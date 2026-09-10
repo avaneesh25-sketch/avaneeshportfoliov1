@@ -12,7 +12,7 @@
 </head>
 <body>
   <audio id="introAudio" preload="auto" src="assets/intro.mp3"></audio>
-  <audio id="viennaAudio" preload="auto" src="assets/vienna.mp3"></audio>
+  <audio id="viennaAudio" preload="auto" src="assets/vienna.mp3.mp3"></audio>
 
   <div class="audio-gate" id="audioGate">
     <div class="gate-card">
@@ -39,119 +39,23 @@
     <section class="page page--active intro-page" data-page="intro" aria-label="Intro">
       <div class="ambient-room"></div>
       <p class="scribble intro-note">Same frame.<br>Different stories.</p>
-
-      <div class="tv-stage">
-        <div class="tv-set" id="tvSet">
-          <div class="tv-bezel">
-            <div class="tv-screen" id="tvScreen">
-              <div class="signal-layer signal-layer--snow"></div>
-              <div class="signal-layer signal-layer--tear"></div>
-              <div class="signal-layer signal-layer--scan"></div>
-              <div class="montage" id="montage">
-                <figure><img src="assets/photo1.jpeg" alt="Avaneesh" /></figure>
-                <figure><img src="assets/photo2.jpeg" alt="Avaneesh" /></figure>
-                <figure><img src="assets/photo3.jpeg" alt="Avaneesh" /></figure>
-                <figure><img src="assets/photo4.jpeg" alt="Avaneesh" /></figure>
-                <figure><img src="assets/photo5.jpeg" alt="Avaneesh" /></figure>
-              </div>
-              <div class="tv-copy" id="tvCopy">
-                <span>A PORTFOLIO BY AVANEESH</span>
-                <button id="playIntro" class="play-intro">▶ PLAY</button>
-              </div>
-              <div class="signal-lost" id="signalLost">BAD SIGNAL</div>
-            </div>
-            <div class="tv-footer"><span>SONY</span><i></i></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="sound-note">◉ &nbsp; SOUND ON FOR A BETTER EXPERIENCE</div>
-      <button class="page-next" id="introNext" data-go="music" disabled>CONTINUE →</button>
+      <div class="tv-stage"><div class="tv-set" id="tvSet"><div class="tv-bezel"><div class="tv-screen" id="tvScreen"><div class="signal-layer signal-layer--snow"></div><div class="signal-layer signal-layer--tear"></div><div class="signal-layer signal-layer--scan"></div><div class="montage" id="montage"><figure><img src="assets/photo1.jpeg" alt="Avaneesh" /></figure><figure><img src="assets/photo2.jpeg" alt="Avaneesh" /></figure><figure><img src="assets/photo3.jpeg" alt="Avaneesh" /></figure><figure><img src="assets/photo4.jpeg" alt="Avaneesh" /></figure><figure><img src="assets/photo5.jpeg" alt="Avaneesh" /></figure></div><div class="tv-copy" id="tvCopy"><span>A PORTFOLIO BY AVANEESH</span><button id="playIntro" class="play-intro">▶ PLAY</button></div><div class="signal-lost" id="signalLost">BAD SIGNAL</div></div><div class="tv-footer"><span>SONY</span><i></i></div></div></div></div>
+      <div class="sound-note">◉ &nbsp; SOUND ON FOR A BETTER EXPERIENCE</div><button class="page-next" id="introNext" data-go="music" disabled>CONTINUE →</button>
     </section>
 
     <section class="page music-page" data-page="music" aria-label="Music">
-      <div class="music-room"></div>
-      <p class="scribble needle-note">Drop the needle.<br>Let's begin. ↘</p>
-
-      <div class="deck-wrap">
-        <div class="turntable" id="turntable">
-          <div class="platter" id="platter">
-            <div class="record" id="record">
-              <div class="record-label"><em>Vienna</em><span>BILLY JOEL</span></div>
-            </div>
-          </div>
-
-          <button class="tonearm" id="tonearm" aria-label="Drop or lift the tonearm">
-            <span class="tonearm-pivot"></span>
-            <span class="tonearm-counterweight"></span>
-            <span class="tonearm-tube"></span>
-            <span class="tonearm-head"><i></i></span>
-          </button>
-          <span class="turntable-mark">P2</span>
-        </div>
-      </div>
-
-      <div class="record-copy">
-        <span>FIRST RECORD:</span>
-        <strong>Vienna</strong>
-        <em>Billy Joel</em>
-      </div>
-
-      <div class="player-card" id="playerCard">
-        <span>NOW PLAYING</span>
-        <strong>Vienna</strong>
-        <small>Billy Joel</small>
-        <div class="progress"><i id="songProgress"></i></div>
-        <button id="liftNeedle">LIFT NEEDLE</button>
-      </div>
-
-      <div class="artist-drawer" id="artistDrawer" aria-hidden="true">
-        <div class="drawer-head">
-          <div><span class="mini-label">A FEW MORE RECORDS</span><h2>What stays on repeat.</h2></div>
-          <button id="closeArtists">×</button>
-        </div>
-        <div class="artist-grid">
-          <button class="artist-card known"><span class="mini-record"></span><strong>BILLY JOEL</strong><small>01</small></button>
-          <button class="artist-card placeholder"><span class="mini-record"></span><strong>YOUR #2</strong><small>02</small></button>
-          <button class="artist-card placeholder"><span class="mini-record"></span><strong>YOUR #3</strong><small>03</small></button>
-          <button class="artist-card placeholder"><span class="mini-record"></span><strong>YOUR #4</strong><small>04</small></button>
-          <button class="artist-card placeholder"><span class="mini-record"></span><strong>YOUR #5</strong><small>05</small></button>
-        </div>
-        <div class="drawer-actions">
-          <a href="https://music.apple.com/profile/avipp2510" target="_blank" rel="noopener">♫ EXPLORE MY APPLE MUSIC ↗</a>
-          <button data-go="work">CONTINUE TO MY WORK ↓</button>
-        </div>
-      </div>
-
-      <button class="page-back" data-go="intro">← INTRO</button>
-      <button class="page-next" data-go="work">WORK →</button>
+      <div class="music-room"></div><p class="scribble needle-note">Drop the needle.<br>Let's begin. ↘</p>
+      <div class="deck-wrap"><div class="turntable" id="turntable"><div class="platter" id="platter"><div class="record" id="record"><div class="record-label"><em>Vienna</em><span>BILLY JOEL</span></div></div></div><button class="tonearm" id="tonearm" aria-label="Drop or lift the tonearm"><span class="tonearm-pivot"></span><span class="tonearm-counterweight"></span><span class="tonearm-tube"></span><span class="tonearm-head"><i></i></span></button><span class="turntable-mark">P2</span></div></div>
+      <div class="record-copy"><span>FIRST RECORD:</span><strong>Vienna</strong><em>Billy Joel</em></div>
+      <div class="player-card" id="playerCard"><span>NOW PLAYING</span><strong>Vienna</strong><small>Billy Joel</small><div class="progress"><i id="songProgress"></i></div><button id="liftNeedle">LIFT NEEDLE</button></div>
+      <div class="artist-drawer" id="artistDrawer" aria-hidden="true"><div class="drawer-head"><div><span class="mini-label">A FEW MORE RECORDS</span><h2>What stays on repeat.</h2></div><button id="closeArtists">×</button></div><div class="artist-grid"><button class="artist-card known"><span class="mini-record"></span><strong>ED SHEERAN</strong><small>01</small></button><button class="artist-card known"><span class="mini-record"></span><strong>MICHAEL JACKSON</strong><small>02</small></button><button class="artist-card known"><span class="mini-record"></span><strong>QUEEN</strong><small>03</small></button><button class="artist-card known"><span class="mini-record"></span><strong>BILLY JOEL</strong><small>04</small></button><button class="artist-card known"><span class="mini-record"></span><strong>ELTON JOHN</strong><small>05</small></button></div><div class="drawer-actions"><a href="https://music.apple.com/profile/avipp2510" target="_blank" rel="noopener">♫ EXPLORE MY APPLE MUSIC ↗</a><button data-go="work">CONTINUE TO MY WORK ↓</button></div></div>
+      <button class="page-back" data-go="intro">← INTRO</button><button class="page-next" data-go="work">WORK →</button>
     </section>
 
-    <section class="page content-page" data-page="work" aria-label="Work">
-      <div class="content-wrap">
-        <span class="section-num">03 / SELECTED WORK</span>
-        <h2>Things I built.<br><em>Things that moved.</em></h2>
-        <div class="work-grid">
-          <article><span>01</span><h3>Yokogawa</h3><p>Process safety, automation, client requirements and cross-functional delivery.</p><strong>20%</strong><small>handover cycle-time reduction</small></article>
-          <article><span>02</span><h3>Coffee Koffee</h3><p>A campus coffee venture built through sourcing, pricing and customer feedback.</p><strong>0→50</strong><small>cups/day</small></article>
-          <article><span>03</span><h3>7 Senses</h3><p>Storefront, catalogue, suppliers, Meta ads and conversion experiments.</p><strong>1K+</strong><small>storefront users</small></article>
-          <article><span>04</span><h3>Hardware builds</h3><p>Wearable bio-tracker, therapeutic exoskeleton and Tesla turbine prototypes.</p><strong>3</strong><small>hands-on builds</small></article>
-        </div>
-      </div>
-      <button class="page-back" data-go="music">← MUSIC</button>
-      <button class="page-next" data-go="about">ABOUT →</button>
-    </section>
+    <section class="page content-page" data-page="work" aria-label="Work"><div class="content-wrap"><span class="section-num">03 / SELECTED WORK</span><h2>Things I built.<br><em>Things that moved.</em></h2><div class="work-grid"><article><span>01</span><h3>Yokogawa</h3><p>Process safety, automation, client requirements and cross-functional delivery.</p><strong>20%</strong><small>handover cycle-time reduction</small></article><article><span>02</span><h3>Coffee Koffee</h3><p>A campus coffee venture built through sourcing, pricing and customer feedback.</p><strong>0→50</strong><small>cups/day</small></article><article><span>03</span><h3>7 Senses</h3><p>Storefront, catalogue, suppliers, Meta ads and conversion experiments.</p><strong>1K+</strong><small>storefront users</small></article><article><span>04</span><h3>Hardware builds</h3><p>Wearable bio-tracker, therapeutic exoskeleton and Tesla turbine prototypes.</p><strong>3</strong><small>hands-on builds</small></article></div></div><button class="page-back" data-go="music">← MUSIC</button><button class="page-next" data-go="about">ABOUT →</button></section>
 
-    <section class="page content-page about-page" data-page="about" aria-label="About">
-      <div class="about-wrap">
-        <div class="about-photo"><img src="assets/photo4.jpeg" alt="Avaneesh" /></div>
-        <div class="about-text"><span class="section-num">04 / ABOUT</span><h2>I like work that moves between <em>systems</em>, people and execution.</h2><p>I started in electrical and automation engineering, then kept gravitating toward the decisions around the system: what gets built, why it matters, and how people actually use it.</p><p>Outside work: records, lifting, cycling, building side projects, and trying coffee ideas in the real world instead of leaving them in a deck.</p></div>
-      </div>
-      <button class="page-back" data-go="work">← WORK</button>
-      <a class="page-next" href="mailto:avaneeshpramod25@gmail.com">CONNECT ↗</a>
-    </section>
+    <section class="page content-page about-page" data-page="about" aria-label="About"><div class="about-wrap"><div class="about-photo"><img src="assets/photo4.jpeg" alt="Avaneesh" /></div><div class="about-text"><span class="section-num">04 / ABOUT</span><h2>I like work that moves between <em>systems</em>, people and execution.</h2><p>I started in electrical and automation engineering, then kept gravitating toward the decisions around the system: what gets built, why it matters, and how people actually use it.</p><p>Outside work: records, lifting, cycling, building side projects, and trying coffee ideas in the real world instead of leaving them in a deck.</p></div></div><button class="page-back" data-go="work">← WORK</button><a class="page-next" href="mailto:avaneeshpramod25@gmail.com">CONNECT ↗</a></section>
   </main>
-
   <script src="script.js"></script>
 </body>
 </html>
