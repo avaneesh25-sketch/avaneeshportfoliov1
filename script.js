@@ -1,68 +1,20 @@
-const powerBtn = document.getElementById('powerBtn');
-const introAudio = document.getElementById('introAudio');
-const tvStage = document.querySelector('.tv-stage');
-const tvOff = document.getElementById('tvOff');
-const introHint = document.getElementById('introHint');
-let played = false;
-
-powerBtn.addEventListener('click', async () => {
-  if (played) {
-    introAudio.currentTime = 0;
-  }
-  played = true;
-  tvStage.classList.remove('playing');
-  void tvStage.offsetWidth;
-  tvStage.classList.add('playing');
-  tvOff.textContent = '';
-  introHint.textContent = 'playing the opening sequence…';
-  try {
-    introAudio.currentTime = 0;
-    await introAudio.play();
-  } catch(e) {
-    introHint.textContent = 'Tap POWER again to allow sound.';
-  }
-  setTimeout(() => { introHint.textContent = 'scroll when the signal cuts.'; }, 11200);
-  setTimeout(() => { tvOff.textContent = 'SIGNAL LOST'; tvOff.style.display='grid'; }, 12750);
-});
-
-const tonearm = document.getElementById('tonearm');
-const record = document.getElementById('record');
-const songTitle = document.getElementById('songTitle');
-let dropped = false;
-tonearm.addEventListener('click', () => {
-  dropped = !dropped;
-  tonearm.classList.toggle('dropped', dropped);
-  record.classList.toggle('spinning', dropped);
-  songTitle.textContent = dropped ? 'Now spinning: Avaneesh’s Apple Music' : 'Then step into my music.';
-});
-
-// subtle parallax on the TV and turntable
-for (const el of [document.querySelector('.tv-shell'), document.querySelector('.turntable')]) {
-  if (!el) continue;
-  el.addEventListener('mousemove', (e) => {
-    const r = el.getBoundingClientRect();
-    const x = (e.clientX - r.left) / r.width - .5;
-    const y = (e.clientY - r.top) / r.height - .5;
-    el.style.setProperty('--mx', x);
-    el.style.setProperty('--my', y);
-  });
-}
-
-// keyboard shortcuts mirror the visible keys
-window.addEventListener('keydown', (e) => {
-  if (e.target.matches('input,textarea')) return;
-  const key = e.key.toLowerCase();
-  const map = {
-    w:'#work', a:'#about',
-    r:'assets/Avaneesh_Pramod_Resume.pdf',
-    l:'https://www.linkedin.com/in/avaneesh-pramod-805527280/',
-    i:'https://www.instagram.com/hakuna.matata2510/',
-    m:'https://music.apple.com/profile/avipp2510',
-    c:'mailto:avaneeshpramod25@gmail.com'
-  };
-  const dest = map[key];
-  if (!dest) return;
-  if (dest.startsWith('#')) document.querySelector(dest)?.scrollIntoView({behavior:'smooth'});
-  else if (dest.startsWith('mailto:')) location.href=dest;
-  else window.open(dest,'_blank');
-});
+const $=(s,r=document)=>r.querySelector(s);const $$=(s,r=document)=>[...r.querySelectorAll(s)];
+const gate=$('#audioGate'),introAudio=$('#introAudio'),viennaAudio=$('#viennaAudio'),tv=$('#tvSet'),playIntro=$('#playIntro'),signalLost=$('#signalLost'),introNext=$('#introNext');
+let soundEnabled=true,introTimer=[],needleHasDropped=false;
+function clearIntroTimers(){introTimer.forEach(clearTimeout);introTimer=[]}
+function go(page){const target=$(`[data-page="${page}"]`);if(!target)return;$$('.page').forEach(p=>p.classList.toggle('page--active',p===target));$$('.artist-drawer').forEach(d=>{d.classList.remove('open');d.setAttribute('aria-hidden','true')});}
+$$('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
+function enter(withSound){soundEnabled=withSound;gate.classList.add('hidden');setTimeout(()=>gate.remove(),800)}
+$('#enterWithSound').addEventListener('click',()=>enter(true));$('#enterMuted').addEventListener('click',()=>enter(false));
+async function startIntro(){clearIntroTimers();tv.classList.remove('playing');signalLost.classList.remove('show');introNext.disabled=true;void tv.offsetWidth;tv.classList.add('playing');if(soundEnabled){try{introAudio.currentTime=0;await introAudio.play()}catch(e){soundEnabled=false}}introTimer.push(setTimeout(()=>{signalLost.classList.add('show')},11800));introTimer.push(setTimeout(()=>{tv.classList.remove('playing');signalLost.textContent='SIGNAL LOST';signalLost.classList.add('show');introNext.disabled=false},12800))}
+playIntro.addEventListener('click',startIntro);
+const tonearm=$('#tonearm'),record=$('#record'),player=$('#playerCard'),drawer=$('#artistDrawer'),progress=$('#songProgress');
+async function dropNeedle(){if(!tonearm.classList.contains('dropped')){tonearm.classList.add('dropped');record.classList.add('spinning');player.classList.add('show');needleHasDropped=true;if(soundEnabled){try{await viennaAudio.play()}catch(e){}}return}liftNeedle()}
+function liftNeedle(){tonearm.classList.remove('dropped');record.classList.remove('spinning');viennaAudio.pause();player.classList.remove('show');if(needleHasDropped)setTimeout(openArtists,350)}
+function openArtists(){drawer.classList.add('open');drawer.setAttribute('aria-hidden','false')}
+tonearm.addEventListener('click',dropNeedle);$('#liftNeedle').addEventListener('click',liftNeedle);$('#closeArtists').addEventListener('click',()=>{drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true')});
+viennaAudio.addEventListener('timeupdate',()=>{if(!viennaAudio.duration)return;progress.style.width=`${(viennaAudio.currentTime/viennaAudio.duration)*100}%`});viennaAudio.addEventListener('ended',()=>{tonearm.classList.remove('dropped');record.classList.remove('spinning');player.classList.remove('show');openArtists()});
+// A deliberate drag gesture also drops the arm; wheel/trackpad never changes pages.
+let dragStart=null;tonearm.addEventListener('pointerdown',e=>{dragStart={x:e.clientX,y:e.clientY};tonearm.setPointerCapture?.(e.pointerId)});tonearm.addEventListener('pointerup',e=>{if(!dragStart)return;const d=Math.hypot(e.clientX-dragStart.x,e.clientY-dragStart.y);dragStart=null;if(d>18&&!tonearm.classList.contains('dropped'))dropNeedle()});
+window.addEventListener('wheel',e=>{if(!$('.content-page.page--active'))e.preventDefault()},{passive:false});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'&&drawer.classList.contains('open')){$('#closeArtists').click()}if(e.key==='ArrowRight'){const p=$('.page--active')?.dataset.page;const next={intro:'music',music:'work',work:'about'}[p];if(next)go(next)}if(e.key==='ArrowLeft'){const p=$('.page--active')?.dataset.page;const prev={music:'intro',work:'music',about:'work'}[p];if(prev)go(prev)}});
