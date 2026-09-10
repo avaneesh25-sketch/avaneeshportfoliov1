@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Avaneesh Pramod — Portfolio</title>
+  <meta name="description" content="Avaneesh Pramod — engineer, builder, operator." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise"></div>
+  <audio id="introAudio" preload="auto" src="assets/intro.mp3"></audio>
+
+  <header class="topbar">
+    <a class="brand" href="#home">AVANEESH PRAMOD</a>
+    <div class="status"><span class="dot"></span> available for conversations</div>
+  </header>
+
+  <main>
+    <section id="home" class="scene hero-scene">
+      <div class="hero-copy">
+        <p class="eyebrow">ENGINEER × BUILDER × BUSINESS</p>
+        <h1>Things I’ve built.<br><em>Things I’m becoming.</em></h1>
+        <p class="subcopy">A portfolio told through objects, work, music and a few questionable camera-roll decisions.</p>
+      </div>
+
+      <div class="tv-stage" aria-label="Interactive retro TV intro">
+        <div class="tv-shell">
+          <div class="tv-screen" id="tvScreen">
+            <div class="tv-static"></div>
+            <div class="montage" id="montage">
+              <img src="assets/photo1.jpeg" alt="Avaneesh portrait" />
+              <img src="assets/photo2.jpeg" alt="Avaneesh portrait" />
+              <img src="assets/photo3.jpeg" alt="Avaneesh portrait" />
+              <img src="assets/photo4.jpeg" alt="Avaneesh portrait" />
+              <img src="assets/photo5.jpeg" alt="Avaneesh portrait" />
+            </div>
+            <div class="tv-title" id="tvTitle">
+              <span>AVANEESH</span>
+              <strong>PRAMOD</strong>
+            </div>
+            <div class="tv-off" id="tvOff">NO SIGNAL</div>
+          </div>
+          <div class="tv-controls">
+            <button id="powerBtn" class="power-btn" aria-label="Power on TV"><span></span>POWER</button>
+            <div class="dial"></div><div class="dial"></div>
+          </div>
+        </div>
+        <p class="instruction" id="introHint">Press POWER. Sound on.</p>
+      </div>
+      <a class="scroll-cue" href="#vinyl">SCROLL TO LISTEN ↓</a>
+    </section>
+
+    <section id="vinyl" class="scene vinyl-scene">
+      <div class="section-heading">
+        <p class="eyebrow">02 / THE RECORD SHELF</p>
+        <h2>Music is part of the operating system.</h2>
+      </div>
+
+      <div class="turntable-wrap">
+        <div class="turntable" id="turntable">
+          <div class="plinth">
+            <div class="platter"><div class="record" id="record"><div class="label">AP<br><small>33⅓</small></div></div></div>
+            <button class="tonearm" id="tonearm" aria-label="Drop the needle"><span class="counterweight"></span><span class="arm"></span><span class="head"></span></button>
+            <div class="switch"></div>
+          </div>
+          <div class="vinyl-shadow"></div>
+        </div>
+        <div class="now-playing">
+          <span class="mono">DROP THE NEEDLE</span>
+          <h3 id="songTitle">Then step into my music.</h3>
+          <p>Click the tonearm to start the record. The Apple Music button opens my profile.</p>
+          <a class="pill" href="https://music.apple.com/profile/avipp2510" target="_blank" rel="noopener">APPLE MUSIC ↗</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="nav" class="scene keyboard-scene">
+      <div class="section-heading">
+        <p class="eyebrow">03 / CHOOSE A KEY</p>
+        <h2>Now you get the controls.</h2>
+      </div>
+      <div class="keyboard" aria-label="Portfolio navigation keyboard">
+        <a class="key key-wide" href="#work"><kbd>W</kbd><span>WORK</span></a>
+        <a class="key" href="#about"><kbd>A</kbd><span>ABOUT</span></a>
+        <a class="key" href="assets/Avaneesh_Pramod_Resume.pdf" target="_blank"><kbd>R</kbd><span>CV</span></a>
+        <a class="key" href="https://www.linkedin.com/in/avaneesh-pramod-805527280/" target="_blank" rel="noopener"><kbd>L</kbd><span>LINKEDIN</span></a>
+        <a class="key" href="https://www.instagram.com/hakuna.matata2510/" target="_blank" rel="noopener"><kbd>I</kbd><span>INSTAGRAM</span></a>
+        <a class="key" href="https://music.apple.com/profile/avipp2510" target="_blank" rel="noopener"><kbd>M</kbd><span>MUSIC</span></a>
+        <a class="key key-wide" href="mailto:avaneeshpramod25@gmail.com"><kbd>C</kbd><span>CONTACT</span></a>
+      </div>
+    </section>
+
+    <section id="work" class="scene work-scene">
+      <div class="section-heading">
+        <p class="eyebrow">04 / SELECTED WORK</p>
+        <h2>Not a résumé wall.<br><em>Stories with receipts.</em></h2>
+      </div>
+      <div class="project-grid">
+        <article class="project-card"><span class="num">01</span><h3>Yokogawa</h3><p>Process safety, automation, client requirements and cross-functional delivery.</p><div class="metric">20% <small>handover cycle-time reduction</small></div></article>
+        <article class="project-card"><span class="num">02</span><h3>Coffee Koffee</h3><p>A campus D2C coffee experiment built from sourcing, pricing and customer feedback.</p><div class="metric">0→50 <small>cups/day</small></div></article>
+        <article class="project-card"><span class="num">03</span><h3>7 Senses</h3><p>Storefront, catalogue, suppliers, Meta ads and conversion experiments.</p><div class="metric">1K+ <small>storefront users</small></div></article>
+        <article class="project-card"><span class="num">04</span><h3>Built in hardware</h3><p>Wearable bio-tracker, therapeutic exoskeleton and Tesla turbine prototypes.</p><div class="metric">3 <small>hands-on builds</small></div></article>
+      </div>
+    </section>
+
+    <section id="about" class="scene about-scene">
+      <div class="about-image"><img src="assets/photo4.jpeg" alt="Avaneesh at the beach" /></div>
+      <div class="about-copy">
+        <p class="eyebrow">05 / ABOUT</p>
+        <h2>I like work that moves between <em>systems</em>, people and execution.</h2>
+        <p>I started in electrical and automation engineering, then kept gravitating toward the decisions around the system: what gets built, why it matters, and how people actually use it.</p>
+        <p>Outside work: records, lifting, cycling, building side projects, and trying coffee ideas in the real world instead of leaving them in a deck.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>© 2026 AVANEESH PRAMOD</span>
+    <a href="mailto:avaneeshpramod25@gmail.com">LET’S TALK ↗</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
