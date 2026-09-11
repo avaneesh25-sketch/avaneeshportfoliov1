@@ -73,6 +73,9 @@ if(canvas){
   const spindle=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.28,24),metal);spindle.position.y=.28;platter.add(spindle);
   const labelRing=new THREE.Mesh(new THREE.TorusGeometry(.57,.012,8,64),new THREE.MeshStandardMaterial({color:0x806b51,roughness:.55}));labelRing.rotation.x=Math.PI/2;labelRing.position.y=.205;platter.add(labelRing);
   const platterRim=new THREE.Mesh(new THREE.TorusGeometry(2.23,.055,12,96),metal);platterRim.rotation.x=Math.PI/2;platterRim.position.y=.08;platter.add(platterRim);
+  const grooveMotion=new THREE.Group();grooveMotion.position.y=.158;platter.add(grooveMotion);
+  const grooveGlowMat=new THREE.MeshStandardMaterial({color:0x6c88a8,emissive:0x26394c,emissiveIntensity:.45,roughness:.28,metalness:.68,transparent:true,opacity:.58});
+  [[1.14,.42,.2],[1.48,.34,2.2],[1.82,.28,4.25]].forEach(([r,arc,rz])=>{const g=new THREE.Mesh(new THREE.TorusGeometry(r,.012,5,72,Math.PI*arc),grooveGlowMat);g.rotation.x=Math.PI/2;g.rotation.z=rz;grooveMotion.add(g)});
 
   // Physical start button on the deck.
   const deckButtonGroup=new THREE.Group();
@@ -127,7 +130,7 @@ if(canvas){
   const pivotBase=new THREE.Mesh(new THREE.CylinderGeometry(.43,.50,.30,48),new THREE.MeshStandardMaterial({color:0x111111,roughness:.25,metalness:.72}));pivotBase.castShadow=true;armPivot.add(pivotBase);
   const pivotCollar=new THREE.Mesh(new THREE.CylinderGeometry(.25,.29,.48,48),metal);pivotCollar.position.y=.28;armPivot.add(pivotCollar);
   const arm=new THREE.Group();armPivot.add(arm);
-  const REST_ANGLE=0, DROP_ANGLE=-.69;
+  const REST_ANGLE=0, DROP_ANGLE=-.69, INNER_ANGLE=-.96;
   arm.rotation.y=REST_ANGLE;
 
   /* Tonearm points toward the FRONT of the deck when parked, like the Rega reference. */
@@ -167,13 +170,15 @@ if(canvas){
   const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(0,2.20,0);lamp.add(bulbMesh);
   const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(5.15,1.85,-2.35);bulb.castShadow=true;scene.add(bulb);
 
-  const lampPullString=new THREE.Group();lampPullString.position.set(5.15,1.95,-2.35);scene.add(lampPullString);
-  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,1.18,10),new THREE.MeshStandardMaterial({color:0x76604a,roughness:.5,metalness:.08}));
-  pullLine.position.y=-.58;lampPullString.add(pullLine);
-  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.072,20,20),new THREE.MeshStandardMaterial({color:0x4a3526,roughness:.42,metalness:.08}));
-  pullBead.position.y=-1.20;pullBead.castShadow=true;lampPullString.add(pullBead);
-  const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.20,.20,1.55,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
-  pullHit.position.set(5.15,1.25,-2.35);scene.add(pullHit);
+  const lampPullString=new THREE.Group();lampPullString.position.set(4.62,1.86,-1.88);scene.add(lampPullString);
+  const chainMat=new THREE.MeshStandardMaterial({color:0xc6a77f,roughness:.42,metalness:.14});
+  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,1.24,12),chainMat);
+  pullLine.position.y=-.60;pullLine.castShadow=true;lampPullString.add(pullLine);
+  for(let i=0;i<8;i++){const bead=new THREE.Mesh(new THREE.SphereGeometry(.028,12,12),chainMat);bead.position.y=-.12-i*.14;lampPullString.add(bead)}
+  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.095,24,24),new THREE.MeshStandardMaterial({color:0x6b4c31,roughness:.36,metalness:.10}));
+  pullBead.position.y=-1.28;pullBead.castShadow=true;lampPullString.add(pullBead);
+  const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,1.7,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  pullHit.position.set(4.62,1.08,-1.88);scene.add(pullHit);
   let lampOn=true,pullAngle=0,pullVel=0,pullTarget=0,pullImpulse=0;
 
   scene.add(new THREE.HemisphereLight(0x9bb1d0,0x2a1208,1.15));
@@ -182,7 +187,7 @@ if(canvas){
 
   renderer.render(scene,camera); // first paint
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
-  let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false,autoDropping=false,autoLifting=false,autoT=0;
+  let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false,autoDropping=false,autoLifting=false,autoT=0,playProgress=0;
   const armMeshes=[armHit,tube,headshell,cartridge,pivotBase,pivotCollar];
   const mugHit=new THREE.Mesh(new THREE.CylinderGeometry(.68,.68,1.25,32),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   mugHit.position.copy(mug.position);scene.add(mugHit);
@@ -227,12 +232,13 @@ if(canvas){
     if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer'}
   });
   canvas.addEventListener('pointermove',e=>{if(hitDeckButton(e)||hitPullString(e)){canvas.style.cursor='pointer'}else if(!iceActive){canvas.style.cursor='default'}});
-  window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping||autoLifting)return;autoDropping=true;autoT=0;});
+  window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping||autoLifting)return;playProgress=0;autoDropping=true;autoT=0;});
+  window.addEventListener('turntable:progress',e=>{playProgress=THREE.MathUtils.clamp(Number(e.detail?.progress)||0,0,1)});
   window.addEventListener('turntable:ended',()=>{playing=false;statusLed.material.color.setHex(0x2b2b2b);statusLed.material.emissive.setHex(0x000000);statusLed.material.emissiveIntensity=0;});
 
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
-  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
+  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing){platter.rotation.y-=dt*1.65;grooveMotion.rotation.y+=dt*.78}
     {
       // Damped pendulum-ish motion for the pull cord.
       const stiffness=13.0,damping=4.8;
@@ -265,6 +271,7 @@ if(canvas){
       arm.rotation.y=THREE.MathUtils.lerp(REST_ANGLE,DROP_ANGLE,e);
       if(t>=1){autoDropping=false;dropped=true;playing=true;statusLed.material.color.setHex(0xff8a3b);statusLed.material.emissive.setHex(0xff5b16);statusLed.material.emissiveIntensity=2.5;window.dispatchEvent(new CustomEvent('turntable:drop'))}
     }
+    if(dropped&&!autoDropping&&!autoLifting){arm.rotation.y=THREE.MathUtils.lerp(arm.rotation.y,THREE.MathUtils.lerp(DROP_ANGLE,INNER_ANGLE,playProgress),Math.min(1,dt*1.8))}
     if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*6.4+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.045;ice.position.z=ice.userData.home.z+Math.cos(a*1.08)*.045;ice.position.y=.465+Math.abs(Math.sin(a*.72))*.015;ice.rotation.y+=dt*(i%2?2.2:-2.4);ice.rotation.x=.08+Math.sin(a*.8)*.07});if(iceTime>1.1){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
     renderer.render(scene,camera)}animate();
 
