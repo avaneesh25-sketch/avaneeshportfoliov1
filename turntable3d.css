@@ -12,3 +12,8 @@
 .music3d-page .page-back,.music3d-page .page-next{z-index:6;color:#f0e6d9!important;text-shadow:0 2px 12px #000}
 @media(max-width:950px){.music3d-crate{width:27vw;left:2vw}.music3d-now{right:3vw;width:26vw}.music3d-tip{display:none}.music3d-cup-label{display:none}}
 @media(max-width:760px){.music3d-crate{display:none}.music3d-now{top:auto;bottom:10vh;right:5vw;width:42vw}.music3d-now h3{font-size:46px}}
+.crate-apple-link{position:absolute;left:24px;right:24px;bottom:52px;text-align:center;color:#c9b39c;text-decoration:none;font:500 7px 'DM Mono',monospace;letter-spacing:.18em;padding-bottom:7px;border-bottom:1px solid rgba(201,179,156,.28);z-index:8;pointer-events:auto}
+.crate-apple-link:hover{color:#fff}
+#turntableCanvas{pointer-events:auto!important}
+.music3d-now,.music3d-tip,.music3d-cup-label{pointer-events:none!important}
+.music3d-now a{pointer-events:auto!important}
