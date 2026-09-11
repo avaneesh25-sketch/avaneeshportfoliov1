@@ -60,7 +60,8 @@
       </aside>
 
       <aside class="music3d-now music3d-minimal">
-        <p id="musicInstruction">Drag the tonearm onto the record.</p>
+        <p id="musicInstruction">Press play to lower the tonearm.</p>
+        <button id="dropNeedleButton" class="drop-needle-btn">DROP THE NEEDLE</button>
       </aside>
 
       <div class="music3d-tip">Drag the needle<br>onto the record<br>to play. ↙</div>
@@ -78,5 +79,16 @@
   </main>
   <script type="module" src="turntable3d.js?v=20260911-1512"></script>
   <script src="script.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+  const b=document.getElementById('dropNeedleButton');
+  if(b)b.addEventListener('click',()=>{
+    b.disabled=true;
+    b.textContent='LOWERING…';
+    window.dispatchEvent(new CustomEvent('turntable:autoDrop'));
+    setTimeout(()=>{b.textContent='NEEDLE DOWN';},1900);
+  });
+});
+</script>
 </body>
 </html>
