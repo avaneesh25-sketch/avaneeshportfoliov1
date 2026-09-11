@@ -52,3 +52,7 @@
 @keyframes miniVinylTopSpin{
   to{transform:translateY(-34px) scale(1) rotate(360deg)}
 }
+
+.lamp-blackout{position:absolute;inset:0;z-index:50;background:#000;opacity:0;pointer-events:none;transition:opacity .55s ease}
+.lamp-blackout.is-off{opacity:.985}
+.lamp-pull-hint{position:absolute;z-index:8;right:18.5vw;top:35vh;color:#d3bda4;font:500 16px Caveat,cursive;transform:rotate(-7deg);pointer-events:none;opacity:.72}
