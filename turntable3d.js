@@ -258,15 +258,50 @@ if(canvas){
   const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(0,2.20,0);lamp.add(bulbMesh);
   const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(4.55,1.85,-1.35);bulb.castShadow=true;scene.add(bulb);
 
-  const lampPullString=new THREE.Group();lampPullString.position.set(4.95,2.12,-.45);scene.add(lampPullString);
-  const chainMat=new THREE.MeshStandardMaterial({color:0xd4b486,roughness:.34,metalness:.08,emissive:0x2a170d,emissiveIntensity:.22});
-  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,1.42,14),chainMat);
-  pullLine.position.y=-.70;pullLine.castShadow=true;lampPullString.add(pullLine);
-  for(let i=0;i<12;i++){const bead=new THREE.Mesh(new THREE.SphereGeometry(.034,14,14),chainMat);bead.position.y=-.08-i*.115;lampPullString.add(bead)}
-  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.12,28,28),new THREE.MeshStandardMaterial({color:0x8a613e,roughness:.32,metalness:.05}));
-  pullBead.scale.set(.82,1.28,.82);pullBead.position.y=-1.47;pullBead.castShadow=true;lampPullString.add(pullBead);
-  const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.30,.30,1.95,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
-  pullHit.position.set(4.95,1.12,-.45);scene.add(pullHit);
+  // Pull cord is a CHILD of the lamp so it cannot drift away from the shade.
+  // Local coordinates are anchored just under the socket housing.
+  const lampPullString=new THREE.Group();
+  lampPullString.position.set(.42,2.34,.34);
+  lamp.add(lampPullString);
+
+  const cordStart=new THREE.Vector3(0,0,0);
+  const cordMid=new THREE.Vector3(.025,-.66,.02);
+  const cordEnd=new THREE.Vector3(.06,-1.34,.05);
+  const cordCurve=new THREE.CatmullRomCurve3([cordStart,cordMid,cordEnd]);
+  const chainMat=new THREE.MeshStandardMaterial({
+    color:0x2b241f,roughness:.58,metalness:.08
+  });
+  const pullLine=new THREE.Mesh(new THREE.TubeGeometry(cordCurve,28,.018,8,false),chainMat);
+  pullLine.castShadow=true;
+  lampPullString.add(pullLine);
+
+  // Small brass/acorn pull at the bottom.
+  const pullBead=new THREE.Group();
+  pullBead.position.copy(cordEnd);
+  const beadTop=new THREE.Mesh(
+    new THREE.SphereGeometry(.075,20,20),
+    new THREE.MeshPhysicalMaterial({color:0x8b6a3e,roughness:.34,metalness:.28,clearcoat:.22})
+  );
+  beadTop.scale.set(.9,1.05,.9);
+  pullBead.add(beadTop);
+  const beadTail=new THREE.Mesh(
+    new THREE.ConeGeometry(.065,.13,20),
+    new THREE.MeshPhysicalMaterial({color:0x725231,roughness:.38,metalness:.22})
+  );
+  beadTail.position.y=-.105;
+  beadTail.rotation.z=Math.PI;
+  pullBead.add(beadTail);
+  lampPullString.add(pullBead);
+
+  // Large invisible hit target, also parented to the lamp.
+  const pullHit=new THREE.Mesh(
+    new THREE.CylinderGeometry(.22,.22,1.55,16),
+    new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false})
+  );
+  pullHit.position.set(.05,-.67,.04);
+  lampPullString.add(pullHit);
+
+  const pullRestPos=lampPullString.position.clone();
   let lampOn=true,pullAngle=0,pullVel=0,pullTarget=0,pullImpulse=0;
 
   scene.add(new THREE.HemisphereLight(0x8f785f,0x241209,.72));
@@ -330,14 +365,23 @@ if(canvas){
     {
       // Damped pendulum-ish motion for the pull cord.
       const stiffness=13.0,damping=4.8;
+      if(Math.abs(pullVel)<.012&&Math.abs(pullAngle)<.012){
+        pullAngle=Math.sin(clock.elapsedTime*.8)*.018;
+      }
       const acc=(-stiffness*pullAngle)-(damping*pullVel);
       pullVel+=acc*dt;
       pullAngle+=pullVel*dt;
       pullAngle=THREE.MathUtils.clamp(pullAngle,-0.5,0.5);
-      lampPullString.rotation.z=pullAngle*0.5;
-      lampPullString.position.x=Math.sin(pullAngle)*0.12;
-      lampPullString.position.y=-Math.abs(pullAngle)*0.10;
-      if(Math.abs(pullAngle)<.002&&Math.abs(pullVel)<.01){pullAngle=0;pullVel=0}
+      lampPullString.rotation.z=pullAngle*0.42;
+      lampPullString.rotation.x=Math.sin(pullAngle*.8)*0.08;
+      lampPullString.position.x=pullRestPos.x+Math.sin(pullAngle)*0.035;
+      lampPullString.position.y=pullRestPos.y-Math.abs(pullAngle)*0.065;
+      lampPullString.position.z=pullRestPos.z;
+      if(Math.abs(pullAngle)<.002&&Math.abs(pullVel)<.01){
+        pullAngle=0;pullVel=0;
+        lampPullString.rotation.set(0,0,0);
+        lampPullString.position.copy(pullRestPos);
+      }
     }
     if(morphT<1){
       morphT=Math.min(1,morphT+dt/1.55);
