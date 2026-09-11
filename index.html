@@ -29,6 +29,60 @@
     .music-page .page-back,.music-page .page-next{bottom:2.5vh}
     @media(max-width:1050px){.vinyl-scene{grid-template-columns:190px 1fr 180px;gap:14px;inset-left:2vw;inset-right:2vw}.artist-sleeve{height:88px}.record-crate{height:58vh}.tonearm-pivot{width:58px;height:58px}}
     @media(max-width:850px){.cv-wrap{padding:12vh 5vw 8vh}.cv-choice-grid{grid-template-columns:1fr}.cv-choice{min-height:210px}.cv-choice:first-child{border-right:0;border-bottom:1px solid #2e2b27}.cv-wrap h2{font-size:52px}.vinyl-scene{inset:12vh 4vw 10vh;grid-template-columns:1fr;grid-template-rows:auto 1fr auto;overflow:auto}.record-crate{height:auto;transform:none;padding:18px;order:2}.sleeve-stack{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}.artist-sleeve{height:100px;margin:0;padding:8px}.artist-sleeve strong{font-size:12px}.artist-sleeve small{font-size:5px}.deck-wrap{order:1}.now-playing{order:3}.needle-note{display:block;right:5%;bottom:13%;font-size:20px}.turntable{min-width:0}.tonearm{display:block}.now-playing h3{font-size:48px}}
+    /* post-intro chapter navigation */
+    .chapter-nav{
+      position:fixed;left:34px;top:24px;z-index:1200;
+      display:flex;align-items:center;gap:28px;
+      opacity:0;visibility:hidden;transform:translateY(-8px);
+      transition:opacity .35s ease,transform .35s ease,visibility .35s ease;
+    }
+    body.chapter-mode .chapter-nav{opacity:1;visibility:visible;transform:none}
+    body.chapter-mode .site-nav{opacity:0;pointer-events:none}
+    .chapter-nav button,.chapter-nav a{
+      position:relative;border:0;background:none;padding:8px 0;
+      color:rgba(245,238,229,.5);text-decoration:none;cursor:pointer;
+      font:500 9px DM Mono,monospace;letter-spacing:.24em;
+      transition:color .25s ease,transform .25s ease;
+    }
+    .chapter-nav button:hover,.chapter-nav a:hover{color:#f4eee7}
+    .chapter-nav button.is-active{color:#fff}
+    .chapter-nav button.is-active:after{
+      content:"";position:absolute;left:0;right:0;bottom:1px;height:1px;
+      background:#fff;box-shadow:0 0 8px rgba(255,255,255,.25);
+    }
+
+    .loop-nav{
+      position:fixed;z-index:1190;top:50%;transform:translateY(-50%);
+      width:46px;height:46px;border:1px solid rgba(255,255,255,.18);
+      border-radius:50%;background:rgba(7,6,5,.26);color:rgba(255,255,255,.72);
+      display:none;place-items:center;cursor:pointer;
+      font:300 24px/1 serif;backdrop-filter:blur(6px);
+      transition:background .25s ease,color .25s ease,transform .25s ease,border-color .25s ease;
+    }
+    body.chapter-mode .loop-nav{display:grid}
+    .loop-nav--prev{left:22px}.loop-nav--next{right:22px}
+    .loop-nav:hover{color:#fff;border-color:rgba(255,255,255,.45);background:rgba(255,255,255,.07)}
+    .loop-nav--prev:hover{transform:translateY(-50%) rotate(-18deg)}
+    .loop-nav--next:hover{transform:translateY(-50%) rotate(18deg)}
+
+    body.chapter-mode .content-page .page-back,
+    body.chapter-mode .content-page .page-next,
+    body.chapter-mode .music-page .page-back,
+    body.chapter-mode .music-page .page-next,
+    body.chapter-mode .cv-page .page-back,
+    body.chapter-mode .cv-page .page-next{display:none!important}
+
+    .page.page-swipe-in-right{animation:pageSwipeInRight .48s cubic-bezier(.2,.72,.2,1) both}
+    .page.page-swipe-in-left{animation:pageSwipeInLeft .48s cubic-bezier(.2,.72,.2,1) both}
+    @keyframes pageSwipeInRight{from{opacity:0;transform:translateX(-42px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes pageSwipeInLeft{from{opacity:0;transform:translateX(42px)}to{opacity:1;transform:translateX(0)}}
+
+    @media(max-width:850px){
+      .chapter-nav{left:18px;right:18px;gap:18px;overflow-x:auto;scrollbar-width:none}
+      .chapter-nav::-webkit-scrollbar{display:none}
+      .loop-nav{width:40px;height:40px;font-size:21px}
+      .loop-nav--prev{left:10px}.loop-nav--next{right:10px}
+    }
   </style>
 </head>
 <body>
@@ -38,7 +92,16 @@
 
   <div class="audio-gate" id="audioGate"><div class="gate-card"><span class="gate-kicker">A PORTFOLIO BY AVANEESH</span><h1>A better experience<br><em>with sound.</em></h1><p>Turn the volume up and step in.</p><button id="enterWithSound" class="gate-button">◖ ENTER WITH SOUND</button><button id="enterMuted" class="gate-muted">ENTER MUTED</button></div></div>
 
-  <header class="site-nav"><button class="wordmark" data-go="intro">AVANEESH</button><nav><button data-go="work">WORK</button><button data-go="about">ABOUT</button><button data-go="music">PLAYLIST</button><button data-go="cv">CV</button><a href="mailto:avaneeshpramod25@gmail.com">CONNECT</a></nav></header>
+  <header class="site-nav"><button class="wordmark" data-go="intro">AVANEESH</button></header>
+  <nav class="chapter-nav" id="chapterNav" aria-label="Portfolio sections">
+    <button data-go="about" data-chapter="about">ABOUT</button>
+    <button data-go="work" data-chapter="work">WORK</button>
+    <button data-go="music" data-chapter="music">PLAYLIST</button>
+    <button data-go="cv" data-chapter="cv">CV</button>
+    <a href="mailto:avaneeshpramod25@gmail.com">CONNECT</a>
+  </nav>
+  <button class="loop-nav loop-nav--prev" id="loopPrev" aria-label="Previous section">↺</button>
+  <button class="loop-nav loop-nav--next" id="loopNext" aria-label="Next section">↻</button>
 
   <main class="app-shell" id="appShell">
     <section class="page page--active intro-page" data-page="intro" aria-label="Intro">
@@ -89,7 +152,7 @@
     },2500);
   </script>
   <script type="module" src="turntable3d.js?v=20260911-finalmerge"></script>
-  <script src="script.js?v=20260911-tv-fixed-suction"></script>
+  <script src="script.js?v=20260911-chapter-swipe"></script>
   <script>
     let lampAudioCtx=null;
     function playLampClick(){
