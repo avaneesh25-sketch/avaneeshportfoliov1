@@ -34,6 +34,7 @@
 <body>
   <audio id="introAudio" preload="auto" src="assets/himym_intro.mp3"></audio>
   <audio id="viennaAudio" preload="auto" src="assets/vienna.mp3.mp3"></audio>
+  <audio id="artistAudio" preload="metadata"></audio>
 
   <div class="audio-gate" id="audioGate"><div class="gate-card"><span class="gate-kicker">A PORTFOLIO BY AVANEESH</span><h1>A better experience<br><em>with sound.</em></h1><p>Turn the volume up and step in.</p><button id="enterWithSound" class="gate-button">◖ ENTER WITH SOUND</button><button id="enterMuted" class="gate-muted">ENTER MUTED</button></div></div>
 
@@ -51,11 +52,11 @@
       <div class="music3d-vignette"></div>
 
       <aside class="music3d-crate" aria-label="Favourite artists">
-        <div class="music3d-sleeve ed"><strong>ED SHEERAN</strong><small>+</small></div>
-        <div class="music3d-sleeve mj"><strong>MICHAEL JACKSON</strong><small>THRILLER</small></div>
-        <div class="music3d-sleeve queen"><strong>QUEEN</strong><small>A NIGHT AT THE OPERA</small></div>
-        <div class="music3d-sleeve billy"><strong>BILLY JOEL</strong><small>THE STRANGER</small></div>
-        <div class="music3d-sleeve elton"><strong>ELTON JOHN</strong><small>GOODBYE YELLOW BRICK ROAD</small></div>
+        <button class="music3d-sleeve ed" data-artist="ed-sheeran" type="button"><span class="hover-vinyl"></span><strong>ED SHEERAN</strong><small>+</small></button>
+        <button class="music3d-sleeve mj" data-artist="michael-jackson" type="button"><span class="hover-vinyl"></span><strong>MICHAEL JACKSON</strong><small>THRILLER</small></button>
+        <button class="music3d-sleeve queen" data-artist="queen" type="button"><span class="hover-vinyl"></span><strong>QUEEN</strong><small>A NIGHT AT THE OPERA</small></button>
+        <button class="music3d-sleeve billy" data-artist="billy-joel" type="button"><span class="hover-vinyl"></span><strong>BILLY JOEL</strong><small>THE STRANGER</small></button>
+        <button class="music3d-sleeve elton" data-artist="elton-john" type="button"><span class="hover-vinyl"></span><strong>ELTON JOHN</strong><small>GOODBYE YELLOW BRICK ROAD</small></button>
         <a class="crate-apple-link" href="https://music.apple.com/profile/avipp2510" target="_blank" rel="noopener">EXPLORE MY APPLE MUSIC ↗</a><span class="crate-note">More songs. Same story.</span>
       </aside>
 
