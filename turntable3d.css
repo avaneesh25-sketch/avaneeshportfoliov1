@@ -1,0 +1,99 @@
+.music3d-page{background:#090604!important;overflow:hidden!important}
+#turntableCanvas{position:absolute;inset:0;width:100%;height:100%;z-index:0;display:block;cursor:default}
+.music3d-vignette{position:absolute;inset:0;z-index:1;pointer-events:none;background:radial-gradient(circle at 50% 44%,transparent 35%,rgba(0,0,0,.2) 67%,rgba(0,0,0,.58) 100%),linear-gradient(180deg,rgba(0,0,0,.3),transparent 16%,transparent 82%,rgba(0,0,0,.42))}
+.music3d-crate{position:absolute;z-index:3;left:2.7vw;top:14vh;width:min(23vw,390px);height:63vh;padding:24px 20px 58px;box-sizing:border-box;background:linear-gradient(90deg,#2c160a,#6f3b1d 9%,#40200f 49%,#74401f 92%,#291409);border:1px solid #734522;box-shadow:inset 0 0 0 7px rgba(14,7,3,.35),0 30px 80px rgba(0,0,0,.6);transform:perspective(900px) rotateY(5deg)}
+.music3d-sleeve{height:19%;min-height:72px;margin-top:-11%;padding:16px 18px;box-sizing:border-box;border:1px solid rgba(255,255,255,.13);box-shadow:0 10px 22px rgba(0,0,0,.5);position:relative;transition:.25s ease}.music3d-sleeve:first-child{margin-top:0}.music3d-sleeve:hover{transform:translateX(10px) rotate(-1deg);z-index:5}
+.music3d-sleeve strong{font:600 clamp(17px,1.45vw,26px) 'Instrument Serif',serif;letter-spacing:.04em}.music3d-sleeve small{display:block;margin-top:4px;font:500 7px 'DM Mono',monospace;letter-spacing:.25em;opacity:.68}
+.music3d-sleeve.ed{background:linear-gradient(135deg,#a63d1d,#c85d2c)}.music3d-sleeve.mj{background:linear-gradient(135deg,#d0c0a8,#897867);color:#17110d}.music3d-sleeve.queen{background:linear-gradient(135deg,#141518,#33291f)}.music3d-sleeve.billy{background:linear-gradient(135deg,#a98f78,#d0b395);color:#17110d}.music3d-sleeve.elton{background:linear-gradient(135deg,#17130f,#4e341c)}
+.crate-note{position:absolute;bottom:17px;left:0;right:0;text-align:center;font:500 21px Caveat,cursive;color:#bf9676;opacity:.85}
+.music3d-now{position:absolute;z-index:4;right:5.2vw;top:24vh;width:min(24vw,350px);color:#eee}.music3d-now>span{color:#d87831;font:500 9px 'DM Mono',monospace;letter-spacing:.4em}.music3d-now h3{font:400 clamp(48px,4.3vw,78px)/.92 'Instrument Serif',serif;margin:12px 0 9px}.music3d-now>strong{font:500 10px 'DM Mono',monospace;letter-spacing:.28em}.music3d-progress{height:2px;background:rgba(255,255,255,.25);margin:28px 0 10px}.music3d-progress i{display:block;height:100%;width:0;background:#efe7dc}.music3d-time{display:flex;justify-content:space-between}.music3d-time b{font:400 9px 'DM Mono',monospace;color:#ae9d8d}.music3d-now p{margin:30px 0 0;font:500 clamp(22px,1.9vw,31px)/1.06 Caveat,cursive;max-width:250px;color:#eee2d4;transform:rotate(-2deg)}.music3d-now a{display:inline-block;margin-top:26px;color:#aaa;text-decoration:none;font:500 8px 'DM Mono',monospace;letter-spacing:.18em;border-bottom:1px solid #635345;padding-bottom:5px}
+.music3d-tip{position:absolute;z-index:4;left:63%;top:51%;font:500 clamp(20px,1.5vw,28px)/1.05 Caveat,cursive;color:#eee4d9;transform:rotate(-4deg);pointer-events:none;text-shadow:0 3px 8px #000}
+.music3d-cup-label{position:absolute;z-index:4;right:7.2vw;bottom:17vh;font:500 18px/1.05 Caveat,cursive;color:#ddd0c1;transform:rotate(8deg);opacity:.86;pointer-events:none}
+.music3d-page .page-back,.music3d-page .page-next{z-index:6;color:#f0e6d9!important;text-shadow:0 2px 12px #000}
+@media(max-width:950px){.music3d-crate{width:27vw;left:2vw}.music3d-now{right:3vw;width:26vw}.music3d-tip{display:none}.music3d-cup-label{display:none}}
+@media(max-width:760px){.music3d-crate{display:none}.music3d-now{top:auto;bottom:10vh;right:5vw;width:42vw}.music3d-now h3{font-size:46px}}
+.crate-apple-link{position:absolute;left:24px;right:24px;bottom:52px;text-align:center;color:#c9b39c;text-decoration:none;font:500 7px 'DM Mono',monospace;letter-spacing:.18em;padding-bottom:7px;border-bottom:1px solid rgba(201,179,156,.28);z-index:8;pointer-events:auto}
+.crate-apple-link:hover{color:#fff}
+#turntableCanvas{pointer-events:auto!important}
+.music3d-now,.music3d-tip,.music3d-cup-label{pointer-events:none!important}
+.music3d-now a{pointer-events:auto!important}
+
+
+.music3d-button-hint{position:absolute;z-index:5;left:61%;top:61%;color:#cdbca8;font:500 17px/1.05 Caveat,cursive;transform:rotate(-4deg);pointer-events:none}
+
+.music3d-sleeve{appearance:none;-webkit-appearance:none;width:100%;text-align:left;color:inherit;font-family:inherit;cursor:pointer}
+.hover-vinyl{position:absolute;right:-10px;top:50%;width:58px;height:58px;border-radius:50%;transform:translate(30%,-50%) scale(.72);opacity:0;pointer-events:none;background:radial-gradient(circle at center,#d8c7aa 0 13%,#111 14% 24%,#050505 25% 67%,#222 68% 69%,#050505 70% 100%);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:opacity .2s ease,transform .25s ease}
+.hover-vinyl:before{content:"";position:absolute;inset:5px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 2px,rgba(255,255,255,.035) 3px 4px)}
+.music3d-sleeve:hover .hover-vinyl,.music3d-sleeve:focus-visible .hover-vinyl{opacity:1;transform:translate(0,-50%) scale(1);animation:miniVinylSpin 1.7s linear infinite}
+@keyframes miniVinylSpin{to{transform:translate(0,-50%) scale(1) rotate(360deg)}}
+.music3d-sleeve.is-active{outline:1px solid rgba(255,255,255,.45);outline-offset:-2px}
+.music3d-sleeve.is-active .hover-vinyl{opacity:1;transform:translate(0,-50%) scale(1);animation:miniVinylSpin 1.7s linear infinite}
+
+/* vinyl peeks upward from each sleeve */
+.music3d-sleeve{overflow:visible!important}
+.hover-vinyl{
+  right:16px!important;
+  left:auto!important;
+  top:-8px!important;
+  width:64px!important;
+  height:64px!important;
+  z-index:-1!important;
+  opacity:0!important;
+  transform:translateY(26px) scale(.78)!important;
+  transform-origin:center!important;
+  transition:opacity .18s ease,transform .28s cubic-bezier(.2,.8,.2,1)!important;
+}
+.music3d-sleeve:hover,.music3d-sleeve:focus-visible{z-index:20!important}
+.music3d-sleeve:hover .hover-vinyl,.music3d-sleeve:focus-visible .hover-vinyl,.music3d-sleeve.is-active .hover-vinyl{
+  opacity:1!important;
+  transform:translateY(-34px) scale(1)!important;
+  animation:miniVinylTopSpin 1.9s linear infinite!important;
+}
+@keyframes miniVinylTopSpin{
+  to{transform:translateY(-34px) scale(1) rotate(360deg)}
+}
+
+.lamp-blackout{position:absolute;inset:0;z-index:50;background:#000;opacity:0;pointer-events:none;transition:opacity .55s ease}
+.lamp-blackout.is-off{opacity:.985}
+.lamp-pull-hint{position:absolute;z-index:8;right:18.5vw;top:35vh;color:#d3bda4;font:500 16px Caveat,cursive;transform:rotate(-7deg);pointer-events:none;opacity:.72}
+
+.lamp-blackout{background:radial-gradient(circle at 78% 28%,rgba(18,10,5,.14),#000 58%)!important;transition:opacity .42s cubic-bezier(.4,0,.2,1)!important}
+.lamp-blackout.is-off{opacity:.992!important}
+
+.music3d-now{top:auto!important;right:19vw!important;bottom:6.5vh!important;width:320px!important;text-align:center}
+.music3d-now p{margin:0!important;font-size:clamp(18px,1.45vw,24px)!important;max-width:none!important;transform:none!important;opacity:.8}
+.music3d-tip{display:none!important}
+.lamp-pull-hint{right:20.5vw!important;top:42vh!important;font-size:18px!important;opacity:.88!important}
+
+/* final artist-card vinyl behavior: half-disc peeks from the top only */
+.music3d-sleeve{overflow:visible!important}
+.music3d-sleeve .hover-vinyl{
+  right:14px!important;
+  top:-32px!important;
+  width:64px!important;
+  height:64px!important;
+  z-index:0!important;
+  opacity:0!important;
+  clip-path:inset(0 0 50% 0)!important;
+  transform:translateY(22px) rotate(0deg)!important;
+  transition:opacity .18s ease,transform .24s ease!important;
+}
+.music3d-sleeve strong,.music3d-sleeve small{position:relative;z-index:2}
+.music3d-sleeve:hover{z-index:30!important}
+.music3d-sleeve:hover .hover-vinyl,.music3d-sleeve:focus-visible .hover-vinyl{
+  opacity:1!important;
+  transform:translateY(0) rotate(0deg)!important;
+  animation:halfVinylSpin 1.85s linear infinite!important;
+}
+.music3d-sleeve.is-active .hover-vinyl{opacity:0!important;animation:none!important}
+.music3d-sleeve.is-active:hover .hover-vinyl{opacity:1!important;animation:halfVinylSpin 1.85s linear infinite!important}
+@keyframes halfVinylSpin{to{transform:translateY(0) rotate(360deg)}}
+
+/* final pull-label placement */
+.lamp-pull-hint{
+  right:17.2vw!important;
+  top:31.5vh!important;
+  font-size:17px!important;
+  transform:rotate(-7deg)!important;
+  opacity:.9!important;
+}
