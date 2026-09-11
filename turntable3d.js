@@ -73,9 +73,11 @@ if(canvas){
   const spindle=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.28,24),metal);spindle.position.y=.28;platter.add(spindle);
   const labelRing=new THREE.Mesh(new THREE.TorusGeometry(.57,.012,8,64),new THREE.MeshStandardMaterial({color:0x806b51,roughness:.55}));labelRing.rotation.x=Math.PI/2;labelRing.position.y=.205;platter.add(labelRing);
   const platterRim=new THREE.Mesh(new THREE.TorusGeometry(2.23,.055,12,96),metal);platterRim.rotation.x=Math.PI/2;platterRim.position.y=.08;platter.add(platterRim);
-  const grooveMotion=new THREE.Group();grooveMotion.position.y=.158;platter.add(grooveMotion);
-  const grooveGlowMat=new THREE.MeshStandardMaterial({color:0x6c88a8,emissive:0x26394c,emissiveIntensity:.45,roughness:.28,metalness:.68,transparent:true,opacity:.58});
-  [[1.14,.42,.2],[1.48,.34,2.2],[1.82,.28,4.25]].forEach(([r,arc,rz])=>{const g=new THREE.Mesh(new THREE.TorusGeometry(r,.012,5,72,Math.PI*arc),grooveGlowMat);g.rotation.x=Math.PI/2;g.rotation.z=rz;grooveMotion.add(g)});
+  // No extra groove geometry: movement is suggested only through a travelling reflection.
+  const vinylSheen=new THREE.PointLight(0x7aa2c8,7.5,4.8,2.2);
+  vinylSheen.position.set(-.82,1.15,.05);
+  scene.add(vinylSheen);
+  let sheenAngle=0;
 
   // Physical start button on the deck.
   const deckButtonGroup=new THREE.Group();
@@ -238,7 +240,7 @@ if(canvas){
 
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
-  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing){platter.rotation.y-=dt*1.65;grooveMotion.rotation.y+=dt*.78}
+  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing){platter.rotation.y-=dt*1.65;sheenAngle+=dt*.95;vinylSheen.position.x=-.82+Math.cos(sheenAngle)*2.15;vinylSheen.position.z=.05+Math.sin(sheenAngle)*2.15;vinylSheen.intensity=6.5+Math.sin(sheenAngle*2)*1.2}
     {
       // Damped pendulum-ish motion for the pull cord.
       const stiffness=13.0,damping=4.8;
