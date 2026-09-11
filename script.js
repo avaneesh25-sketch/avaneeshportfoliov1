@@ -6,7 +6,7 @@ function clearIntroTimers(){introTimer.forEach(clearTimeout);introTimer=[]}
 function go(page){const target=$(`[data-page="${page}"]`);if(!target)return;$$('.page').forEach(p=>p.classList.toggle('page--active',p===target));if(page!=='music')pauseVienna(false)}
 $$('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
 function enter(withSound){soundEnabled=withSound;gate.classList.add('hidden');setTimeout(()=>gate.remove(),800)}
-$('#enterWithSound').addEventListener('click',()=>enter(true));$('#enterMuted').addEventListener('click',()=>enter(false));
+$('#enterWithSound')?.addEventListener('click',()=>enter(true));$('#enterMuted')?.addEventListener('click',()=>enter(false));
 const aboutImage=$('.about-photo img');if(aboutImage)aboutImage.src='assets/about.jpeg';
 const transitionStyle=document.createElement('style');transitionStyle.textContent=`.crt-exit-noise{position:fixed;z-index:998;inset:0;pointer-events:none;opacity:0;visibility:hidden;background:#777;overflow:hidden;transition:opacity .18s ease,visibility .18s ease}.crt-exit-noise:before{content:"";position:absolute;inset:-30%;background-image:repeating-radial-gradient(circle at 30% 20%,#eee 0 1px,#555 1px 2px,#999 2px 3px,#222 3px 4px);background-size:5px 5px;animation:crtStatic .08s steps(2) infinite;filter:contrast(1.8) grayscale(1)}.crt-exit-noise:after{content:"NO SIGNAL";position:absolute;inset:0;display:grid;place-items:center;color:#e9e9e9;font:500 11px DM Mono,monospace;letter-spacing:.34em}.crt-exit-noise.show{opacity:1;visibility:visible}.intro-page.crt-sucked{animation:crtSuck .95s cubic-bezier(.7,0,.3,1) forwards;transform-origin:50% 50%}@keyframes crtStatic{0%{transform:translate(0)}50%{transform:translate(-2%,3%)}100%{transform:translate(2%,-2%)}}@keyframes crtSuck{0%{transform:scale(1)}55%{filter:grayscale(1) contrast(1.7);transform:scale(.985)}100%{filter:grayscale(1) contrast(2.2);transform:scale(.08,.012);opacity:0}}`;document.head.appendChild(transitionStyle);const exitNoise=document.createElement('div');exitNoise.className='crt-exit-noise';document.body.appendChild(exitNoise);
 function transitionIntroToAbout(){if(introTransitioning)return;introTransitioning=true;clearIntroTimers();introAudio.pause();const introPage=$('[data-page="intro"]');signalLost.textContent='NO SIGNAL';signalLost.classList.add('show');setTimeout(()=>{exitNoise.classList.add('show');introPage?.classList.add('crt-sucked')},180);setTimeout(()=>go('about'),1050);setTimeout(()=>{exitNoise.classList.remove('show');introPage?.classList.remove('crt-sucked');tv.classList.remove('playing');signalLost.classList.remove('show');signalLost.textContent='BAD SIGNAL';introTransitioning=false},1500)}
@@ -24,8 +24,11 @@ async function playSelectedFromTurntable(){
     return;
   }
   viennaAudio.pause();
-  if(artistState.tracks.length)/* playback waits for the tonearm */
-  else if(instruction)instruction.textContent=`${artist} has no uploaded tracks yet.`;
+  if(artistState.tracks.length){
+    await playArtistTrack(0);
+  }else if(instruction){
+    instruction.textContent=`${artist} has no uploaded tracks yet.`;
+  }
 }
 function pauseVienna(){viennaAudio.pause();if(artistAudio)artistAudio.pause();}
 window.addEventListener('turntable:drop',playSelectedFromTurntable);
