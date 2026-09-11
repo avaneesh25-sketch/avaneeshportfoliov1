@@ -70,8 +70,10 @@ if(canvas){
   const cupBottom=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.055,64),ceramic);cupBottom.position.y=-.41;mug.add(cupBottom);
   const rimOuter=new THREE.Mesh(new THREE.TorusGeometry(.46,.035,16,64),ceramic);rimOuter.rotation.x=Math.PI/2;rimOuter.position.y=.41;mug.add(rimOuter);
   const inner=new THREE.Mesh(new THREE.CylinderGeometry(.405,.405,.035,64),new THREE.MeshStandardMaterial({color:0x070504,roughness:.5}));inner.position.y=.385;mug.add(inner);
-  const coffee=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.018,64),new THREE.MeshStandardMaterial({color:0x321306,roughness:.18,metalness:.02}));coffee.position.y=.41;mug.add(coffee);
-  const coffeeGlow=new THREE.Mesh(new THREE.TorusGeometry(.31,.012,10,48),new THREE.MeshStandardMaterial({color:0x8b4a24,roughness:.28}));coffeeGlow.rotation.x=Math.PI/2;coffeeGlow.position.y=.425;mug.add(coffeeGlow);
+  const latte=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.018,64),new THREE.MeshStandardMaterial({color:0xb98558,roughness:.22,metalness:.01}));latte.position.y=.41;mug.add(latte);
+  const foam=new THREE.Mesh(new THREE.TorusGeometry(.28,.018,10,48),new THREE.MeshStandardMaterial({color:0xe0c39f,roughness:.65}));foam.rotation.x=Math.PI/2;foam.position.y=.426;mug.add(foam);
+  const iceMat=new THREE.MeshPhysicalMaterial({color:0xe7f2f2,transparent:true,opacity:.48,roughness:.08,transmission:.35});
+  [[-.16,.08],[.12,.12],[.05,-.16]].forEach(([x,z],i)=>{const ice=new THREE.Mesh(new THREE.BoxGeometry(.18,.07,.18),iceMat);ice.position.set(x,.455,z);ice.rotation.y=i*.65+.2;mug.add(ice)});
   const handle=new THREE.Mesh(new THREE.TorusGeometry(.31,.07,18,56,Math.PI*1.55),ceramic);handle.rotation.set(Math.PI/2,0,-Math.PI/2);handle.position.set(.46,.02,0);mug.add(handle);
   const saucer=new THREE.Mesh(new THREE.CylinderGeometry(.62,.67,.055,64),ceramic);saucer.position.y=-.48;saucer.scale.z=.72;mug.add(saucer);
   const lamp=new THREE.Group();lamp.position.set(5.15,-.35,-2.35);scene.add(lamp);
