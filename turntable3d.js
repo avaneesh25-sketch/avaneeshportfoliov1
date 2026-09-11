@@ -1,4 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
+import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/RGBELoader.js';
 
 const canvas=document.getElementById('turntableCanvas');
 if(canvas){
@@ -19,6 +20,20 @@ if(canvas){
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.03;
 
+  const pmremGenerator=new THREE.PMREMGenerator(renderer);
+  pmremGenerator.compileEquirectangularShader();
+  new RGBELoader().load(
+    'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr',
+    tex=>{
+      const env=pmremGenerator.fromEquirectangular(tex).texture;
+      scene.environment=env;
+      tex.dispose();
+      pmremGenerator.dispose();
+    },
+    undefined,
+    ()=>{}
+  );
+
   const pm=new THREE.MeshStandardMaterial({color:0x15120f,roughness:.48,metalness:.32});
   const wood=new THREE.MeshStandardMaterial({color:0x32180c,roughness:.6,metalness:.03});
   const black=new THREE.MeshStandardMaterial({color:0x050505,roughness:.23,metalness:.46});
@@ -38,8 +53,20 @@ if(canvas){
 
   const platter=new THREE.Group();platter.position.set(-.82,.02,.05);scene.add(platter);
   const platterBase=new THREE.Mesh(new THREE.CylinderGeometry(2.28,2.28,.16,96),new THREE.MeshStandardMaterial({color:0x353535,roughness:.23,metalness:.8}));platterBase.castShadow=true;platter.add(platterBase);
-  const record=new THREE.Mesh(new THREE.CylinderGeometry(2.12,2.12,.065,128),black);record.position.y=.115;record.castShadow=true;platter.add(record);
-  for(let r=.78;r<2.04;r+=.07){const ring=new THREE.Mesh(new THREE.TorusGeometry(r,.006,5,120),new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:.33,metalness:.65}));ring.rotation.x=Math.PI/2;ring.position.y=.153;platter.add(ring)}
+  // Vinyl surface: physical semi-gloss with procedural concentric-groove normal map.
+  const grooveCanvas=document.createElement('canvas');grooveCanvas.width=1024;grooveCanvas.height=1024;
+  const gctx=grooveCanvas.getContext('2d');gctx.fillStyle='rgb(128,128,255)';gctx.fillRect(0,0,1024,1024);
+  gctx.translate(512,512);
+  for(let r=145;r<486;r+=3.4){
+    const shade=(r%7<3.5)?136:120;
+    gctx.strokeStyle=`rgb(${shade},128,255)`;gctx.lineWidth=1.25;gctx.beginPath();gctx.arc(0,0,r,0,Math.PI*2);gctx.stroke();
+  }
+  const grooveNormal=new THREE.CanvasTexture(grooveCanvas);grooveNormal.wrapS=grooveNormal.wrapT=THREE.RepeatWrapping;
+  const vinylMat=new THREE.MeshPhysicalMaterial({
+    color:0x080808,roughness:.34,metalness:.08,clearcoat:.6,clearcoatRoughness:.15,
+    normalMap:grooveNormal,normalScale:new THREE.Vector2(.42,.42),envMapIntensity:1.35
+  });
+  const record=new THREE.Mesh(new THREE.CylinderGeometry(2.12,2.12,.065,192),vinylMat);record.position.y=.115;record.castShadow=true;platter.add(record);
   const labelCanvas=document.createElement('canvas');labelCanvas.width=1024;labelCanvas.height=1024;
   const labelCtx=labelCanvas.getContext('2d');
   const labelTexture=new THREE.CanvasTexture(labelCanvas);labelTexture.colorSpace=THREE.SRGBColorSpace;labelTexture.anisotropy=8;
@@ -150,19 +177,42 @@ if(canvas){
   const armHit=new THREE.Mesh(new THREE.BoxGeometry(.72,.5,3.9),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   armHit.position.set(0,.28,1.55);arm.add(armHit);
   const mug=new THREE.Group();mug.position.set(4.35,-.12,2.55);mug.rotation.y=-.18;scene.add(mug);
-  const ceramic=new THREE.MeshStandardMaterial({color:0x17120f,roughness:.26,metalness:.08});
-  const cup=new THREE.Mesh(new THREE.CylinderGeometry(.46,.37,.82,64,1,true),ceramic);cup.castShadow=true;mug.add(cup);
-  const cupBottom=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.055,64),ceramic);cupBottom.position.y=-.41;mug.add(cupBottom);
-  const rimOuter=new THREE.Mesh(new THREE.TorusGeometry(.46,.035,16,64),ceramic);rimOuter.rotation.x=Math.PI/2;rimOuter.position.y=.41;mug.add(rimOuter);
-  const inner=new THREE.Mesh(new THREE.CylinderGeometry(.405,.405,.035,64),new THREE.MeshStandardMaterial({color:0x070504,roughness:.5}));inner.position.y=.385;mug.add(inner);
-  const latte=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.018,64),new THREE.MeshStandardMaterial({color:0xb98558,roughness:.22,metalness:.01}));latte.position.y=.41;mug.add(latte);
-  const foamDots=[];
-  [[-.09,.05],[.08,.04],[-.02,-.09],[.12,-.08]].forEach(([x,z])=>{const f=new THREE.Mesh(new THREE.SphereGeometry(.022,12,12),new THREE.MeshStandardMaterial({color:0xe7cfb4,roughness:.9}));f.position.set(x,.432,z);foamDots.push(f);mug.add(f)});
-  const iceMat=new THREE.MeshPhysicalMaterial({color:0xf6fbff,transparent:true,opacity:.62,roughness:.08,metalness:0,transmission:.28,thickness:.12,ior:1.31,clearcoat:.35,clearcoatRoughness:.08});
+
+  // Condensation normal texture for the glass surface.
+  const condCanvas=document.createElement('canvas');condCanvas.width=512;condCanvas.height=512;
+  const cctx=condCanvas.getContext('2d');cctx.fillStyle='rgb(128,128,255)';cctx.fillRect(0,0,512,512);
+  for(let i=0;i<420;i++){const x=(i*83)%512,y=(i*197)%512,r=1+((i*29)%5);const v=118+((i*17)%28);cctx.fillStyle=`rgb(${v},${v},255)`;cctx.beginPath();cctx.arc(x,y,r,0,Math.PI*2);cctx.fill()}
+  const condensationNormal=new THREE.CanvasTexture(condCanvas);condensationNormal.wrapS=condensationNormal.wrapT=THREE.RepeatWrapping;condensationNormal.repeat.set(2,2);
+
+  const glassMat=new THREE.MeshPhysicalMaterial({
+    color:0xf4f7f8,transmission:1,thickness:.5,roughness:.05,ior:1.45,
+    transparent:true,opacity:.98,envMapIntensity:1.15,normalMap:condensationNormal,normalScale:new THREE.Vector2(.16,.16)
+  });
+  const cup=new THREE.Mesh(new THREE.CylinderGeometry(.46,.37,.82,96,1,true),glassMat);cup.castShadow=true;mug.add(cup);
+  const cupBottom=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.045,96),glassMat);cupBottom.position.y=-.41;mug.add(cupBottom);
+  const rimOuter=new THREE.Mesh(new THREE.TorusGeometry(.46,.028,18,96),glassMat);rimOuter.rotation.x=Math.PI/2;rimOuter.position.y=.41;mug.add(rimOuter);
+  const handle=new THREE.Mesh(new THREE.TorusGeometry(.31,.055,18,64,Math.PI*1.55),glassMat);handle.rotation.set(Math.PI/2,0,-Math.PI/2);handle.position.set(.46,.02,0);mug.add(handle);
+
+  // Layered iced latte: milk low, espresso high, foam under rim.
+  const milkMat=new THREE.MeshPhysicalMaterial({color:0xe5c79e,roughness:.2,transmission:.08,transparent:true,opacity:.9});
+  const espressoMat=new THREE.MeshPhysicalMaterial({color:0x6a3418,roughness:.18,transmission:.04,transparent:true,opacity:.88});
+  const milk=new THREE.Mesh(new THREE.CylinderGeometry(.345,.32,.38,64),milkMat);milk.position.y=-.13;mug.add(milk);
+  const espresso=new THREE.Mesh(new THREE.CylinderGeometry(.355,.345,.23,64),espressoMat);espresso.position.y=.18;mug.add(espresso);
+  const foamTop=new THREE.Mesh(new THREE.CylinderGeometry(.355,.355,.025,64),new THREE.MeshStandardMaterial({color:0xf2e5d1,roughness:.85}));foamTop.position.y=.405;mug.add(foamTop);
+
+  const iceMat=new THREE.MeshPhysicalMaterial({color:0xeaf4ff,transmission:.75,thickness:.15,ior:1.31,roughness:.18,transparent:true,opacity:.72});
   const iceCubes=[];
-  [[-.15,.07],[.13,.10],[.04,-.15]].forEach(([x,z],i)=>{const geo=new THREE.BoxGeometry(.19,.09,.19,2,1,2);const ice=new THREE.Mesh(geo,iceMat);ice.position.set(x,.465,z);ice.rotation.set(.08,i*.52+.15,.05);ice.userData.home=ice.position.clone();ice.userData.phase=i*2.1;iceCubes.push(ice);mug.add(ice)});
-  const handle=new THREE.Mesh(new THREE.TorusGeometry(.31,.07,18,56,Math.PI*1.55),ceramic);handle.rotation.set(Math.PI/2,0,-Math.PI/2);handle.position.set(.46,.02,0);mug.add(handle);
-  const saucer=new THREE.Mesh(new THREE.CylinderGeometry(.62,.67,.055,64),ceramic);saucer.position.y=-.48;saucer.scale.z=.72;mug.add(saucer);
+  [[-.16,.18,.08],[.13,.22,.10],[.03,.05,-.14],[-.08,-.03,-.03],[.17,.02,-.08]].forEach(([x,y,z],i)=>{
+    const ice=new THREE.Mesh(new THREE.BoxGeometry(.17,.11,.17,2,2,2),iceMat);
+    ice.position.set(x,y,z);ice.rotation.set(.16+i*.04,i*.55+.15,.08);ice.userData.home=ice.position.clone();ice.userData.phase=i*1.7;iceCubes.push(ice);mug.add(ice)
+  });
+
+  const strawCurve=new THREE.CatmullRomCurve3([
+    new THREE.Vector3(.08,.35,.02),new THREE.Vector3(.10,.62,.01),new THREE.Vector3(.16,.86,.0),new THREE.Vector3(.24,1.02,.0)
+  ]);
+  const straw=new THREE.Mesh(new THREE.TubeGeometry(strawCurve,24,.025,10,false),new THREE.MeshStandardMaterial({color:0xf3dfc6,roughness:.5}));
+  mug.add(straw);
+
   const lamp=new THREE.Group();lamp.position.set(5.15,-.35,-2.35);scene.add(lamp);
   const lampBase=new THREE.Mesh(new THREE.CylinderGeometry(.78,.9,.18,48),new THREE.MeshStandardMaterial({color:0x17120f,roughness:.3,metalness:.62}));lampBase.castShadow=true;lamp.add(lampBase);
   const lampBaseRing=new THREE.Mesh(new THREE.TorusGeometry(.78,.055,12,48),metal);lampBaseRing.rotation.x=Math.PI/2;lampBaseRing.position.y=.1;lamp.add(lampBaseRing);
