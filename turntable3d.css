@@ -20,3 +20,11 @@
 
 
 .music3d-button-hint{position:absolute;z-index:5;left:61%;top:61%;color:#cdbca8;font:500 17px/1.05 Caveat,cursive;transform:rotate(-4deg);pointer-events:none}
+
+.music3d-sleeve{appearance:none;-webkit-appearance:none;width:100%;text-align:left;color:inherit;font-family:inherit;cursor:pointer}
+.hover-vinyl{position:absolute;right:-10px;top:50%;width:58px;height:58px;border-radius:50%;transform:translate(30%,-50%) scale(.72);opacity:0;pointer-events:none;background:radial-gradient(circle at center,#d8c7aa 0 13%,#111 14% 24%,#050505 25% 67%,#222 68% 69%,#050505 70% 100%);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:opacity .2s ease,transform .25s ease}
+.hover-vinyl:before{content:"";position:absolute;inset:5px;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 2px,rgba(255,255,255,.035) 3px 4px)}
+.music3d-sleeve:hover .hover-vinyl,.music3d-sleeve:focus-visible .hover-vinyl{opacity:1;transform:translate(0,-50%) scale(1);animation:miniVinylSpin 1.7s linear infinite}
+@keyframes miniVinylSpin{to{transform:translate(0,-50%) scale(1) rotate(360deg)}}
+.music3d-sleeve.is-active{outline:1px solid rgba(255,255,255,.45);outline-offset:-2px}
+.music3d-sleeve.is-active .hover-vinyl{opacity:1;transform:translate(0,-50%) scale(1);animation:miniVinylSpin 1.7s linear infinite}
