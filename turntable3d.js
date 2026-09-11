@@ -167,6 +167,15 @@ if(canvas){
   const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(0,2.20,0);lamp.add(bulbMesh);
   const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(5.15,1.85,-2.35);bulb.castShadow=true;scene.add(bulb);
 
+  const lampPullString=new THREE.Group();lampPullString.position.set(5.15,1.95,-2.35);scene.add(lampPullString);
+  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1.15,10),new THREE.MeshStandardMaterial({color:0x4a3b30,roughness:.55}));
+  pullLine.position.y=-.56;lampPullString.add(pullLine);
+  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.095,20,20),new THREE.MeshStandardMaterial({color:0x2a211a,roughness:.32,metalness:.15}));
+  pullBead.position.y=-1.16;pullBead.castShadow=true;lampPullString.add(pullBead);
+  const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.20,.20,1.55,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  pullHit.position.set(5.15,1.25,-2.35);scene.add(pullHit);
+  let lampOn=true,pullAnim=0;
+
   scene.add(new THREE.HemisphereLight(0x9bb1d0,0x2a1208,1.15));
   const key=new THREE.DirectionalLight(0xffd7aa,2.3);key.position.set(-4,7,5);key.castShadow=true;scene.add(key);
   const fill=new THREE.PointLight(0x5478a8,9,8,2);fill.position.set(-2,2,-4);scene.add(fill);
@@ -185,7 +194,15 @@ if(canvas){
   function normalized(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
   function hitMug(e){setPointer(e);const p=normalized(e);return ray.intersectObject(mugHit,false).length>0 || (p.x>.73&&p.x<.88&&p.y>.60&&p.y<.86)}
   function hitDeckButton(e){setPointer(e);return ray.intersectObject(buttonHit,false).length>0}
+  function hitPullString(e){setPointer(e);return ray.intersectObject(pullHit,false).length>0}
   canvas.addEventListener('pointerdown',e=>{
+    if(hitPullString(e)){
+      pullAnim=.34;
+      lampOn=!lampOn;
+      bulb.visible=lampOn;bulbMesh.visible=lampOn;
+      window.dispatchEvent(new CustomEvent('lamp:toggle',{detail:{on:lampOn}}));
+      return;
+    }
     if(hitDeckButton(e)){
       buttonPressT=.18;
       if(dropped && !autoLifting){
@@ -206,13 +223,14 @@ if(canvas){
     }
     if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer'}
   });
-  canvas.addEventListener('pointermove',e=>{if(hitDeckButton(e)){canvas.style.cursor='pointer'}else if(!iceActive){canvas.style.cursor='default'}});
+  canvas.addEventListener('pointermove',e=>{if(hitDeckButton(e)||hitPullString(e)){canvas.style.cursor='pointer'}else if(!iceActive){canvas.style.cursor='default'}});
   window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping||autoLifting)return;autoDropping=true;autoT=0;});
   window.addEventListener('turntable:ended',()=>{playing=false;statusLed.material.color.setHex(0x2b2b2b);statusLed.material.emissive.setHex(0x000000);statusLed.material.emissiveIntensity=0;});
 
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
+    if(pullAnim>0){pullAnim-=dt;const p=Math.max(0,pullAnim/.34);lampPullString.position.y=-Math.sin((1-p)*Math.PI)*.18}else{lampPullString.position.y=0}
     if(morphT<1){
       morphT=Math.min(1,morphT+dt/1.55);
       const mid=1-Math.abs(morphT-.5)*2;
