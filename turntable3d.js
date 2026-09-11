@@ -1,7 +1,7 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/RGBELoader.js?module';
 
 const canvas=document.getElementById('turntableCanvas');
+window.__turntable3dLoaded=true;
 if(canvas){
   const scene=new THREE.Scene();
   scene.background=new THREE.Color(0x090604);
@@ -20,21 +20,19 @@ if(canvas){
   renderer.toneMapping=THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure=1.03;
 
+  // Self-contained reflected-light environment. No remote module/assets can block rendering.
   const pmremGenerator=new THREE.PMREMGenerator(renderer);
-  pmremGenerator.compileEquirectangularShader();
-  // Local procedural room environment is available immediately; remote HDRI only upgrades it.
   const envScene=new THREE.Scene();
   envScene.background=new THREE.Color(0x24130b);
-  const envRoom=new THREE.Mesh(new THREE.BoxGeometry(20,12,20),new THREE.MeshBasicMaterial({color:0x2b160d,side:THREE.BackSide}));envScene.add(envRoom);
-  const envWarm=new THREE.PointLight(0xff8b35,45,16);envWarm.position.set(5,4,2);envScene.add(envWarm);
-  const envCool=new THREE.PointLight(0x6688aa,18,14);envCool.position.set(-5,3,-2);envScene.add(envCool);
-  scene.environment=pmremGenerator.fromScene(envScene,.04).texture;
-  new RGBELoader().load(
-    'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr',
-    tex=>{scene.environment=pmremGenerator.fromEquirectangular(tex).texture;tex.dispose()},
-    undefined,
-    ()=>{}
+  const envRoom=new THREE.Mesh(
+    new THREE.BoxGeometry(20,12,20),
+    new THREE.MeshBasicMaterial({color:0x2b160d,side:THREE.BackSide})
   );
+  envScene.add(envRoom);
+  const envWarm=new THREE.PointLight(0xff8b35,55,18);envWarm.position.set(5,4,2);envScene.add(envWarm);
+  const envCool=new THREE.PointLight(0x6688aa,16,15);envCool.position.set(-5,3,-2);envScene.add(envCool);
+  scene.environment=pmremGenerator.fromScene(envScene,.04).texture;
+  pmremGenerator.dispose();
 
   const pm=new THREE.MeshStandardMaterial({color:0x15120f,roughness:.48,metalness:.32});
   const wood=new THREE.MeshStandardMaterial({color:0x32180c,roughness:.6,metalness:.03});
