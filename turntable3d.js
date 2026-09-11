@@ -64,6 +64,8 @@ if(canvas){
   const counterWeight=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.62,32),new THREE.MeshStandardMaterial({color:0x191919,roughness:.3,metalness:.72}));
   counterWeight.rotation.x=Math.PI/2; counterWeight.position.set(0,.35,-.42); arm.add(counterWeight);
   const cueLever=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.55,12),metal);cueLever.rotation.z=Math.PI/2;cueLever.position.set(.48,.22,.02);armPivot.add(cueLever);
+  const armHit=new THREE.Mesh(new THREE.BoxGeometry(.72,.5,3.9),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  armHit.position.set(0,.28,1.55);arm.add(armHit);
   const mug=new THREE.Group();mug.position.set(4.35,-.12,2.55);mug.rotation.y=-.18;scene.add(mug);
   const ceramic=new THREE.MeshStandardMaterial({color:0x17120f,roughness:.26,metalness:.08});
   const cup=new THREE.Mesh(new THREE.CylinderGeometry(.46,.37,.82,64,1,true),ceramic);cup.castShadow=true;mug.add(cup);
@@ -72,8 +74,9 @@ if(canvas){
   const inner=new THREE.Mesh(new THREE.CylinderGeometry(.405,.405,.035,64),new THREE.MeshStandardMaterial({color:0x070504,roughness:.5}));inner.position.y=.385;mug.add(inner);
   const latte=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.018,64),new THREE.MeshStandardMaterial({color:0xb98558,roughness:.22,metalness:.01}));latte.position.y=.41;mug.add(latte);
   const foam=new THREE.Mesh(new THREE.TorusGeometry(.28,.018,10,48),new THREE.MeshStandardMaterial({color:0xe0c39f,roughness:.65}));foam.rotation.x=Math.PI/2;foam.position.y=.426;mug.add(foam);
-  const iceMat=new THREE.MeshPhysicalMaterial({color:0xe7f2f2,transparent:true,opacity:.48,roughness:.08,transmission:.35});
-  [[-.16,.08],[.12,.12],[.05,-.16]].forEach(([x,z],i)=>{const ice=new THREE.Mesh(new THREE.BoxGeometry(.18,.07,.18),iceMat);ice.position.set(x,.455,z);ice.rotation.y=i*.65+.2;mug.add(ice)});
+  const iceMat=new THREE.MeshStandardMaterial({color:0xe9f1ef,transparent:true,opacity:.72,roughness:.22,metalness:0});
+  const iceCubes=[];
+  [[-.16,.08],[.12,.12],[.05,-.16]].forEach(([x,z],i)=>{const ice=new THREE.Mesh(new THREE.BoxGeometry(.16,.055,.16),iceMat);ice.position.set(x,.46,z);ice.rotation.set(.12,i*.65+.2,.08);ice.userData.home=ice.position.clone();ice.userData.phase=i*2.1;iceCubes.push(ice);mug.add(ice)});
   const handle=new THREE.Mesh(new THREE.TorusGeometry(.31,.07,18,56,Math.PI*1.55),ceramic);handle.rotation.set(Math.PI/2,0,-Math.PI/2);handle.position.set(.46,.02,0);mug.add(handle);
   const saucer=new THREE.Mesh(new THREE.CylinderGeometry(.62,.67,.055,64),ceramic);saucer.position.y=-.48;saucer.scale.z=.72;mug.add(saucer);
   const lamp=new THREE.Group();lamp.position.set(5.15,-.35,-2.35);scene.add(lamp);
@@ -91,17 +94,32 @@ if(canvas){
 
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
   let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false;
-  const armMeshes=[tube,headshell,cartridge,pivotBase,pivotCollar];
+  const armMeshes=[armHit,tube,headshell,cartridge,pivotBase,pivotCollar];
+  const mugHit=new THREE.Mesh(new THREE.CylinderGeometry(.68,.68,1.25,32),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  mugHit.position.copy(mug.position);scene.add(mugHit);
+  let iceActive=false,iceTime=0;
 
-  function hitArm(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera);return ray.intersectObjects(armMeshes,false).length>0}
-  canvas.addEventListener('pointerdown',e=>{if(dropped)return;if(hitArm(e)){dragging=true;startX=e.clientX;baseAngle=arm.rotation.y;canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing'}});
-  canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=(e.clientX-startX)/innerWidth;arm.rotation.y=THREE.MathUtils.clamp(baseAngle-dx*2.7,-.78,REST_ANGLE)});
-  canvas.addEventListener('pointerup',e=>{if(!dragging)return;dragging=false;canvas.style.cursor='default';if(arm.rotation.y<-.55){arm.rotation.y=DROP_ANGLE;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}else{arm.rotation.y=REST_ANGLE}});
+  function setPointer(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera)}
+  function hitArm(e){setPointer(e);return ray.intersectObjects(armMeshes,false).length>0}
+  function hitMug(e){setPointer(e);return ray.intersectObject(mugHit,false).length>0}
+  canvas.addEventListener('pointerdown',e=>{
+    if(hitMug(e)){iceActive=true;iceTime=0;return}
+    if(dropped)return;
+    if(hitArm(e)){dragging=true;startX=e.clientX;baseAngle=arm.rotation.y;canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing'}
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(!dragging)return;
+    const dx=(e.clientX-startX)/Math.max(innerWidth,900);
+    arm.rotation.y=THREE.MathUtils.clamp(baseAngle-dx*4.2,-.78,REST_ANGLE);
+  });
+  canvas.addEventListener('pointerup',e=>{if(!dragging)return;dragging=false;canvas.style.cursor='default';if(arm.rotation.y<-.42){arm.rotation.y=DROP_ANGLE;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}else{arm.rotation.y=REST_ANGLE}});
   canvas.addEventListener('pointercancel',()=>{dragging=false;canvas.style.cursor='default';if(!dropped)arm.rotation.y=REST_ANGLE});
   window.addEventListener('turntable:ended',()=>{playing=false});
 
   const clock=new THREE.Clock();
-  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;renderer.render(scene,camera)}animate();
+  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
+    if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*7+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.035;ice.position.z=ice.userData.home.z+Math.cos(a*1.15)*.035;ice.rotation.y+=dt*(i%2?2.2:-2.4);ice.rotation.x=.12+Math.sin(a*.8)*.08});if(iceTime>1.25){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
+    renderer.render(scene,camera)}animate();
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
 }
