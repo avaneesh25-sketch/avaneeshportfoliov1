@@ -15,10 +15,21 @@ async function startIntro(){clearIntroTimers();introTransitioning=false;tv.class
 
 const progress=$('#songProgress'),elapsed=$('#elapsedTime'),duration=$('#durationTime'),instruction=$('#musicInstruction'),artistAudio=$('#artistAudio');
 const formatTime=t=>{if(!Number.isFinite(t))return '—:—';const m=Math.floor(t/60),s=Math.floor(t%60);return `${m}:${String(s).padStart(2,'0')}`};
-async function playViennaFromTurntable(){if(instruction)instruction.textContent='Needle down. Vienna is playing.';if(soundEnabled){try{viennaAudio.currentTime=0;await viennaAudio.play()}catch(e){}}}
-function pauseVienna(){viennaAudio.pause();}
-window.addEventListener('turntable:drop',playViennaFromTurntable);
-window.addEventListener('turntable:lift',()=>{pauseVienna();if(instruction)instruction.textContent='Drag the tonearm onto the record.'});
+async function playSelectedFromTurntable(){
+  const artist=artistNames[artistState.slug]||'BILLY JOEL';
+  if(artistState.slug==='billy-joel' && (!artistState.tracks.length || artistState.tracks[0]?.src==='assets/vienna.mp3.mp3')){
+    if(artistAudio)artistAudio.pause();
+    if(instruction)instruction.textContent='Needle down. Vienna is playing.';
+    if(soundEnabled){try{viennaAudio.currentTime=0;await viennaAudio.play()}catch(e){}}
+    return;
+  }
+  viennaAudio.pause();
+  if(artistState.tracks.length)/* playback waits for the tonearm */
+  else if(instruction)instruction.textContent=`${artist} has no uploaded tracks yet.`;
+}
+function pauseVienna(){viennaAudio.pause();if(artistAudio)artistAudio.pause();}
+window.addEventListener('turntable:drop',playSelectedFromTurntable);
+window.addEventListener('turntable:lift',()=>{pauseVienna();if(instruction)instruction.textContent='Press the turntable button to lower the needle.'});
 viennaAudio.addEventListener('loadedmetadata',()=>{if(duration)duration.textContent=formatTime(viennaAudio.duration)});
 viennaAudio.addEventListener('timeupdate',()=>{if(!viennaAudio.duration)return;const p=viennaAudio.currentTime/viennaAudio.duration;if(progress)progress.style.width=`${p*100}%`;if(elapsed)elapsed.textContent=formatTime(viennaAudio.currentTime);if(duration)duration.textContent=formatTime(viennaAudio.duration);window.dispatchEvent(new CustomEvent('turntable:progress',{detail:{progress:p}}))});
 viennaAudio.addEventListener('ended',()=>{if(instruction)instruction.textContent='Side finished. The needle stays where you left it.';window.dispatchEvent(new CustomEvent('turntable:ended'))});
@@ -30,7 +41,7 @@ const artistNames={
   'billy-joel':'BILLY JOEL',
   'elton-john':'ELTON JOHN'
 };
-const artistState={tracks:[],index:0,slug:'billy-joel',durations:[],totalDuration:0};
+const artistState={tracks:[{title:'Vienna',src:'assets/vienna.mp3.mp3'}],index:0,slug:'billy-joel',durations:[],totalDuration:0,selectedTitle:'Vienna'};
 function morphVinylLabel(title,artist){window.dispatchEvent(new CustomEvent('turntable:label',{detail:{title,artist}}))}
 async function probeDurations(tracks){
   const durations=await Promise.all(tracks.map(t=>new Promise(resolve=>{const a=new Audio();a.preload='metadata';a.src=t.src;const done=()=>resolve(Number.isFinite(a.duration)?a.duration:0);a.addEventListener('loadedmetadata',done,{once:true});a.addEventListener('error',()=>resolve(0),{once:true})})));
@@ -38,20 +49,36 @@ async function probeDurations(tracks){
 }
 async function loadArtistPlaylist(slug){
   const artist=artistNames[slug]||slug.toUpperCase();
+  const sameArtist=artistState.slug===slug;
   $$('.music3d-sleeve').forEach(x=>x.classList.toggle('is-active',x.dataset.artist===slug));
-  morphVinylLabel(slug==='billy-joel'?'Vienna':artist,artist);
+
+  // Selecting an artist never starts audio. It only changes the record/playlist selection.
   if(artistAudio)artistAudio.pause();
   viennaAudio.pause();
-  artistState.slug=slug;artistState.index=0;artistState.tracks=[];
+  window.dispatchEvent(new CustomEvent('turntable:lift'));
+  artistState.slug=slug;artistState.index=0;artistState.durations=[];artistState.totalDuration=0;artistState.tracks=[];
+
   try{
     const res=await fetch(`music/${slug}/playlist.json?ts=${Date.now()}`,{cache:'no-store'});
     if(!res.ok)throw new Error('playlist missing');
     const data=await res.json();
     artistState.tracks=(Array.isArray(data)?data:(data.tracks||[])).filter(t=>t&&t.src);
-    if(!artistState.tracks.length){if(instruction)instruction.textContent=`${artist} selected — add tracks in GitHub anytime.`;return}
-    await probeDurations(artistState.tracks);
-    await playArtistTrack(0);
-  }catch(e){if(instruction)instruction.textContent=`${artist} selected — add tracks in GitHub anytime.`}
+    if(artistState.tracks.length)await probeDurations(artistState.tracks);
+
+    const first=artistState.tracks[0];
+    const nextTitle=first?.title || (slug==='billy-joel'?'Vienna':artist);
+    artistState.selectedTitle=nextTitle;
+
+    if(!sameArtist)morphVinylLabel(nextTitle,artist);
+    if(instruction)instruction.textContent=artistState.tracks.length
+      ? `${artist} selected. Press the turntable button to lower the needle.`
+      : `${artist} selected — add tracks in GitHub anytime.`;
+  }catch(e){
+    const nextTitle=slug==='billy-joel'?'Vienna':artist;
+    artistState.selectedTitle=nextTitle;
+    if(!sameArtist)morphVinylLabel(nextTitle,artist);
+    if(instruction)instruction.textContent=`${artist} selected — add tracks in GitHub anytime.`;
+  }
 }
 async function playArtistTrack(i){
   const track=artistState.tracks[i];if(!track||!artistAudio)return;
