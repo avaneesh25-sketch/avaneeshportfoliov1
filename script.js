@@ -15,7 +15,7 @@ transitionStyle.textContent=`
 .crt-exit-noise:after{content:"NO SIGNAL";position:absolute;inset:0;display:grid;place-items:center;color:#eee;font:500 11px DM Mono,monospace;letter-spacing:.34em;text-shadow:0 0 7px rgba(255,255,255,.38)}
 .crt-impact-flash{position:fixed;z-index:999;inset:0;pointer-events:none;background:#fff;opacity:0;visibility:hidden}
 .about-page.crt-about-reveal .about-wrap{animation:crtAboutReveal .82s cubic-bezier(.2,.72,.2,1) both}
-.tv-set.crt-pull-in{will-change:transform,filter,opacity;z-index:997;position:relative}
+.tv-stage{overflow:visible!important}.intro-page{overflow:visible!important}.tv-set.crt-pull-in{will-change:transform,filter,opacity;position:fixed!important;z-index:9999!important;left:50%!important;top:50%!important;margin:0!important;transform-origin:50% 50%!important}
 @keyframes crtStatic{0%{transform:translate(0,0)}25%{transform:translate(-1.4%,1.8%)}50%{transform:translate(1.2%,-1.2%)}75%{transform:translate(-.8%,-1.4%)}100%{transform:translate(1.5%,1%)}}
 #montage figure{transition:opacity var(--montage-speed,.72s) linear,filter var(--montage-speed,.72s) linear,transform var(--montage-speed,.72s) ease}.montage.montage-fast figure{animation-duration:.42s!important;transition-duration:.20s!important}@keyframes crtAboutReveal{0%{opacity:0;transform:translateY(22px)}100%{opacity:1;transform:translateY(0)}}
 `;
@@ -30,84 +30,87 @@ async function transitionIntroToAbout(){
   introAudio.pause();
 
   const aboutPage=$('[data-page="about"]');
+  const rect=tv.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  const dx=cx-window.innerWidth/2;
+  const dy=cy-window.innerHeight/2;
+
   signalLost.textContent='NO SIGNAL';
   signalLost.classList.add('show');
 
-  // Quick "suction" into the CRT: tiny anticipation, then a hard accelerating yank.
   tv.classList.add('crt-pull-in');
-  tv.style.transformOrigin='50% 50%';
+  tv.style.width=rect.width+'px';
+  tv.style.height=rect.height+'px';
+  tv.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`;
 
   const pull=tv.animate([
-    {transform:'scale(1)',filter:'brightness(1) contrast(1)',opacity:1,offset:0},
-    {transform:'scale(.985)',filter:'brightness(.98) contrast(1.04)',opacity:1,offset:.12},
-    {transform:'scale(1.22)',filter:'brightness(.96) contrast(1.12)',opacity:1,offset:.26},
-    {transform:'scale(4.6)',filter:'brightness(.86) contrast(1.32) blur(.3px)',opacity:1,offset:.62},
-    {transform:'scale(19)',filter:'brightness(.64) contrast(1.75) blur(1px)',opacity:1,offset:1}
+    {transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`,filter:'blur(0) brightness(1) contrast(1)',offset:0},
+    {transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.99)`,filter:'blur(0) brightness(.98) contrast(1.05)',offset:.08},
+    {transform:'translate(-50%,-50%) scale(1.35)',filter:'blur(0) brightness(1) contrast(1.12)',offset:.22},
+    {transform:'translate(-50%,-50%) scale(6.5)',filter:'blur(2px) brightness(1.08) contrast(1.28)',offset:.62},
+    {transform:'translate(-50%,-50%) scale(42)',filter:'blur(13px) brightness(1.36) contrast(1.55)',offset:1}
   ],{
-    duration:620,
-    easing:'cubic-bezier(.72,.02,.98,.36)',
+    duration:700,
+    easing:'cubic-bezier(.82,.01,.98,.22)',
     fill:'forwards'
   });
 
-  // Bring in static only near the end so the zoom reads first.
-  await wait(380);
+  await wait(430);
   exitNoise.style.visibility='visible';
-  exitNoise.animate([{opacity:0},{opacity:.18},{opacity:1}],{
-    duration:180,
-    easing:'linear',
-    fill:'forwards',
-    offset:[0,.35,1]
-  });
+  exitNoise.animate([{opacity:0},{opacity:1}],{duration:180,easing:'linear',fill:'forwards'});
 
-  await wait(115);
+  await wait(135);
 
-  // Very short impact flash right as the glass fills the frame.
+  // brief viewport jolt at impact
+  const bodyShake=document.body.animate([
+    {transform:'translateX(0)'},
+    {transform:'translateX(6px)'},
+    {transform:'translateX(-5px)'},
+    {transform:'translateX(4px)'},
+    {transform:'translateX(-3px)'},
+    {transform:'translateX(0)'}
+  ],{duration:180,easing:'steps(1,end)'});
+
   impactFlash.style.visibility='visible';
   await impactFlash.animate(
-    [{opacity:0},{opacity:.72},{opacity:0}],
-    {duration:150,easing:'ease-out',fill:'forwards',offset:[0,.18,1]}
+    [{opacity:0},{opacity:.9},{opacity:0}],
+    {duration:180,easing:'ease-out',fill:'forwards',offset:[0,.16,1]}
   ).finished.catch(()=>{});
   impactFlash.style.visibility='hidden';
+  await bodyShake.finished.catch(()=>{});
 
-  // Short, punchy CRT desync after impact.
   await exitNoise.animate([
-    {transform:'translate(0,0) scale(1)'},
-    {transform:'translate(-14px,1px) scale(1.01)'},
-    {transform:'translate(10px,-1px) scale(.995)'},
-    {transform:'translate(-7px,0) scale(1.005)'},
-    {transform:'translate(0,0) scale(1)'}
-  ],{duration:115,easing:'steps(1,end)'}).finished.catch(()=>{});
+    {transform:'translate(0,0)'},
+    {transform:'translate(-12px,1px)'},
+    {transform:'translate(9px,-1px)'},
+    {transform:'translate(-5px,0)'},
+    {transform:'translate(0,0)'}
+  ],{duration:120,easing:'steps(1,end)'}).finished.catch(()=>{});
 
-  await wait(170);
-
+  await wait(260);
   go('about');
   aboutPage?.classList.add('crt-about-reveal');
 
-  await exitNoise.animate([{opacity:1},{opacity:.92},{opacity:0}],{
-    duration:360,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'
+  await exitNoise.animate([{opacity:1},{opacity:0}],{
+    duration:420,easing:'ease-out',fill:'forwards'
   }).finished.catch(()=>{});
 
   exitNoise.style.visibility='hidden';
   exitNoise.style.transform='';
 
   try{pull.cancel()}catch(e){}
+  tv.style.width='';
+  tv.style.height='';
   tv.style.transform='';
   tv.style.filter='';
   tv.style.opacity='';
-  tv.style.transformOrigin='';
   tv.classList.remove('crt-pull-in','playing');
   signalLost.classList.remove('show');
   signalLost.textContent='BAD SIGNAL';
 
-  setTimeout(()=>aboutPage?.classList.remove('crt-about-reveal'),800);
+  setTimeout(()=>aboutPage?.classList.remove('crt-about-reveal'),850);
   introTransitioning=false;
-}
-let introFastMontage=false;
-function setMontageSpeed(fast){
-  introFastMontage=fast;
-  document.documentElement.style.setProperty('--montage-speed',fast?'0.28s':'0.72s');
-  const m=$('#montage');
-  if(m)m.classList.toggle('montage-fast',fast);
 }
 async function startIntro(){
   clearIntroTimers();introTransitioning=false;setMontageSpeed(false);
