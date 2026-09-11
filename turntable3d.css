@@ -64,3 +64,27 @@
 .music3d-now p{margin:0!important;font-size:clamp(18px,1.45vw,24px)!important;max-width:none!important;transform:none!important;opacity:.8}
 .music3d-tip{display:none!important}
 .lamp-pull-hint{right:20.5vw!important;top:42vh!important;font-size:18px!important;opacity:.88!important}
+
+/* final artist-card vinyl behavior: half-disc peeks from the top only */
+.music3d-sleeve{overflow:visible!important}
+.music3d-sleeve .hover-vinyl{
+  right:14px!important;
+  top:-32px!important;
+  width:64px!important;
+  height:64px!important;
+  z-index:0!important;
+  opacity:0!important;
+  clip-path:inset(0 0 50% 0)!important;
+  transform:translateY(22px) rotate(0deg)!important;
+  transition:opacity .18s ease,transform .24s ease!important;
+}
+.music3d-sleeve strong,.music3d-sleeve small{position:relative;z-index:2}
+.music3d-sleeve:hover{z-index:30!important}
+.music3d-sleeve:hover .hover-vinyl,.music3d-sleeve:focus-visible .hover-vinyl{
+  opacity:1!important;
+  transform:translateY(0) rotate(0deg)!important;
+  animation:halfVinylSpin 1.85s linear infinite!important;
+}
+.music3d-sleeve.is-active .hover-vinyl{opacity:0!important;animation:none!important}
+.music3d-sleeve.is-active:hover .hover-vinyl{opacity:1!important;animation:halfVinylSpin 1.85s linear infinite!important}
+@keyframes halfVinylSpin{to{transform:translateY(0) rotate(360deg)}}
