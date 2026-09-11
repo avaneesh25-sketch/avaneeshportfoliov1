@@ -74,9 +74,9 @@ if(canvas){
   const inner=new THREE.Mesh(new THREE.CylinderGeometry(.405,.405,.035,64),new THREE.MeshStandardMaterial({color:0x070504,roughness:.5}));inner.position.y=.385;mug.add(inner);
   const latte=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.018,64),new THREE.MeshStandardMaterial({color:0xb98558,roughness:.22,metalness:.01}));latte.position.y=.41;mug.add(latte);
   const foam=new THREE.Mesh(new THREE.TorusGeometry(.28,.018,10,48),new THREE.MeshStandardMaterial({color:0xe0c39f,roughness:.65}));foam.rotation.x=Math.PI/2;foam.position.y=.426;mug.add(foam);
-  const iceMat=new THREE.MeshStandardMaterial({color:0xe9f1ef,transparent:true,opacity:.72,roughness:.22,metalness:0});
+  const iceMat=new THREE.MeshStandardMaterial({color:0xf0f4f1,transparent:true,opacity:.58,roughness:.35,metalness:0});
   const iceCubes=[];
-  [[-.16,.08],[.12,.12],[.05,-.16]].forEach(([x,z],i)=>{const ice=new THREE.Mesh(new THREE.BoxGeometry(.16,.055,.16),iceMat);ice.position.set(x,.46,z);ice.rotation.set(.12,i*.65+.2,.08);ice.userData.home=ice.position.clone();ice.userData.phase=i*2.1;iceCubes.push(ice);mug.add(ice)});
+  [[-.15,.07],[.13,.10],[.04,-.15]].forEach(([x,z],i)=>{const ice=new THREE.Mesh(new THREE.IcosahedronGeometry(.105,1),iceMat);ice.scale.set(1.15,.55,1);ice.position.set(x,.47,z);ice.rotation.set(.18,i*.7+.25,.12);ice.userData.home=ice.position.clone();ice.userData.phase=i*2.1;iceCubes.push(ice);mug.add(ice)});
   const handle=new THREE.Mesh(new THREE.TorusGeometry(.31,.07,18,56,Math.PI*1.55),ceramic);handle.rotation.set(Math.PI/2,0,-Math.PI/2);handle.position.set(.46,.02,0);mug.add(handle);
   const saucer=new THREE.Mesh(new THREE.CylinderGeometry(.62,.67,.055,64),ceramic);saucer.position.y=-.48;saucer.scale.z=.72;mug.add(saucer);
   const lamp=new THREE.Group();lamp.position.set(5.15,-.35,-2.35);scene.add(lamp);
@@ -100,25 +100,27 @@ if(canvas){
   let iceActive=false,iceTime=0;
 
   function setPointer(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera)}
-  function hitArm(e){setPointer(e);return ray.intersectObjects(armMeshes,false).length>0}
-  function hitMug(e){setPointer(e);return ray.intersectObject(mugHit,false).length>0}
+  function normalized(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
+  function hitArm(e){setPointer(e);const p=normalized(e);return ray.intersectObjects(armMeshes,false).length>0 || (p.x>.52&&p.x<.72&&p.y>.24&&p.y<.67)}
+  function hitMug(e){setPointer(e);const p=normalized(e);return ray.intersectObject(mugHit,false).length>0 || (p.x>.73&&p.x<.88&&p.y>.60&&p.y<.86)}
   canvas.addEventListener('pointerdown',e=>{
-    if(hitMug(e)){iceActive=true;iceTime=0;return}
+    if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer';return}
     if(dropped)return;
-    if(hitArm(e)){dragging=true;startX=e.clientX;baseAngle=arm.rotation.y;canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing'}
+    if(hitArm(e)){dragging=true;startX=e.clientX;baseAngle=arm.rotation.y;canvas.setPointerCapture?.(e.pointerId);canvas.style.cursor='grabbing'}
   });
   canvas.addEventListener('pointermove',e=>{
-    if(!dragging)return;
+    const p=normalized(e);
+    if(!dragging){canvas.style.cursor=((p.x>.52&&p.x<.72&&p.y>.24&&p.y<.67)||(p.x>.73&&p.x<.88&&p.y>.60&&p.y<.86))?'grab':'default';return}
     const dx=(e.clientX-startX)/Math.max(innerWidth,900);
-    arm.rotation.y=THREE.MathUtils.clamp(baseAngle-dx*4.2,-.78,REST_ANGLE);
+    arm.rotation.y=THREE.MathUtils.clamp(baseAngle-dx*5.6,-.80,REST_ANGLE);
   });
-  canvas.addEventListener('pointerup',e=>{if(!dragging)return;dragging=false;canvas.style.cursor='default';if(arm.rotation.y<-.42){arm.rotation.y=DROP_ANGLE;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}else{arm.rotation.y=REST_ANGLE}});
+  canvas.addEventListener('pointerup',e=>{if(!dragging)return;dragging=false;canvas.style.cursor='default';if(arm.rotation.y<-.34){arm.rotation.y=DROP_ANGLE;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}else{arm.rotation.y=REST_ANGLE}});
   canvas.addEventListener('pointercancel',()=>{dragging=false;canvas.style.cursor='default';if(!dropped)arm.rotation.y=REST_ANGLE});
   window.addEventListener('turntable:ended',()=>{playing=false});
 
   const clock=new THREE.Clock();
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
-    if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*7+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.035;ice.position.z=ice.userData.home.z+Math.cos(a*1.15)*.035;ice.rotation.y+=dt*(i%2?2.2:-2.4);ice.rotation.x=.12+Math.sin(a*.8)*.08});if(iceTime>1.25){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
+    if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*7+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.065;ice.position.z=ice.userData.home.z+Math.cos(a*1.15)*.065;ice.position.y=.47+Math.abs(Math.sin(a*.7))*.028;ice.rotation.y+=dt*(i%2?3.6:-3.8);ice.rotation.x=.18+Math.sin(a*.8)*.16});if(iceTime>1.25){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
     renderer.render(scene,camera)}animate();
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
