@@ -185,76 +185,153 @@ if(canvas){
   armHit.position.set(0,.28,1.55);arm.add(armHit);
   const mug=new THREE.Group();mug.position.set(4.35,-.16,2.55);mug.rotation.y=-.22;scene.add(mug);
 
-  // Cafe-style black ceramic latte cup — visual geometry only; existing collider is untouched below.
+  // Glossy black cafe ceramic inspired by the reference.
   const ceramicMat=new THREE.MeshPhysicalMaterial({
-    color:0x050505,roughness:.2,metalness:.03,clearcoat:.72,clearcoatRoughness:.14,envMapIntensity:.48
+    color:0x0a0a0a,
+    roughness:.20,
+    metalness:.02,
+    clearcoat:1.0,
+    clearcoatRoughness:.08,
+    envMapIntensity:1.35
   });
-  const innerCeramicMat=new THREE.MeshStandardMaterial({color:0x0b0908,roughness:.38});
-  const cupBody=new THREE.Mesh(new THREE.CylinderGeometry(.50,.39,.58,96,1,true),ceramicMat);
-  cupBody.position.y=-.05;cupBody.castShadow=true;mug.add(cupBody);
-  const cupBase=new THREE.Mesh(new THREE.CylinderGeometry(.39,.39,.075,96),ceramicMat);
-  cupBase.position.y=-.375;cupBase.castShadow=true;mug.add(cupBase);
-  const cupRim=new THREE.Mesh(new THREE.TorusGeometry(.50,.045,20,96),ceramicMat);
-  cupRim.rotation.x=Math.PI/2;cupRim.position.y=.245;mug.add(cupRim);
-  const cupInner=new THREE.Mesh(new THREE.CylinderGeometry(.445,.445,.045,96),innerCeramicMat);
-  cupInner.position.y=.218;mug.add(cupInner);
 
-  // Big rounded cafe handle.
-  const handleCurve=new THREE.CatmullRomCurve3([
-    new THREE.Vector3(.44,.10,.0),
-    new THREE.Vector3(.70,.16,.0),
-    new THREE.Vector3(.78,-.04,.0),
-    new THREE.Vector3(.67,-.25,.0),
-    new THREE.Vector3(.42,-.20,.0)
-  ]);
-  const handle=new THREE.Mesh(new THREE.TubeGeometry(handleCurve,48,.072,18,false),ceramicMat);
-  handle.rotation.y=-.04;handle.castShadow=true;mug.add(handle);
+  const cupBody=new THREE.Mesh(
+    new THREE.CylinderGeometry(.50,.40,.58,128,1,true),
+    ceramicMat
+  );
+  cupBody.position.y=-.05;
+  cupBody.castShadow=true;
+  mug.add(cupBody);
 
-  // Latte surface.
-  const latteMat=new THREE.MeshPhysicalMaterial({color:0xb86b35,roughness:.38,metalness:0,clearcoat:.12,clearcoatRoughness:.38});
-  const latte=new THREE.Mesh(new THREE.CylinderGeometry(.425,.425,.026,96),latteMat);
-  latte.position.y=.245;mug.add(latte);
+  const cupBase=new THREE.Mesh(
+    new THREE.CylinderGeometry(.40,.40,.075,128),
+    ceramicMat
+  );
+  cupBase.position.y=-.375;
+  cupBase.castShadow=true;
+  mug.add(cupBase);
 
-  // Latte art drawn procedurally onto a thin top texture.
-  const artCanvas=document.createElement('canvas');artCanvas.width=512;artCanvas.height=512;
-  const actx=artCanvas.getContext('2d');
-  actx.clearRect(0,0,512,512);
-  actx.translate(256,256);
-  actx.strokeStyle='rgba(247,232,205,.97)';
-  actx.lineCap='round';
-  actx.lineJoin='round';
-  // rosetta/leaf stack
-  for(let i=0;i<7;i++){
-    const y=82-i*21, w=112-i*11;
-    actx.lineWidth=14-i*.8;
-    actx.beginPath();
-    actx.moveTo(-w*.5,y);
-    actx.bezierCurveTo(-w*.2,y-14,w*.2,y-14,w*.5,y);
-    actx.bezierCurveTo(w*.18,y+15,-w*.18,y+15,-w*.5,y);
-    actx.stroke();
+  const cupRim=new THREE.Mesh(
+    new THREE.TorusGeometry(.50,.042,24,128),
+    ceramicMat
+  );
+  cupRim.rotation.x=Math.PI/2;
+  cupRim.position.y=.245;
+  mug.add(cupRim);
+
+  // Smooth rounded D-loop handle using TorusGeometry.
+  const handle=new THREE.Mesh(
+    new THREE.TorusGeometry(.235,.052,20,64,Math.PI*1.5),
+    ceramicMat
+  );
+  handle.position.set(.50,-.02,0);
+  handle.rotation.set(0,Math.PI/2,Math.PI/2);
+  handle.castShadow=true;
+  mug.add(handle);
+
+  // Procedural crema + rosetta/fern latte art.
+  const latteCanvas=document.createElement('canvas');
+  latteCanvas.width=latteCanvas.height=512;
+  const lctx=latteCanvas.getContext('2d');
+
+  const crema=lctx.createRadialGradient(230,210,20,256,256,250);
+  crema.addColorStop(0,'#c9803e');
+  crema.addColorStop(.55,'#b56b31');
+  crema.addColorStop(1,'#9a5628');
+  lctx.fillStyle=crema;
+  lctx.beginPath();lctx.arc(256,256,252,0,Math.PI*2);lctx.fill();
+
+  // Irregular milk halo.
+  lctx.fillStyle='rgba(246,232,209,.96)';
+  lctx.beginPath();
+  lctx.ellipse(256,238,125,95,-.08,0,Math.PI*2);
+  lctx.fill();
+
+  // Restore crema inside the halo to make the art feel poured, not stamped.
+  lctx.fillStyle='#b86a31';
+  lctx.beginPath();lctx.ellipse(256,245,98,72,-.08,0,Math.PI*2);lctx.fill();
+
+  lctx.strokeStyle='rgba(250,239,220,.96)';
+  lctx.lineCap='round';
+  lctx.lineJoin='round';
+
+  const cx=256,cy=305;
+  for(let i=0;i<8;i++){
+    const y=cy-i*20;
+    const width=118-i*10;
+    lctx.lineWidth=13-i*.55;
+    lctx.beginPath();
+    lctx.moveTo(cx-width*.48,y);
+    lctx.bezierCurveTo(cx-width*.20,y-14,cx+width*.20,y-14,cx+width*.48,y);
+    lctx.bezierCurveTo(cx+width*.17,y+12,cx-width*.17,y+12,cx-width*.48,y);
+    lctx.stroke();
   }
-  // stem
-  actx.lineWidth=12;
-  actx.beginPath();actx.moveTo(0,98);actx.quadraticCurveTo(8,20,0,-106);actx.stroke();
-  // heart crown
-  actx.beginPath();
-  actx.moveTo(0,-74);
-  actx.bezierCurveTo(-38,-118,-95,-82,0,-14);
-  actx.bezierCurveTo(95,-82,38,-118,0,-74);
-  actx.stroke();
 
-  const artTex=new THREE.CanvasTexture(artCanvas);artTex.colorSpace=THREE.SRGBColorSpace;
-  const artMat=new THREE.MeshBasicMaterial({map:artTex,transparent:true,depthWrite:false,side:THREE.DoubleSide});
-  const artDisc=new THREE.Mesh(new THREE.CircleGeometry(.36,96),artMat);
-  artDisc.rotation.x=-Math.PI/2;artDisc.position.y=.265;artDisc.renderOrder=4;mug.add(artDisc);
+  // Pull-through line.
+  lctx.lineWidth=8;
+  lctx.beginPath();
+  lctx.moveTo(cx,330);
+  lctx.quadraticCurveTo(cx+5,250,cx,150);
+  lctx.stroke();
 
-  // Small saucer underneath for cafe feel.
-  const saucer=new THREE.Mesh(new THREE.CylinderGeometry(.68,.72,.065,96),new THREE.MeshPhysicalMaterial({
-    color:0x0b0b0b,roughness:.24,metalness:.02,clearcoat:.58,clearcoatRoughness:.18,envMapIntensity:.42
-  }));
-  saucer.position.y=-.455;saucer.scale.z=.82;saucer.castShadow=true;mug.add(saucer);
+  // Small heart crown.
+  lctx.lineWidth=11;
+  lctx.beginPath();
+  lctx.moveTo(cx,175);
+  lctx.bezierCurveTo(cx-34,135,cx-85,164,cx,218);
+  lctx.bezierCurveTo(cx+85,164,cx+34,135,cx,175);
+  lctx.stroke();
 
-  // Keep ice arrays defined so the existing click-animation code remains safe without changing collider/physics logic.
+  // Slight asymmetry / crema bleed.
+  lctx.globalAlpha=.35;
+  lctx.strokeStyle='#8f4e25';
+  lctx.lineWidth=8;
+  lctx.beginPath();
+  lctx.arc(256,250,150,.2,2.7);
+  lctx.stroke();
+  lctx.globalAlpha=1;
+
+  const latteTex=new THREE.CanvasTexture(latteCanvas);
+  latteTex.colorSpace=THREE.SRGBColorSpace;
+
+  // Shallow domed crema cap rather than a flat decal.
+  const latteCap=new THREE.Mesh(
+    new THREE.SphereGeometry(.435,96,48,0,Math.PI*2,0,Math.PI*.12),
+    new THREE.MeshPhysicalMaterial({
+      map:latteTex,
+      roughness:.42,
+      metalness:0,
+      clearcoat:.10,
+      clearcoatRoughness:.38,
+      envMapIntensity:.45
+    })
+  );
+  latteCap.scale.y=.28;
+  latteCap.position.y=.216;
+  latteCap.rotation.x=Math.PI;
+  latteCap.renderOrder=3;
+  mug.add(latteCap);
+
+  // Soft inner dark ring under crema for depth.
+  const innerRing=new THREE.Mesh(
+    new THREE.TorusGeometry(.445,.020,16,96),
+    new THREE.MeshStandardMaterial({color:0x17100b,roughness:.48})
+  );
+  innerRing.rotation.x=Math.PI/2;
+  innerRing.position.y=.225;
+  mug.add(innerRing);
+
+  // Subtle saucer, same ceramic finish.
+  const saucer=new THREE.Mesh(
+    new THREE.CylinderGeometry(.67,.72,.06,128),
+    ceramicMat
+  );
+  saucer.position.y=-.455;
+  saucer.scale.z=.82;
+  saucer.castShadow=true;
+  mug.add(saucer);
+
+  // Keep the existing mug interaction logic safe.
   const iceCubes=[];
 
   const lamp=new THREE.Group();lamp.position.set(4.55,-.35,-1.35);scene.add(lamp);
