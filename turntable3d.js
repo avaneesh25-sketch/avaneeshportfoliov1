@@ -258,8 +258,54 @@ if(canvas){
   lctx.bezierCurveTo(cx-33,134,cx-78,165,cx,218);
   lctx.bezierCurveTo(cx+78,165,cx+33,134,cx,170);lctx.stroke();
 
+
+  const latteSnapshot=document.createElement('canvas');
+  latteSnapshot.width=latteCanvas.width;latteSnapshot.height=latteCanvas.height;
+  latteSnapshot.getContext('2d').drawImage(latteCanvas,0,0);
+
   const latteTex=new THREE.CanvasTexture(latteCanvas);
   latteTex.colorSpace=THREE.SRGBColorSpace;
+
+  const rippleGroup=new THREE.Group();
+  rippleGroup.position.y=.249;
+  mug.add(rippleGroup);
+  const rippleRings=[];
+  [0,.13,.26].forEach((delay,i)=>{
+    const mat=new THREE.MeshBasicMaterial({color:0xf4dfc0,transparent:true,opacity:0,depthWrite:false});
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(.08,.007,10,72),mat);
+    ring.rotation.x=Math.PI/2;
+    ring.userData.delay=delay;
+    ring.visible=false;
+    rippleRings.push(ring);
+    rippleGroup.add(ring);
+  });
+
+  function redrawLatteBase(){
+    const g=lctx.createRadialGradient(230,210,20,256,256,250);
+    g.addColorStop(0,'#c9803e');g.addColorStop(.55,'#b56b31');g.addColorStop(1,'#965021');
+    lctx.clearRect(0,0,512,512);
+    lctx.fillStyle=g;lctx.beginPath();lctx.arc(256,256,252,0,Math.PI*2);lctx.fill();
+  }
+
+  function disperseLatteArt(p){
+    redrawLatteBase();
+    if(p<1){
+      // Ghost the original art outward while fading it, like milk dispersing into crema.
+      const scales=[1+p*.08,1+p*.16,1+p*.24];
+      scales.forEach((s,i)=>{
+        lctx.save();
+        lctx.globalAlpha=(1-p)*(.52-i*.11);
+        lctx.translate(256,256);
+        lctx.rotate((i-1)*p*.035);
+        lctx.scale(s,s);
+        lctx.translate(-256,-256);
+        lctx.drawImage(latteSnapshot,0,0);
+        lctx.restore();
+      });
+    }
+    latteTex.needsUpdate=true;
+  }
+
   latteTex.generateMipmaps=true;
   latteTex.minFilter=THREE.LinearMipmapLinearFilter;
   latteTex.magFilter=THREE.LinearFilter;
@@ -382,7 +428,7 @@ if(canvas){
   mugHit.position.copy(mug.position);scene.add(mugHit);
   const buttonHit=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.28,32),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   buttonHit.position.copy(deckButtonGroup.position);buttonHit.position.y=.10;scene.add(buttonHit);
-  let iceActive=false,iceTime=0,buttonPressT=0;
+  let iceActive=false,iceTime=0,buttonPressT=0,latteRippling=false,latteRippleT=0,latteDispersed=false;
 
   function setPointer(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera)}
   function normalized(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
@@ -418,7 +464,10 @@ if(canvas){
       }
       return;
     }
-    if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer'}
+    if(hitMug(e)){
+      if(!latteDispersed&&!latteRippling){latteRippling=true;latteRippleT=0}
+      canvas.style.cursor='pointer';
+    }
   });
   canvas.addEventListener('pointermove',e=>{if(hitDeckButton(e)||hitPullString(e)){canvas.style.cursor='pointer'}else if(!iceActive){canvas.style.cursor='default'}});
   window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping||autoLifting)return;playProgress=0;autoDropping=true;autoT=0;});
@@ -470,6 +519,23 @@ if(canvas){
       if(t>=1){autoDropping=false;dropped=true;playing=true;statusLed.material.color.setHex(0xff8a3b);statusLed.material.emissive.setHex(0xff5b16);statusLed.material.emissiveIntensity=2.5;window.dispatchEvent(new CustomEvent('turntable:drop'))}
     }
     if(dropped&&!autoDropping&&!autoLifting){arm.rotation.y=THREE.MathUtils.lerp(arm.rotation.y,THREE.MathUtils.lerp(DROP_ANGLE,INNER_ANGLE,playProgress),Math.min(1,dt*1.8))}
+    if(latteRippling){
+      latteRippleT=Math.min(1,latteRippleT+dt/1.45);
+      const p=latteRippleT;
+      disperseLatteArt(p);
+      rippleRings.forEach((ring,i)=>{
+        const local=THREE.MathUtils.clamp((p-ring.userData.delay)/(1-ring.userData.delay),0,1);
+        ring.visible=local>0&&local<1;
+        const radius=.10+local*.34;
+        ring.scale.setScalar(radius/.08);
+        ring.material.opacity=(1-local)*.34;
+      });
+      if(p>=1){
+        latteRippling=false;latteDispersed=true;
+        redrawLatteBase();latteTex.needsUpdate=true;
+        rippleRings.forEach(r=>{r.visible=false;r.material.opacity=0});
+      }
+    }
     if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*6.4+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.045;ice.position.z=ice.userData.home.z+Math.cos(a*1.08)*.045;ice.position.y=.465+Math.abs(Math.sin(a*.72))*.015;ice.rotation.y+=dt*(i%2?2.2:-2.4);ice.rotation.x=.08+Math.sin(a*.8)*.07});if(iceTime>1.1){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
     renderer.render(scene,camera)}animate();
 
