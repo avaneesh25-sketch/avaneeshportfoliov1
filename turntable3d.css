@@ -59,3 +59,8 @@
 
 .lamp-blackout{background:radial-gradient(circle at 78% 28%,rgba(18,10,5,.14),#000 58%)!important;transition:opacity .42s cubic-bezier(.4,0,.2,1)!important}
 .lamp-blackout.is-off{opacity:.992!important}
+
+.music3d-now{top:auto!important;right:19vw!important;bottom:6.5vh!important;width:320px!important;text-align:center}
+.music3d-now p{margin:0!important;font-size:clamp(18px,1.45vw,24px)!important;max-width:none!important;transform:none!important;opacity:.8}
+.music3d-tip{display:none!important}
+.lamp-pull-hint{right:20.5vw!important;top:42vh!important;font-size:18px!important;opacity:.88!important}
