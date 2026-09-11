@@ -97,3 +97,12 @@
   transform:rotate(-7deg)!important;
   opacity:.9!important;
 }
+
+/* pull hint: anchor visually beside the hanging bead, not over the lamp base */
+.lamp-pull-hint{
+  right:18.0vw!important;
+  top:27.0vh!important;
+  transform:translate(0,-50%) rotate(-7deg)!important;
+  white-space:nowrap!important;
+  pointer-events:none!important;
+}
