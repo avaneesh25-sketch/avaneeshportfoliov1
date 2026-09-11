@@ -40,7 +40,36 @@ if(canvas){
   const platterBase=new THREE.Mesh(new THREE.CylinderGeometry(2.28,2.28,.16,96),new THREE.MeshStandardMaterial({color:0x353535,roughness:.23,metalness:.8}));platterBase.castShadow=true;platter.add(platterBase);
   const record=new THREE.Mesh(new THREE.CylinderGeometry(2.12,2.12,.065,128),black);record.position.y=.115;record.castShadow=true;platter.add(record);
   for(let r=.78;r<2.04;r+=.07){const ring=new THREE.Mesh(new THREE.TorusGeometry(r,.006,5,120),new THREE.MeshStandardMaterial({color:0x2a2a2a,roughness:.33,metalness:.65}));ring.rotation.x=Math.PI/2;ring.position.y=.153;platter.add(ring)}
-  const label=new THREE.Mesh(new THREE.CylinderGeometry(.68,.68,.075,64),cream);label.position.y=.16;platter.add(label);
+  const labelCanvas=document.createElement('canvas');labelCanvas.width=1024;labelCanvas.height=1024;
+  const labelCtx=labelCanvas.getContext('2d');
+  const labelTexture=new THREE.CanvasTexture(labelCanvas);labelTexture.colorSpace=THREE.SRGBColorSpace;labelTexture.anisotropy=8;
+  const labelMat=new THREE.MeshStandardMaterial({map:labelTexture,color:0xffffff,roughness:.72,metalness:0});
+  const label=new THREE.Mesh(new THREE.CylinderGeometry(.68,.68,.075,96),labelMat);label.position.y=.16;platter.add(label);
+
+  let labelTitle='Vienna',labelArtist='BILLY JOEL',morphFrom='Vienna',morphTo='Vienna',morphArtist='BILLY JOEL',morphT=1;
+  const runeGlyphs=['ᚠ','ᚢ','ᚦ','ᚱ','ᚲ','ᚷ','ᚹ','ᛃ','ᛇ','ᛈ','ᛉ','ᛏ','ᛒ','ᛗ','ᛚ','ᛞ','ᛟ'];
+  function drawRecordLabel(title=labelTitle,artist=labelArtist,dust=0){
+    const ctx=labelCtx,w=labelCanvas.width,h=labelCanvas.height;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle='#d8c6a6';ctx.fillRect(0,0,w,h);
+    ctx.globalAlpha=.18;ctx.fillStyle='#6c5a42';
+    for(let i=0;i<180;i++){const x=(i*83)%w,y=(i*151)%h,r=1+((i*17)%4);ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
+    ctx.globalAlpha=1;
+    ctx.strokeStyle='rgba(92,72,50,.45)';ctx.lineWidth=4;ctx.beginPath();ctx.arc(w/2,h/2,365,0,Math.PI*2);ctx.stroke();
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillStyle='#17120e';ctx.font='italic 96px Georgia, serif';ctx.fillText(title,w/2,h/2-34);
+    ctx.font='500 34px monospace';ctx.letterSpacing='8px';ctx.fillText(artist,w/2,h/2+92);
+    if(dust>0){ctx.globalAlpha=dust*.45;ctx.fillStyle='#8b6a48';for(let i=0;i<110;i++){const x=(Math.sin(i*91.7+dust*17)*.5+.5)*w,y=(Math.sin(i*57.1+dust*9)*.5+.5)*h;ctx.fillRect(x,y,2+(i%5),2+(i%4))}ctx.globalAlpha=1}
+    labelTexture.needsUpdate=true;
+  }
+  function runeVersion(text,amount){
+    return [...String(text)].map((ch,i)=>ch===' ' ? ' ' : (Math.random()<amount ? runeGlyphs[(i+Math.floor(performance.now()/120))%runeGlyphs.length] : ch)).join('');
+  }
+  function morphLabel(title,artist){
+    morphFrom=labelTitle;morphTo=title;labelArtist=artist;morphArtist=artist;morphT=0;
+  }
+  drawRecordLabel('Vienna','BILLY JOEL',0);
+  window.addEventListener('turntable:label',e=>{const d=e.detail||{};morphLabel(d.title||d.artist||'VINYL',d.artist||'')});
   const spindle=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.28,24),metal);spindle.position.y=.28;platter.add(spindle);
   const labelRing=new THREE.Mesh(new THREE.TorusGeometry(.57,.012,8,64),new THREE.MeshStandardMaterial({color:0x806b51,roughness:.55}));labelRing.rotation.x=Math.PI/2;labelRing.position.y=.205;platter.add(labelRing);
   const platterRim=new THREE.Mesh(new THREE.TorusGeometry(2.23,.055,12,96),metal);platterRim.rotation.x=Math.PI/2;platterRim.position.y=.08;platter.add(platterRim);
@@ -184,6 +213,13 @@ if(canvas){
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
+    if(morphT<1){
+      morphT=Math.min(1,morphT+dt/1.55);
+      const mid=1-Math.abs(morphT-.5)*2;
+      const shown=morphT<.5?runeVersion(morphFrom,mid):runeVersion(morphTo,mid);
+      drawRecordLabel(shown,morphArtist,mid);
+      if(morphT>=1){labelTitle=morphTo;labelArtist=morphArtist;drawRecordLabel(labelTitle,labelArtist,0)}
+    }
     if(buttonPressT>0){buttonPressT-=dt;deckButton.position.y=.055}else{deckButton.position.y=.085}
     if(autoLifting){
       autoT+=dt/1.35;
