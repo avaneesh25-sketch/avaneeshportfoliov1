@@ -13,7 +13,7 @@ function transitionIntroToAbout(){if(introTransitioning)return;introTransitionin
 async function startIntro(){clearIntroTimers();introTransitioning=false;tv.classList.remove('playing');signalLost.classList.remove('show');introNext.disabled=true;void tv.offsetWidth;tv.classList.add('playing');let audioStarted=false;if(soundEnabled){try{introAudio.currentTime=0;await introAudio.play();audioStarted=true}catch(e){}}if(audioStarted){introAudio.onended=transitionIntroToAbout;if(Number.isFinite(introAudio.duration)&&introAudio.duration>0)introTimer.push(setTimeout(transitionIntroToAbout,(introAudio.duration+.15)*1000))}else introTimer.push(setTimeout(transitionIntroToAbout,12800))}playIntro.addEventListener('click',startIntro);
 
 
-const progress=$('#songProgress'),elapsed=$('#elapsedTime'),duration=$('#durationTime'),instruction=$('#musicInstruction');
+const progress=$('#songProgress'),elapsed=$('#elapsedTime'),duration=$('#durationTime'),instruction=$('#musicInstruction'),artistAudio=$('#artistAudio');
 const formatTime=t=>{if(!Number.isFinite(t))return '—:—';const m=Math.floor(t/60),s=Math.floor(t%60);return `${m}:${String(s).padStart(2,'0')}`};
 async function playViennaFromTurntable(){if(instruction)instruction.textContent='Needle down. Vienna is playing.';if(soundEnabled){try{viennaAudio.currentTime=0;await viennaAudio.play()}catch(e){}}}
 function pauseVienna(){viennaAudio.pause();}
@@ -22,4 +22,40 @@ window.addEventListener('turntable:lift',()=>{pauseVienna();if(instruction)instr
 viennaAudio.addEventListener('loadedmetadata',()=>{if(duration)duration.textContent=formatTime(viennaAudio.duration)});
 viennaAudio.addEventListener('timeupdate',()=>{if(!viennaAudio.duration)return;if(progress)progress.style.width=`${viennaAudio.currentTime/viennaAudio.duration*100}%`;if(elapsed)elapsed.textContent=formatTime(viennaAudio.currentTime);if(duration)duration.textContent=formatTime(viennaAudio.duration)});
 viennaAudio.addEventListener('ended',()=>{if(instruction)instruction.textContent='Side finished. The needle stays where you left it.';window.dispatchEvent(new CustomEvent('turntable:ended'))});
+
+const artistNames={
+  'ed-sheeran':'ED SHEERAN',
+  'michael-jackson':'MICHAEL JACKSON',
+  'queen':'QUEEN',
+  'billy-joel':'BILLY JOEL',
+  'elton-john':'ELTON JOHN'
+};
+const artistState={tracks:[],index:0,slug:'billy-joel'};
+function morphVinylLabel(title,artist){window.dispatchEvent(new CustomEvent('turntable:label',{detail:{title,artist}}))}
+async function loadArtistPlaylist(slug){
+  const artist=artistNames[slug]||slug.toUpperCase();
+  $$('.music3d-sleeve').forEach(x=>x.classList.toggle('is-active',x.dataset.artist===slug));
+  morphVinylLabel(slug==='billy-joel'?'Vienna':artist,artist);
+  if(artistAudio)artistAudio.pause();
+  viennaAudio.pause();
+  artistState.slug=slug;artistState.index=0;artistState.tracks=[];
+  try{
+    const res=await fetch(`music/${slug}/playlist.json?ts=${Date.now()}`,{cache:'no-store'});
+    if(!res.ok)throw new Error('playlist missing');
+    const data=await res.json();
+    artistState.tracks=(Array.isArray(data)?data:(data.tracks||[])).filter(t=>t&&t.src);
+    if(!artistState.tracks.length){if(instruction)instruction.textContent=`${artist} selected — add tracks in GitHub anytime.`;return}
+    await playArtistTrack(0);
+  }catch(e){if(instruction)instruction.textContent=`${artist} selected — add tracks in GitHub anytime.`}
+}
+async function playArtistTrack(i){
+  const track=artistState.tracks[i];if(!track||!artistAudio)return;
+  artistState.index=i;
+  artistAudio.src=track.src;
+  morphVinylLabel(track.title||artistNames[artistState.slug]||'VINYL',artistNames[artistState.slug]||'');
+  if(instruction)instruction.textContent=`${track.title||artistNames[artistState.slug]} — playing.`;
+  if(soundEnabled)try{await artistAudio.play()}catch(e){}
+}
+if(artistAudio)artistAudio.addEventListener('ended',()=>{const n=artistState.index+1;if(n<artistState.tracks.length)playArtistTrack(n);else if(instruction)instruction.textContent='Playlist finished.'});
+$$('.music3d-sleeve').forEach(s=>s.addEventListener('click',()=>loadArtistPlaylist(s.dataset.artist)));
 window.addEventListener('wheel',e=>{if(!$('.content-page.page--active'))e.preventDefault()},{passive:false});window.addEventListener('keydown',e=>{const p=$('.page--active')?.dataset.page;if(e.key==='ArrowRight'){const n={intro:'music',music:'work',work:'about',about:'cv'}[p];if(n)go(n)}if(e.key==='ArrowLeft'){const q={music:'intro',work:'music',about:'work',cv:'about'}[p];if(q)go(q)}});
