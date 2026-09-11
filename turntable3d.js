@@ -49,30 +49,6 @@ if(canvas){
   const table=new THREE.Mesh(tableGeo,tableMat);table.position.y=-.69;table.receiveShadow=true;scene.add(table);
   const deskLip=new THREE.Mesh(new THREE.BoxGeometry(18,.16,10.72),new THREE.MeshStandardMaterial({color:0x241006,roughness:.68}));deskLip.position.y=-.96;scene.add(deskLip);
 
-  function makeSoftShadowTexture(){
-    const c=document.createElement('canvas');c.width=c.height=512;
-    const x=c.getContext('2d');
-    const g=x.createRadialGradient(256,256,8,256,256,250);
-    g.addColorStop(0,'rgba(0,0,0,.52)');
-    g.addColorStop(.32,'rgba(0,0,0,.30)');
-    g.addColorStop(.68,'rgba(0,0,0,.11)');
-    g.addColorStop(1,'rgba(0,0,0,0)');
-    x.fillStyle=g;x.fillRect(0,0,512,512);
-    const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;return t;
-  }
-  const softShadowTex=makeSoftShadowTexture();
-  function addContactShadow(x,z,sx,sz,opacity=.52){
-    const m=new THREE.Mesh(
-      new THREE.PlaneGeometry(1,1),
-      new THREE.MeshBasicMaterial({map:softShadowTex,transparent:true,opacity,depthWrite:false,color:0x000000})
-    );
-    m.rotation.x=-Math.PI/2;
-    m.position.set(x,-.392,z);
-    m.scale.set(sx,sz,1);
-    m.renderOrder=1;
-    scene.add(m);
-    return m;
-  }
   const back=new THREE.Mesh(new THREE.PlaneGeometry(22,10),new THREE.MeshStandardMaterial({color:0x160b06,roughness:.9}));back.position.set(0,3,-5.4);scene.add(back);
 
   const baseMat=new THREE.MeshPhysicalMaterial({color:0x14110f,roughness:.28,metalness:.18,clearcoat:.32,clearcoatRoughness:.22,envMapIntensity:.5});
@@ -80,7 +56,6 @@ if(canvas){
   const frontTrim=new THREE.Mesh(new THREE.BoxGeometry(6.86,.09,.08),metal);frontTrim.position.set(-.1,-.34,2.61);scene.add(frontTrim);
   [[-2.7,-1.75],[2.5,-1.75],[-2.7,1.75],[2.5,1.75]].forEach(([x,z])=>{const foot=new THREE.Mesh(new THREE.CylinderGeometry(.17,.19,.18,24),black);foot.position.set(x,-.53,z);scene.add(foot)});
   const rim=new THREE.Mesh(new THREE.BoxGeometry(7.16,.12,5.16),new THREE.MeshStandardMaterial({color:0x38251b,roughness:.34,metalness:.24}));rim.position.set(-.1,-.46,.1);scene.add(rim);
-  const turntableContactShadow=addContactShadow(-.1,.1,8.1,5.9,.46);
 
   const platter=new THREE.Group();platter.position.set(-.82,.02,.05);scene.add(platter);
   const platterBase=new THREE.Mesh(new THREE.CylinderGeometry(2.28,2.28,.16,96),new THREE.MeshStandardMaterial({color:0x353535,roughness:.23,metalness:.8}));platterBase.castShadow=true;platter.add(platterBase);
@@ -204,7 +179,6 @@ if(canvas){
   const armHit=new THREE.Mesh(new THREE.BoxGeometry(.72,.5,3.9),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   armHit.position.set(0,.28,1.55);arm.add(armHit);
   const mug=new THREE.Group();mug.position.set(4.35,-.16,2.55);mug.rotation.y=-.22;scene.add(mug);
-  const mugContactShadow=addContactShadow(4.35,2.55,1.45,1.15,.28);
 
   // Cafe-style black ceramic latte cup — visual geometry only; existing collider is untouched below.
   const ceramicMat=new THREE.MeshPhysicalMaterial({
@@ -279,14 +253,15 @@ if(canvas){
   const iceCubes=[];
 
   const lamp=new THREE.Group();lamp.position.set(4.55,-.35,-1.35);scene.add(lamp);
-  const lampContactShadow=addContactShadow(4.55,-1.35,2.45,2.05,.34);
   const lampBase=new THREE.Mesh(new THREE.CylinderGeometry(.78,.9,.18,48),new THREE.MeshStandardMaterial({color:0x17120f,roughness:.3,metalness:.62}));lampBase.castShadow=true;lamp.add(lampBase);
   const lampBaseRing=new THREE.Mesh(new THREE.TorusGeometry(.78,.055,12,48),metal);lampBaseRing.rotation.x=Math.PI/2;lampBaseRing.position.y=.1;lamp.add(lampBaseRing);
   const lampStem=new THREE.Mesh(new THREE.CylinderGeometry(.075,.09,2.35,20),new THREE.MeshStandardMaterial({color:0x2a211b,metalness:.78,roughness:.25}));lampStem.position.set(0,1.18,0);lamp.add(lampStem);
   const neck=new THREE.Mesh(new THREE.TorusGeometry(.48,.075,16,48,Math.PI*.72),new THREE.MeshStandardMaterial({color:0x2a211b,metalness:.78,roughness:.25}));neck.position.set(0,2.25,0);neck.rotation.set(Math.PI/2,0,0);lamp.add(neck);
-  const shade=new THREE.Mesh(new THREE.CylinderGeometry(.62,1.38,.92,64,1,true),new THREE.MeshStandardMaterial({color:0xa84b12,roughness:.42,metalness:.16,side:THREE.DoubleSide}));shade.position.set(0,2.68,0);shade.rotation.z=0;shade.castShadow=false;lamp.add(shade);
+  const shade=new THREE.Mesh(new THREE.CylinderGeometry(.62,1.38,.92,64,1,true),new THREE.MeshStandardMaterial({color:0xa84b12,roughness:.42,metalness:.16,side:THREE.DoubleSide}));shade.position.set(0,2.68,0);shade.rotation.z=0;shade.castShadow=true;lamp.add(shade);
   const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(0,2.20,0);lamp.add(bulbMesh);
-  const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(4.55,1.85,-1.35);bulb.castShadow=false;scene.add(bulb);
+  const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(4.55,1.85,-1.35);bulb.castShadow=true;
+  bulb.shadow.mapSize.set(1024,1024);bulb.shadow.bias=-0.00035;bulb.shadow.normalBias=.015;bulb.shadow.radius=4;
+  scene.add(bulb);
 
   // Pull cord is a CHILD of the lamp so it cannot drift away from the shade.
   // Local coordinates are anchored just under the socket housing.
@@ -335,10 +310,11 @@ if(canvas){
   let lampOn=true,pullAngle=0,pullVel=0,pullTarget=0,pullImpulse=0;
 
   scene.add(new THREE.HemisphereLight(0x8f785f,0x241209,.72));
-  const key=new THREE.DirectionalLight(0xffc58a,1.25);key.position.set(-4,6,5);key.castShadow=true;
+  const key=new THREE.DirectionalLight(0xffc58a,1.15);key.position.set(-4,6,5);key.castShadow=true;
   key.shadow.mapSize.set(2048,2048);
-  key.shadow.bias=-0.00045;
-  key.shadow.normalBias=.02;
+  key.shadow.bias=-0.0002;
+  key.shadow.normalBias=.01;
+  key.shadow.radius=3;
   key.shadow.camera.near=.5;
   key.shadow.camera.far=18;
   key.shadow.camera.left=-7;key.shadow.camera.right=7;key.shadow.camera.top=7;key.shadow.camera.bottom=-7;
