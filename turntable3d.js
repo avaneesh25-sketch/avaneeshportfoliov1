@@ -168,13 +168,13 @@ if(canvas){
   const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(5.15,1.85,-2.35);bulb.castShadow=true;scene.add(bulb);
 
   const lampPullString=new THREE.Group();lampPullString.position.set(5.15,1.95,-2.35);scene.add(lampPullString);
-  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,1.15,10),new THREE.MeshStandardMaterial({color:0x4a3b30,roughness:.55}));
-  pullLine.position.y=-.56;lampPullString.add(pullLine);
-  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.095,20,20),new THREE.MeshStandardMaterial({color:0x2a211a,roughness:.32,metalness:.15}));
-  pullBead.position.y=-1.16;pullBead.castShadow=true;lampPullString.add(pullBead);
+  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.009,.009,1.18,10),new THREE.MeshStandardMaterial({color:0x76604a,roughness:.5,metalness:.08}));
+  pullLine.position.y=-.58;lampPullString.add(pullLine);
+  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.072,20,20),new THREE.MeshStandardMaterial({color:0x4a3526,roughness:.42,metalness:.08}));
+  pullBead.position.y=-1.20;pullBead.castShadow=true;lampPullString.add(pullBead);
   const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.20,.20,1.55,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   pullHit.position.set(5.15,1.25,-2.35);scene.add(pullHit);
-  let lampOn=true,pullAnim=0;
+  let lampOn=true,pullAngle=0,pullVel=0,pullTarget=0,pullImpulse=0;
 
   scene.add(new THREE.HemisphereLight(0x9bb1d0,0x2a1208,1.15));
   const key=new THREE.DirectionalLight(0xffd7aa,2.3);key.position.set(-4,7,5);key.castShadow=true;scene.add(key);
@@ -197,10 +197,13 @@ if(canvas){
   function hitPullString(e){setPointer(e);return ray.intersectObject(pullHit,false).length>0}
   canvas.addEventListener('pointerdown',e=>{
     if(hitPullString(e)){
-      pullAnim=.34;
+      // Give the chain a downward tug and let it swing/settle naturally.
+      pullVel += 3.6;
+      pullImpulse = 1;
       lampOn=!lampOn;
       bulb.visible=lampOn;bulbMesh.visible=lampOn;
       window.dispatchEvent(new CustomEvent('lamp:toggle',{detail:{on:lampOn}}));
+      window.dispatchEvent(new CustomEvent('lamp:click'));
       return;
     }
     if(hitDeckButton(e)){
@@ -230,7 +233,18 @@ if(canvas){
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
-    if(pullAnim>0){pullAnim-=dt;const p=Math.max(0,pullAnim/.34);lampPullString.position.y=-Math.sin((1-p)*Math.PI)*.18}else{lampPullString.position.y=0}
+    {
+      // Damped pendulum-ish motion for the pull cord.
+      const stiffness=13.0,damping=4.8;
+      const acc=(-stiffness*pullAngle)-(damping*pullVel);
+      pullVel+=acc*dt;
+      pullAngle+=pullVel*dt;
+      pullAngle=THREE.MathUtils.clamp(pullAngle,-0.5,0.5);
+      lampPullString.rotation.z=pullAngle*0.5;
+      lampPullString.position.x=Math.sin(pullAngle)*0.12;
+      lampPullString.position.y=-Math.abs(pullAngle)*0.10;
+      if(Math.abs(pullAngle)<.002&&Math.abs(pullVel)<.01){pullAngle=0;pullVel=0}
+    }
     if(morphT<1){
       morphT=Math.min(1,morphT+dt/1.55);
       const mid=1-Math.abs(morphT-.5)*2;
