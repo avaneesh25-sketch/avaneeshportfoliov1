@@ -1,5 +1,5 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js';
-import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/RGBELoader.js';
+import { RGBELoader } from 'https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/loaders/RGBELoader.js?module';
 
 const canvas=document.getElementById('turntableCanvas');
 if(canvas){
@@ -22,14 +22,16 @@ if(canvas){
 
   const pmremGenerator=new THREE.PMREMGenerator(renderer);
   pmremGenerator.compileEquirectangularShader();
+  // Local procedural room environment is available immediately; remote HDRI only upgrades it.
+  const envScene=new THREE.Scene();
+  envScene.background=new THREE.Color(0x24130b);
+  const envRoom=new THREE.Mesh(new THREE.BoxGeometry(20,12,20),new THREE.MeshBasicMaterial({color:0x2b160d,side:THREE.BackSide}));envScene.add(envRoom);
+  const envWarm=new THREE.PointLight(0xff8b35,45,16);envWarm.position.set(5,4,2);envScene.add(envWarm);
+  const envCool=new THREE.PointLight(0x6688aa,18,14);envCool.position.set(-5,3,-2);envScene.add(envCool);
+  scene.environment=pmremGenerator.fromScene(envScene,.04).texture;
   new RGBELoader().load(
     'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr',
-    tex=>{
-      const env=pmremGenerator.fromEquirectangular(tex).texture;
-      scene.environment=env;
-      tex.dispose();
-      pmremGenerator.dispose();
-    },
+    tex=>{scene.environment=pmremGenerator.fromEquirectangular(tex).texture;tex.dispose()},
     undefined,
     ()=>{}
   );
@@ -100,11 +102,7 @@ if(canvas){
   const spindle=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,.28,24),metal);spindle.position.y=.28;platter.add(spindle);
   const labelRing=new THREE.Mesh(new THREE.TorusGeometry(.57,.012,8,64),new THREE.MeshStandardMaterial({color:0x806b51,roughness:.55}));labelRing.rotation.x=Math.PI/2;labelRing.position.y=.205;platter.add(labelRing);
   const platterRim=new THREE.Mesh(new THREE.TorusGeometry(2.23,.055,12,96),metal);platterRim.rotation.x=Math.PI/2;platterRim.position.y=.08;platter.add(platterRim);
-  // No extra groove geometry: movement is suggested only through a travelling reflection.
-  const vinylSheen=new THREE.PointLight(0x7aa2c8,7.5,4.8,2.2);
-  vinylSheen.position.set(-.82,1.15,.05);
-  scene.add(vinylSheen);
-  let sheenAngle=0;
+  // No fake groove geometry: the physical normal map catches the real scene/lamp lighting.
 
   // Physical start button on the deck.
   const deckButtonGroup=new THREE.Group();
@@ -213,16 +211,16 @@ if(canvas){
   const straw=new THREE.Mesh(new THREE.TubeGeometry(strawCurve,24,.025,10,false),new THREE.MeshStandardMaterial({color:0xf3dfc6,roughness:.5}));
   mug.add(straw);
 
-  const lamp=new THREE.Group();lamp.position.set(5.15,-.35,-2.35);scene.add(lamp);
+  const lamp=new THREE.Group();lamp.position.set(4.55,-.35,-1.35);scene.add(lamp);
   const lampBase=new THREE.Mesh(new THREE.CylinderGeometry(.78,.9,.18,48),new THREE.MeshStandardMaterial({color:0x17120f,roughness:.3,metalness:.62}));lampBase.castShadow=true;lamp.add(lampBase);
   const lampBaseRing=new THREE.Mesh(new THREE.TorusGeometry(.78,.055,12,48),metal);lampBaseRing.rotation.x=Math.PI/2;lampBaseRing.position.y=.1;lamp.add(lampBaseRing);
   const lampStem=new THREE.Mesh(new THREE.CylinderGeometry(.075,.09,2.35,20),new THREE.MeshStandardMaterial({color:0x2a211b,metalness:.78,roughness:.25}));lampStem.position.set(0,1.18,0);lamp.add(lampStem);
   const neck=new THREE.Mesh(new THREE.TorusGeometry(.48,.075,16,48,Math.PI*.72),new THREE.MeshStandardMaterial({color:0x2a211b,metalness:.78,roughness:.25}));neck.position.set(0,2.25,0);neck.rotation.set(Math.PI/2,0,0);lamp.add(neck);
   const shade=new THREE.Mesh(new THREE.CylinderGeometry(.62,1.38,.92,64,1,true),new THREE.MeshStandardMaterial({color:0xa84b12,roughness:.42,metalness:.16,side:THREE.DoubleSide}));shade.position.set(0,2.68,0);shade.rotation.z=0;shade.castShadow=true;lamp.add(shade);
   const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(0,2.20,0);lamp.add(bulbMesh);
-  const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(5.15,1.85,-2.35);bulb.castShadow=true;scene.add(bulb);
+  const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(4.55,1.85,-1.35);bulb.castShadow=true;scene.add(bulb);
 
-  const lampPullString=new THREE.Group();lampPullString.position.set(4.62,1.86,-1.88);scene.add(lampPullString);
+  const lampPullString=new THREE.Group();lampPullString.position.set(4.86,1.93,-1.05);scene.add(lampPullString);
   const chainMat=new THREE.MeshStandardMaterial({color:0xc6a77f,roughness:.42,metalness:.14});
   const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,1.24,12),chainMat);
   pullLine.position.y=-.60;pullLine.castShadow=true;lampPullString.add(pullLine);
@@ -230,7 +228,7 @@ if(canvas){
   const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.095,24,24),new THREE.MeshStandardMaterial({color:0x6b4c31,roughness:.36,metalness:.10}));
   pullBead.position.y=-1.28;pullBead.castShadow=true;lampPullString.add(pullBead);
   const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,1.7,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
-  pullHit.position.set(4.62,1.08,-1.88);scene.add(pullHit);
+  pullHit.position.set(4.86,1.12,-1.05);scene.add(pullHit);
   let lampOn=true,pullAngle=0,pullVel=0,pullTarget=0,pullImpulse=0;
 
   scene.add(new THREE.HemisphereLight(0x9bb1d0,0x2a1208,1.15));
@@ -290,7 +288,7 @@ if(canvas){
 
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
-  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing){platter.rotation.y-=dt*1.65;sheenAngle+=dt*.95;vinylSheen.position.x=-.82+Math.cos(sheenAngle)*2.15;vinylSheen.position.z=.05+Math.sin(sheenAngle)*2.15;vinylSheen.intensity=6.5+Math.sin(sheenAngle*2)*1.2}
+  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing){platter.rotation.y-=dt*1.65}
     {
       // Damped pendulum-ish motion for the pull cord.
       const stiffness=13.0,damping=4.8;
