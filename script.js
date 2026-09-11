@@ -20,7 +20,7 @@ function pauseVienna(){viennaAudio.pause();}
 window.addEventListener('turntable:drop',playViennaFromTurntable);
 window.addEventListener('turntable:lift',()=>{pauseVienna();if(instruction)instruction.textContent='Drag the tonearm onto the record.'});
 viennaAudio.addEventListener('loadedmetadata',()=>{if(duration)duration.textContent=formatTime(viennaAudio.duration)});
-viennaAudio.addEventListener('timeupdate',()=>{if(!viennaAudio.duration)return;if(progress)progress.style.width=`${viennaAudio.currentTime/viennaAudio.duration*100}%`;if(elapsed)elapsed.textContent=formatTime(viennaAudio.currentTime);if(duration)duration.textContent=formatTime(viennaAudio.duration)});
+viennaAudio.addEventListener('timeupdate',()=>{if(!viennaAudio.duration)return;const p=viennaAudio.currentTime/viennaAudio.duration;if(progress)progress.style.width=`${p*100}%`;if(elapsed)elapsed.textContent=formatTime(viennaAudio.currentTime);if(duration)duration.textContent=formatTime(viennaAudio.duration);window.dispatchEvent(new CustomEvent('turntable:progress',{detail:{progress:p}}))});
 viennaAudio.addEventListener('ended',()=>{if(instruction)instruction.textContent='Side finished. The needle stays where you left it.';window.dispatchEvent(new CustomEvent('turntable:ended'))});
 
 const artistNames={
@@ -30,8 +30,12 @@ const artistNames={
   'billy-joel':'BILLY JOEL',
   'elton-john':'ELTON JOHN'
 };
-const artistState={tracks:[],index:0,slug:'billy-joel'};
+const artistState={tracks:[],index:0,slug:'billy-joel',durations:[],totalDuration:0};
 function morphVinylLabel(title,artist){window.dispatchEvent(new CustomEvent('turntable:label',{detail:{title,artist}}))}
+async function probeDurations(tracks){
+  const durations=await Promise.all(tracks.map(t=>new Promise(resolve=>{const a=new Audio();a.preload='metadata';a.src=t.src;const done=()=>resolve(Number.isFinite(a.duration)?a.duration:0);a.addEventListener('loadedmetadata',done,{once:true});a.addEventListener('error',()=>resolve(0),{once:true})})));
+  artistState.durations=durations;artistState.totalDuration=durations.reduce((a,b)=>a+b,0);
+}
 async function loadArtistPlaylist(slug){
   const artist=artistNames[slug]||slug.toUpperCase();
   $$('.music3d-sleeve').forEach(x=>x.classList.toggle('is-active',x.dataset.artist===slug));
@@ -45,6 +49,7 @@ async function loadArtistPlaylist(slug){
     const data=await res.json();
     artistState.tracks=(Array.isArray(data)?data:(data.tracks||[])).filter(t=>t&&t.src);
     if(!artistState.tracks.length){if(instruction)instruction.textContent=`${artist} selected — add tracks in GitHub anytime.`;return}
+    await probeDurations(artistState.tracks);
     await playArtistTrack(0);
   }catch(e){if(instruction)instruction.textContent=`${artist} selected — add tracks in GitHub anytime.`}
 }
@@ -56,6 +61,12 @@ async function playArtistTrack(i){
   if(instruction)instruction.textContent=`${track.title||artistNames[artistState.slug]} — playing.`;
   if(soundEnabled)try{await artistAudio.play()}catch(e){}
 }
+if(artistAudio)artistAudio.addEventListener('timeupdate',()=>{
+  const prior=artistState.durations.slice(0,artistState.index).reduce((a,b)=>a+b,0);
+  const current=Number.isFinite(artistAudio.currentTime)?artistAudio.currentTime:0;
+  const total=artistState.totalDuration||artistAudio.duration||1;
+  window.dispatchEvent(new CustomEvent('turntable:progress',{detail:{progress:Math.min(1,(prior+current)/total)}}));
+});
 if(artistAudio)artistAudio.addEventListener('ended',()=>{const n=artistState.index+1;if(n<artistState.tracks.length)playArtistTrack(n);else if(instruction)instruction.textContent='Playlist finished.'});
 $$('.music3d-sleeve').forEach(s=>s.addEventListener('click',()=>loadArtistPlaylist(s.dataset.artist)));
 window.addEventListener('wheel',e=>{if(!$('.content-page.page--active'))e.preventDefault()},{passive:false});window.addEventListener('keydown',e=>{const p=$('.page--active')?.dataset.page;if(e.key==='ArrowRight'){const n={intro:'music',music:'work',work:'about',about:'cv'}[p];if(n)go(n)}if(e.key==='ArrowLeft'){const q={music:'intro',work:'music',about:'work',cv:'about'}[p];if(q)go(q)}});
