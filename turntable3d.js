@@ -53,7 +53,7 @@ if(canvas){
   woodTex.magFilter=THREE.LinearFilter;
   woodTex.anisotropy=renderer.capabilities.getMaxAnisotropy();
   woodTex.needsUpdate=true;
-  const tableMat=new THREE.MeshPhysicalMaterial({map:woodTex,color:0xffffff,roughness:.48,metalness:0,clearcoat:.16,clearcoatRoughness:.45,envMapIntensity:.35});
+  const tableMat=new THREE.MeshPhysicalMaterial({map:woodTex,color:0xffffff,roughness:.44,metalness:0,clearcoat:.20,clearcoatRoughness:.38,envMapIntensity:.38});
   const tableGeo=new THREE.BoxGeometry(18,.58,10.6,32,2,32);
   tableGeo.computeVertexNormals();
   const table=new THREE.Mesh(tableGeo,tableMat);table.position.y=-.69;table.receiveShadow=true;scene.add(table);
@@ -84,8 +84,8 @@ if(canvas){
   grooveNormal.anisotropy=renderer.capabilities.getMaxAnisotropy();
   grooveNormal.needsUpdate=true;
   const vinylMat=new THREE.MeshPhysicalMaterial({
-    color:0x090909,roughness:.39,metalness:.03,clearcoat:.42,clearcoatRoughness:.22,
-    normalMap:grooveNormal,normalScale:new THREE.Vector2(.72,.72),envMapIntensity:.58
+    color:0x090909,roughness:.36,metalness:.03,clearcoat:.46,clearcoatRoughness:.19,
+    normalMap:grooveNormal,normalScale:new THREE.Vector2(.78,.78),envMapIntensity:.62
   });
   const record=new THREE.Mesh(new THREE.CylinderGeometry(2.12,2.12,.065,192),vinylMat);record.position.y=.115;record.castShadow=true;platter.add(record);
   const labelCanvas=document.createElement('canvas');labelCanvas.width=1024;labelCanvas.height=1024;
@@ -465,7 +465,10 @@ if(canvas){
       return;
     }
     if(hitMug(e)){
-      if(!latteDispersed&&!latteRippling){latteRippling=true;latteRippleT=0}
+      if(!latteRippling){
+        latteRippling=true;
+        latteRippleT=0;
+      }
       canvas.style.cursor='pointer';
     }
   });
@@ -522,7 +525,7 @@ if(canvas){
     if(latteRippling){
       latteRippleT=Math.min(1,latteRippleT+dt/1.45);
       const p=latteRippleT;
-      disperseLatteArt(p);
+      if(!latteDispersed)disperseLatteArt(p);
       rippleRings.forEach((ring,i)=>{
         const local=THREE.MathUtils.clamp((p-ring.userData.delay)/(1-ring.userData.delay),0,1);
         ring.visible=local>0&&local<1;
@@ -531,8 +534,12 @@ if(canvas){
         ring.material.opacity=(1-local)*.34;
       });
       if(p>=1){
-        latteRippling=false;latteDispersed=true;
-        redrawLatteBase();latteTex.needsUpdate=true;
+        latteRippling=false;
+        if(!latteDispersed){
+          latteDispersed=true;
+          redrawLatteBase();
+          latteTex.needsUpdate=true;
+        }
         rippleRings.forEach(r=>{r.visible=false;r.material.opacity=0});
       }
     }
