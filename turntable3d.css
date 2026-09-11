@@ -28,3 +28,27 @@
 @keyframes miniVinylSpin{to{transform:translate(0,-50%) scale(1) rotate(360deg)}}
 .music3d-sleeve.is-active{outline:1px solid rgba(255,255,255,.45);outline-offset:-2px}
 .music3d-sleeve.is-active .hover-vinyl{opacity:1;transform:translate(0,-50%) scale(1);animation:miniVinylSpin 1.7s linear infinite}
+
+/* vinyl peeks upward from each sleeve */
+.music3d-sleeve{overflow:visible!important}
+.hover-vinyl{
+  right:16px!important;
+  left:auto!important;
+  top:-8px!important;
+  width:64px!important;
+  height:64px!important;
+  z-index:-1!important;
+  opacity:0!important;
+  transform:translateY(26px) scale(.78)!important;
+  transform-origin:center!important;
+  transition:opacity .18s ease,transform .28s cubic-bezier(.2,.8,.2,1)!important;
+}
+.music3d-sleeve:hover,.music3d-sleeve:focus-visible{z-index:20!important}
+.music3d-sleeve:hover .hover-vinyl,.music3d-sleeve:focus-visible .hover-vinyl,.music3d-sleeve.is-active .hover-vinyl{
+  opacity:1!important;
+  transform:translateY(-34px) scale(1)!important;
+  animation:miniVinylTopSpin 1.9s linear infinite!important;
+}
+@keyframes miniVinylTopSpin{
+  to{transform:translateY(-34px) scale(1) rotate(360deg)}
+}
