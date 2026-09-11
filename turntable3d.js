@@ -73,10 +73,11 @@ if(canvas){
   const rimOuter=new THREE.Mesh(new THREE.TorusGeometry(.46,.035,16,64),ceramic);rimOuter.rotation.x=Math.PI/2;rimOuter.position.y=.41;mug.add(rimOuter);
   const inner=new THREE.Mesh(new THREE.CylinderGeometry(.405,.405,.035,64),new THREE.MeshStandardMaterial({color:0x070504,roughness:.5}));inner.position.y=.385;mug.add(inner);
   const latte=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.018,64),new THREE.MeshStandardMaterial({color:0xb98558,roughness:.22,metalness:.01}));latte.position.y=.41;mug.add(latte);
-  const foam=new THREE.Mesh(new THREE.TorusGeometry(.28,.018,10,48),new THREE.MeshStandardMaterial({color:0xe0c39f,roughness:.65}));foam.rotation.x=Math.PI/2;foam.position.y=.426;mug.add(foam);
-  const iceMat=new THREE.MeshStandardMaterial({color:0xf0f4f1,transparent:true,opacity:.58,roughness:.35,metalness:0});
+  const foamDots=[];
+  [[-.09,.05],[.08,.04],[-.02,-.09],[.12,-.08]].forEach(([x,z])=>{const f=new THREE.Mesh(new THREE.SphereGeometry(.022,12,12),new THREE.MeshStandardMaterial({color:0xe7cfb4,roughness:.9}));f.position.set(x,.432,z);foamDots.push(f);mug.add(f)});
+  const iceMat=new THREE.MeshPhysicalMaterial({color:0xf6fbff,transparent:true,opacity:.62,roughness:.08,metalness:0,transmission:.28,thickness:.12,ior:1.31,clearcoat:.35,clearcoatRoughness:.08});
   const iceCubes=[];
-  [[-.15,.07],[.13,.10],[.04,-.15]].forEach(([x,z],i)=>{const ice=new THREE.Mesh(new THREE.IcosahedronGeometry(.105,1),iceMat);ice.scale.set(1.15,.55,1);ice.position.set(x,.47,z);ice.rotation.set(.18,i*.7+.25,.12);ice.userData.home=ice.position.clone();ice.userData.phase=i*2.1;iceCubes.push(ice);mug.add(ice)});
+  [[-.15,.07],[.13,.10],[.04,-.15]].forEach(([x,z],i)=>{const geo=new THREE.BoxGeometry(.19,.09,.19,2,1,2);const ice=new THREE.Mesh(geo,iceMat);ice.position.set(x,.465,z);ice.rotation.set(.08,i*.52+.15,.05);ice.userData.home=ice.position.clone();ice.userData.phase=i*2.1;iceCubes.push(ice);mug.add(ice)});
   const handle=new THREE.Mesh(new THREE.TorusGeometry(.31,.07,18,56,Math.PI*1.55),ceramic);handle.rotation.set(Math.PI/2,0,-Math.PI/2);handle.position.set(.46,.02,0);mug.add(handle);
   const saucer=new THREE.Mesh(new THREE.CylinderGeometry(.62,.67,.055,64),ceramic);saucer.position.y=-.48;saucer.scale.z=.72;mug.add(saucer);
   const lamp=new THREE.Group();lamp.position.set(5.15,-.35,-2.35);scene.add(lamp);
@@ -93,7 +94,7 @@ if(canvas){
   const fill=new THREE.PointLight(0x5478a8,9,8,2);fill.position.set(-2,2,-4);scene.add(fill);
 
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
-  let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false;
+  let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false,autoDropping=false,autoT=0;
   const armMeshes=[armHit,tube,headshell,cartridge,pivotBase,pivotCollar];
   const mugHit=new THREE.Mesh(new THREE.CylinderGeometry(.68,.68,1.25,32),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   mugHit.position.copy(mug.position);scene.add(mugHit);
@@ -101,26 +102,21 @@ if(canvas){
 
   function setPointer(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera)}
   function normalized(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
-  function hitArm(e){setPointer(e);const p=normalized(e);return ray.intersectObjects(armMeshes,false).length>0 || (p.x>.52&&p.x<.72&&p.y>.24&&p.y<.67)}
   function hitMug(e){setPointer(e);const p=normalized(e);return ray.intersectObject(mugHit,false).length>0 || (p.x>.73&&p.x<.88&&p.y>.60&&p.y<.86)}
-  canvas.addEventListener('pointerdown',e=>{
-    if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer';return}
-    if(dropped)return;
-    if(hitArm(e)){dragging=true;startX=e.clientX;baseAngle=arm.rotation.y;canvas.setPointerCapture?.(e.pointerId);canvas.style.cursor='grabbing'}
-  });
-  canvas.addEventListener('pointermove',e=>{
-    const p=normalized(e);
-    if(!dragging){canvas.style.cursor=((p.x>.52&&p.x<.72&&p.y>.24&&p.y<.67)||(p.x>.73&&p.x<.88&&p.y>.60&&p.y<.86))?'grab':'default';return}
-    const dx=(e.clientX-startX)/Math.max(innerWidth,900);
-    arm.rotation.y=THREE.MathUtils.clamp(baseAngle-dx*5.6,-.80,REST_ANGLE);
-  });
-  canvas.addEventListener('pointerup',e=>{if(!dragging)return;dragging=false;canvas.style.cursor='default';if(arm.rotation.y<-.34){arm.rotation.y=DROP_ANGLE;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}else{arm.rotation.y=REST_ANGLE}});
-  canvas.addEventListener('pointercancel',()=>{dragging=false;canvas.style.cursor='default';if(!dropped)arm.rotation.y=REST_ANGLE});
+  canvas.addEventListener('pointerdown',e=>{if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer'}});
+  window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping)return;autoDropping=true;autoT=0;});
   window.addEventListener('turntable:ended',()=>{playing=false});
 
   const clock=new THREE.Clock();
+  function smoothstep(t){return t*t*(3-2*t)}
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
-    if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*7+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.065;ice.position.z=ice.userData.home.z+Math.cos(a*1.15)*.065;ice.position.y=.47+Math.abs(Math.sin(a*.7))*.028;ice.rotation.y+=dt*(i%2?3.6:-3.8);ice.rotation.x=.18+Math.sin(a*.8)*.16});if(iceTime>1.25){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
+    if(autoDropping){
+      autoT+=dt/1.8;
+      const t=Math.min(autoT,1),e=smoothstep(t);
+      arm.rotation.y=THREE.MathUtils.lerp(REST_ANGLE,DROP_ANGLE,e);
+      if(t>=1){autoDropping=false;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}
+    }
+    if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*6.4+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.045;ice.position.z=ice.userData.home.z+Math.cos(a*1.08)*.045;ice.position.y=.465+Math.abs(Math.sin(a*.72))*.015;ice.rotation.y+=dt*(i%2?2.2:-2.4);ice.rotation.x=.08+Math.sin(a*.8)*.07});if(iceTime>1.1){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
     renderer.render(scene,camera)}animate();
 
   addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
