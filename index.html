@@ -9,6 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="turntable3d.css" />
   <style>
     .cv-page{background:radial-gradient(circle at 50% 18%,rgba(184,117,57,.18),transparent 28%),#080807}.cv-wrap{height:100%;padding:15vh 7vw 9vh;display:flex;flex-direction:column;justify-content:center}.cv-wrap h2{font:400 clamp(54px,7vw,100px)/.9 Instrument Serif,serif;margin:14px 0 5vh;text-align:center}.cv-wrap h2 em{font-weight:400}.cv-choice-grid{display:grid;grid-template-columns:1fr 1fr;border:1px solid #2e2b27;max-width:1100px;width:100%;margin:0 auto;background:rgba(255,255,255,.015)}.cv-choice{min-height:310px;padding:38px;text-decoration:none;color:#eee;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden;transition:.35s}.cv-choice:first-child{border-right:1px solid #2e2b27}.cv-choice:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 100%,rgba(184,117,57,.18),transparent 50%);opacity:0;transition:.35s}.cv-choice:hover{background:rgba(255,255,255,.04)}.cv-choice:hover:before{opacity:1}.cv-choice small{font:500 9px DM Mono,monospace;letter-spacing:.26em;color:#777;position:relative}.cv-choice strong{font:400 clamp(40px,5vw,70px)/.95 Instrument Serif,serif;position:relative}.cv-choice span{font:500 9px DM Mono,monospace;letter-spacing:.18em;color:#aaa;position:relative}.cv-side-note{text-align:center;margin-top:25px;color:#777;font:9px DM Mono,monospace;letter-spacing:.18em}.about-photo img{object-position:center}.montage img{object-position:center}.cv-page .page-back,.cv-page .page-next{bottom:3vh}
 
@@ -45,14 +46,34 @@
       <div class="sound-note">◉ &nbsp; SOUND ON FOR A BETTER EXPERIENCE</div><button class="page-next" id="introNext" data-go="music" disabled>CONTINUE →</button>
     </section>
 
-    <section class="page music-page" data-page="music" aria-label="Music">
-      <div class="music-room"></div>
-      <div class="vinyl-scene">
-        <aside class="record-crate" aria-label="Favourite artists"><div class="sleeve-stack"><div class="artist-sleeve"><strong>Ed Sheeran</strong><small>01 / ON REPEAT</small></div><div class="artist-sleeve"><strong>Michael Jackson</strong><small>02 / ON REPEAT</small></div><div class="artist-sleeve"><strong>Queen</strong><small>03 / ON REPEAT</small></div><div class="artist-sleeve"><strong>Billy Joel</strong><small>04 / FIRST RECORD</small></div><div class="artist-sleeve"><strong>Elton John</strong><small>05 / ON REPEAT</small></div></div></aside>
-        <div class="deck-wrap"><div class="turntable" id="turntable"><div class="platter" id="platter"><div class="record" id="record"><div class="record-label"><em>Vienna</em><span>BILLY JOEL</span></div></div></div><button class="tonearm" id="tonearm" aria-label="Drag the tonearm onto the record to play"><span class="tonearm-pivot"></span><span class="tonearm-counterweight"></span><span class="tonearm-tube"></span><span class="tonearm-head"><i></i></span></button><span class="turntable-mark">P2</span><p class="scribble needle-note">Drag the needle<br>onto the record</p></div></div>
-        <aside class="now-playing"><span class="eyebrow">FIRST RECORD</span><h3>Vienna</h3><span class="artist-name">BILLY JOEL</span><div class="progress"><i id="songProgress"></i></div><div class="time-row"><span id="elapsedTime">0:00</span><span id="durationTime">—:—</span></div><p class="music-instruction" id="musicInstruction">Move the arm. Music starts only when the stylus reaches the vinyl.</p><a class="apple-link" href="https://music.apple.com/profile/avipp2510" target="_blank" rel="noopener">EXPLORE MY APPLE MUSIC ↗</a></aside>
-      </div>
-      <button class="page-back" data-go="intro">← INTRO</button><button class="page-next" data-go="work">WORK →</button>
+    <section class="page music-page music3d-page" data-page="music" aria-label="Music">
+      <canvas id="turntableCanvas" aria-label="Interactive 3D turntable"></canvas>
+      <div class="music3d-vignette"></div>
+
+      <aside class="music3d-crate" aria-label="Favourite artists">
+        <div class="music3d-sleeve ed"><strong>ED SHEERAN</strong><small>+</small></div>
+        <div class="music3d-sleeve mj"><strong>MICHAEL JACKSON</strong><small>THRILLER</small></div>
+        <div class="music3d-sleeve queen"><strong>QUEEN</strong><small>A NIGHT AT THE OPERA</small></div>
+        <div class="music3d-sleeve billy"><strong>BILLY JOEL</strong><small>THE STRANGER</small></div>
+        <div class="music3d-sleeve elton"><strong>ELTON JOHN</strong><small>GOODBYE YELLOW BRICK ROAD</small></div>
+        <span class="crate-note">More songs. Same story.</span>
+      </aside>
+
+      <aside class="music3d-now">
+        <span>NOW PLAYING</span>
+        <h3>Vienna</h3>
+        <strong>BILLY JOEL</strong>
+        <div class="music3d-progress"><i id="songProgress"></i></div>
+        <div class="music3d-time"><b id="elapsedTime">0:00</b><b id="durationTime">—:—</b></div>
+        <p id="musicInstruction">Drag the tonearm onto the record.</p>
+        <a href="https://music.apple.com/profile/avipp2510" target="_blank" rel="noopener">EXPLORE MY APPLE MUSIC ↗</a>
+      </aside>
+
+      <div class="music3d-tip">Drag the needle<br>onto the record<br>to play. ↙</div>
+      <div class="music3d-cup-label">Good Music<br>Better Decisions</div>
+
+      <button class="page-back" data-go="intro">← INTRO</button>
+      <button class="page-next" data-go="work">WORK →</button>
     </section>
 
     <section class="page content-page" data-page="work" aria-label="Work"><div class="content-wrap"><span class="section-num">03 / SELECTED WORK</span><h2>Things I built.<br><em>Things that moved.</em></h2><div class="work-grid"><article><span>01</span><h3>Yokogawa</h3><p>Process safety, automation, client requirements and cross-functional delivery.</p><strong>20%</strong><small>handover cycle-time reduction</small></article><article><span>02</span><h3>Coffee Koffee</h3><p>A campus coffee venture built through sourcing, pricing and customer feedback.</p><strong>0→50</strong><small>cups/day</small></article><article><span>03</span><h3>7 Senses</h3><p>Storefront, catalogue, suppliers, Meta ads and conversion experiments.</p><strong>1K+</strong><small>storefront users</small></article><article><span>04</span><h3>Hardware builds</h3><p>Wearable bio-tracker, therapeutic exoskeleton and Tesla turbine prototypes.</p><strong>3</strong><small>hands-on builds</small></article></div></div><button class="page-back" data-go="music">← MUSIC</button><button class="page-next" data-go="about">ABOUT →</button></section>
@@ -61,6 +82,7 @@
 
     <section class="page cv-page" data-page="cv" aria-label="CV"><div class="cv-wrap"><span class="section-num" style="text-align:center">05 / CV — PICK A LENS</span><h2>Same story.<br><em>Different lens.</em></h2><div class="cv-choice-grid"><a class="cv-choice" href="assets/Avaneesh%20Pramod_C7_Onepagerpm.pdf" target="_blank" rel="noopener"><small>LEFT / 01</small><strong>Product</strong><span>OPEN PRODUCT CV ↗</span></a><a class="cv-choice" href="assets/Avaneesh_Pramod_C7_Onepager_CoS%20(1).pdf" target="_blank" rel="noopener"><small>RIGHT / 02</small><strong>Founder's Office</strong><span>OPEN FOUNDER'S OFFICE CV ↗</span></a></div><div class="cv-side-note">Two versions. One trajectory.</div></div><button class="page-back" data-go="about">← BACK TO STORY</button><a class="page-next" href="mailto:avaneeshpramod25@gmail.com">CONNECT ↗</a></section>
   </main>
+  <script type="module" src="turntable3d.js"></script>
   <script src="script.js"></script>
 </body>
 </html>
