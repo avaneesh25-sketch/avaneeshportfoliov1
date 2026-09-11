@@ -45,20 +45,25 @@ if(canvas){
   const labelRing=new THREE.Mesh(new THREE.TorusGeometry(.57,.012,8,64),new THREE.MeshStandardMaterial({color:0x806b51,roughness:.55}));labelRing.rotation.x=Math.PI/2;labelRing.position.y=.205;platter.add(labelRing);
   const platterRim=new THREE.Mesh(new THREE.TorusGeometry(2.23,.055,12,96),metal);platterRim.rotation.x=Math.PI/2;platterRim.position.y=.08;platter.add(platterRim);
 
-  const armPivot=new THREE.Group();armPivot.position.set(2.45,.22,-1.45);scene.add(armPivot);
-  const pivotBase=new THREE.Mesh(new THREE.CylinderGeometry(.48,.55,.35,48),new THREE.MeshStandardMaterial({color:0x151515,roughness:.28,metalness:.7}));pivotBase.castShadow=true;armPivot.add(pivotBase);
-  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.3,48),metal);cap.position.y=.27;armPivot.add(cap);
+  const armPivot=new THREE.Group();armPivot.position.set(2.55,.24,-1.48);scene.add(armPivot);
+  const pivotBase=new THREE.Mesh(new THREE.CylinderGeometry(.43,.50,.30,48),new THREE.MeshStandardMaterial({color:0x111111,roughness:.25,metalness:.72}));pivotBase.castShadow=true;armPivot.add(pivotBase);
+  const pivotCollar=new THREE.Mesh(new THREE.CylinderGeometry(.25,.29,.48,48),metal);pivotCollar.position.y=.28;armPivot.add(pivotCollar);
   const arm=new THREE.Group();armPivot.add(arm);
-  const REST_ANGLE=.12, DROP_ANGLE=-.68;
+  const REST_ANGLE=0, DROP_ANGLE=-.69;
   arm.rotation.y=REST_ANGLE;
-  const tube=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,3.72,20),metal);tube.rotation.z=Math.PI/2;tube.position.set(-1.72,.3,.06);tube.castShadow=true;arm.add(tube);
-  const elbow=new THREE.Mesh(new THREE.TorusGeometry(.48,.055,16,48,Math.PI*.52),metal);elbow.rotation.set(Math.PI/2,0,-.25);elbow.position.set(-3.42,.3,.18);arm.add(elbow);
-  const cartridge=new THREE.Mesh(new THREE.BoxGeometry(.55,.18,.35),new THREE.MeshStandardMaterial({color:0x101010,roughness:.3,metalness:.6}));cartridge.position.set(-3.62,.23,.54);cartridge.rotation.y=-.18;arm.add(cartridge);
-  const stylus=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.25,8),new THREE.MeshStandardMaterial({color:0xe1b26d,metalness:.7,roughness:.25}));stylus.position.set(-3.78,.08,.58);arm.add(stylus);
-  const weight=new THREE.Mesh(new THREE.CylinderGeometry(.25,.25,.6,32),new THREE.MeshStandardMaterial({color:0x202020,roughness:.35,metalness:.72}));weight.rotation.z=Math.PI/2;weight.position.set(.42,.32,-.03);arm.add(weight);
 
-  const powerKnob=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.12,32),metal);powerKnob.position.set(2.75,.08,1.75);scene.add(powerKnob);
-  const powerDot=new THREE.Mesh(new THREE.SphereGeometry(.035,12,12),new THREE.MeshStandardMaterial({color:0xe78b43,emissive:0xe05c1b,emissiveIntensity:3}));powerDot.position.set(2.75,.17,1.75);scene.add(powerDot);
+  /* Tonearm points toward the FRONT of the deck when parked, like the Rega reference. */
+  const tube=new THREE.Mesh(new THREE.CylinderGeometry(.052,.052,3.25,24),metal);
+  tube.rotation.x=Math.PI/2; tube.position.set(0,.34,1.52); tube.castShadow=true; arm.add(tube);
+  const headshell=new THREE.Mesh(new THREE.BoxGeometry(.38,.12,.62),new THREE.MeshStandardMaterial({color:0x171717,roughness:.28,metalness:.55}));
+  headshell.position.set(-.03,.29,3.12); headshell.rotation.y=.05; headshell.castShadow=true; arm.add(headshell);
+  const cartridge=new THREE.Mesh(new THREE.BoxGeometry(.25,.18,.29),new THREE.MeshStandardMaterial({color:0xe8e2d7,roughness:.5,metalness:.12}));
+  cartridge.position.set(-.03,.18,3.37); arm.add(cartridge);
+  const stylus=new THREE.Mesh(new THREE.CylinderGeometry(.011,.011,.18,8),new THREE.MeshStandardMaterial({color:0xd9aa62,metalness:.75,roughness:.2}));
+  stylus.position.set(-.03,.055,3.48); arm.add(stylus);
+  const counterWeight=new THREE.Mesh(new THREE.CylinderGeometry(.23,.23,.62,32),new THREE.MeshStandardMaterial({color:0x191919,roughness:.3,metalness:.72}));
+  counterWeight.rotation.x=Math.PI/2; counterWeight.position.set(0,.35,-.42); arm.add(counterWeight);
+  const cueLever=new THREE.Mesh(new THREE.CylinderGeometry(.025,.025,.55,12),metal);cueLever.rotation.z=Math.PI/2;cueLever.position.set(.48,.22,.02);armPivot.add(cueLever);
   const mug=new THREE.Group();mug.position.set(4.35,-.12,2.55);mug.rotation.y=-.18;scene.add(mug);
   const ceramic=new THREE.MeshStandardMaterial({color:0x17120f,roughness:.26,metalness:.08});
   const cup=new THREE.Mesh(new THREE.CylinderGeometry(.46,.37,.82,64,1,true),ceramic);cup.castShadow=true;mug.add(cup);
@@ -84,7 +89,7 @@ if(canvas){
 
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
   let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false;
-  const armMeshes=[tube,elbow,cartridge,cap,pivotBase];
+  const armMeshes=[tube,headshell,cartridge,pivotBase,pivotCollar];
 
   function hitArm(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera);return ray.intersectObjects(armMeshes,false).length>0}
   canvas.addEventListener('pointerdown',e=>{if(dropped)return;if(hitArm(e)){dragging=true;startX=e.clientX;baseAngle=arm.rotation.y;canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing'}});
