@@ -98,23 +98,34 @@ if(canvas){
   const armMeshes=[armHit,tube,headshell,cartridge,pivotBase,pivotCollar];
   const mugHit=new THREE.Mesh(new THREE.CylinderGeometry(.68,.68,1.25,32),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   mugHit.position.copy(mug.position);scene.add(mugHit);
-  let iceActive=false,iceTime=0;
+  const buttonHit=new THREE.Mesh(new THREE.CylinderGeometry(.34,.34,.28,32),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  buttonHit.position.copy(deckButtonGroup.position);buttonHit.position.y=.10;scene.add(buttonHit);
+  let iceActive=false,iceTime=0,buttonPressT=0;
 
   function setPointer(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera)}
   function normalized(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}}
   function hitMug(e){setPointer(e);const p=normalized(e);return ray.intersectObject(mugHit,false).length>0 || (p.x>.73&&p.x<.88&&p.y>.60&&p.y<.86)}
-  canvas.addEventListener('pointerdown',e=>{if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer'}});
+  function hitDeckButton(e){setPointer(e);return ray.intersectObject(buttonHit,false).length>0}
+  canvas.addEventListener('pointerdown',e=>{
+    if(hitDeckButton(e)){
+      if(!dropped&&!autoDropping){buttonPressT=.18;statusLed.material.color.setHex(0xff8a3b);statusLed.material.emissive.setHex(0xff5b16);statusLed.material.emissiveIntensity=3;window.dispatchEvent(new CustomEvent('turntable:autoDrop'))}
+      return;
+    }
+    if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer'}
+  });
+  canvas.addEventListener('pointermove',e=>{if(hitDeckButton(e)){canvas.style.cursor='pointer'}else if(!iceActive){canvas.style.cursor='default'}});
   window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping)return;autoDropping=true;autoT=0;});
-  window.addEventListener('turntable:ended',()=>{playing=false});
+  window.addEventListener('turntable:ended',()=>{playing=false;statusLed.material.color.setHex(0x2b2b2b);statusLed.material.emissive.setHex(0x000000);statusLed.material.emissiveIntensity=0;});
 
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
+    if(buttonPressT>0){buttonPressT-=dt;deckButton.position.y=.055}else{deckButton.position.y=.085}
     if(autoDropping){
       autoT+=dt/1.8;
       const t=Math.min(autoT,1),e=smoothstep(t);
       arm.rotation.y=THREE.MathUtils.lerp(REST_ANGLE,DROP_ANGLE,e);
-      if(t>=1){autoDropping=false;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}
+      if(t>=1){autoDropping=false;dropped=true;playing=true;statusLed.material.color.setHex(0xff8a3b);statusLed.material.emissive.setHex(0xff5b16);statusLed.material.emissiveIntensity=2.5;window.dispatchEvent(new CustomEvent('turntable:drop'))}
     }
     if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*6.4+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.045;ice.position.z=ice.userData.home.z+Math.cos(a*1.08)*.045;ice.position.y=.465+Math.abs(Math.sin(a*.72))*.015;ice.rotation.y+=dt*(i%2?2.2:-2.4);ice.rotation.x=.08+Math.sin(a*.8)*.07});if(iceTime>1.1){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
     renderer.render(scene,camera)}animate();
