@@ -88,3 +88,12 @@
 .music3d-sleeve.is-active .hover-vinyl{opacity:0!important;animation:none!important}
 .music3d-sleeve.is-active:hover .hover-vinyl{opacity:1!important;animation:halfVinylSpin 1.85s linear infinite!important}
 @keyframes halfVinylSpin{to{transform:translateY(0) rotate(360deg)}}
+
+/* final pull-label placement */
+.lamp-pull-hint{
+  right:17.2vw!important;
+  top:31.5vh!important;
+  font-size:17px!important;
+  transform:rotate(-7deg)!important;
+  opacity:.9!important;
+}
