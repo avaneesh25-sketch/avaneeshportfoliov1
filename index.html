@@ -66,6 +66,8 @@
 
       <div class="music3d-tip">Drag the needle<br>onto the record<br>to play. ↙</div>
       <div class="music3d-cup-label">Good Music<br>Better Decisions</div>
+      <div class="lamp-pull-hint">pull ↘</div>
+      <div id="lampBlackout" class="lamp-blackout" aria-hidden="true"></div>
 
       <button class="page-back" data-go="intro">← INTRO</button>
       <button class="page-next" data-go="work">WORK →</button>
@@ -77,7 +79,16 @@
 
     <section class="page cv-page" data-page="cv" aria-label="CV"><div class="cv-wrap"><span class="section-num" style="text-align:center">05 / CV — PICK A LENS</span><h2>Same story.<br><em>Different lens.</em></h2><div class="cv-choice-grid"><a class="cv-choice" href="assets/Avaneesh%20Pramod_C7_Onepagerpm.pdf" target="_blank" rel="noopener"><small>LEFT / 01</small><strong>Product</strong><span>OPEN PRODUCT CV ↗</span></a><a class="cv-choice" href="assets/Avaneesh_Pramod_C7_Onepager_CoS%20(1).pdf" target="_blank" rel="noopener"><small>RIGHT / 02</small><strong>Founder's Office</strong><span>OPEN FOUNDER'S OFFICE CV ↗</span></a></div><div class="cv-side-note">Two versions. One trajectory.</div></div><button class="page-back" data-go="about">← BACK TO STORY</button><a class="page-next" href="mailto:avaneeshpramod25@gmail.com">CONNECT ↗</a></section>
   </main>
-  <script type="module" src="turntable3d.js?v=20260911-labelmorph"></script>
+  <script type="module" src="turntable3d.js?v=20260911-lamppull"></script>
   <script src="script.js?v=20260911-labelmorph"></script>
+  <script>
+    window.addEventListener('lamp:toggle',e=>{
+      const o=document.getElementById('lampBlackout');
+      if(!o)return;
+      const off=!e.detail?.on;
+      o.classList.toggle('is-off',off);
+      o.setAttribute('aria-hidden',off?'false':'true');
+    });
+  </script>
 </body>
 </html>
