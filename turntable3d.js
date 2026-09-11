@@ -42,7 +42,12 @@ if(canvas){
   const wctx=woodCanvas.getContext('2d');
   const grad=wctx.createLinearGradient(0,0,1024,0);grad.addColorStop(0,'#2b150b');grad.addColorStop(.35,'#4b2511');grad.addColorStop(.72,'#3b1c0e');grad.addColorStop(1,'#5b2d13');wctx.fillStyle=grad;wctx.fillRect(0,0,1024,512);
   for(let y=0;y<512;y+=7){const wobble=Math.sin(y*.09)*16;wctx.strokeStyle=`rgba(130,72,35,${.08+(y%21)/500})`;wctx.lineWidth=1;wctx.beginPath();wctx.moveTo(0,y);for(let x=0;x<=1024;x+=32)wctx.lineTo(x,y+Math.sin(x*.018+y*.05)*3+wobble*.08);wctx.stroke()}
-  const woodTex=new THREE.CanvasTexture(woodCanvas);woodTex.wrapS=woodTex.wrapT=THREE.RepeatWrapping;woodTex.repeat.set(2.2,1.5);
+  const woodTex=new THREE.CanvasTexture(woodCanvas);
+  // Use one continuous texture across the tabletop. Repeating the gradient created
+  // the visible center seam where the right edge wrapped back to the left edge.
+  woodTex.wrapS=THREE.ClampToEdgeWrapping;
+  woodTex.wrapT=THREE.ClampToEdgeWrapping;
+  woodTex.repeat.set(1,1);
   const tableMat=new THREE.MeshPhysicalMaterial({map:woodTex,color:0xffffff,roughness:.48,metalness:0,clearcoat:.16,clearcoatRoughness:.45,envMapIntensity:.35});
   const tableGeo=new THREE.BoxGeometry(18,.58,10.6,32,2,32);
   tableGeo.computeVertexNormals();
