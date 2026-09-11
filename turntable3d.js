@@ -45,6 +45,55 @@ if(canvas){
   const labelRing=new THREE.Mesh(new THREE.TorusGeometry(.57,.012,8,64),new THREE.MeshStandardMaterial({color:0x806b51,roughness:.55}));labelRing.rotation.x=Math.PI/2;labelRing.position.y=.205;platter.add(labelRing);
   const platterRim=new THREE.Mesh(new THREE.TorusGeometry(2.23,.055,12,96),metal);platterRim.rotation.x=Math.PI/2;platterRim.position.y=.08;platter.add(platterRim);
 
+  // Physical start button on the deck.
+  const deckButtonGroup=new THREE.Group();
+  deckButtonGroup.position.set(2.55,.02,1.72);
+  scene.add(deckButtonGroup);
+
+  const buttonWell=new THREE.Mesh(
+    new THREE.CylinderGeometry(.25,.27,.055,48),
+    new THREE.MeshStandardMaterial({color:0x090909,roughness:.2,metalness:.55})
+  );
+  buttonWell.position.y=.02;
+  deckButtonGroup.add(buttonWell);
+
+  const deckButton=new THREE.Mesh(
+    new THREE.CylinderGeometry(.19,.19,.085,48),
+    new THREE.MeshStandardMaterial({color:0x171717,roughness:.28,metalness:.5})
+  );
+  deckButton.position.y=.085;
+  deckButton.castShadow=true;
+  deckButtonGroup.add(deckButton);
+
+  const buttonRing=new THREE.Mesh(
+    new THREE.TorusGeometry(.19,.018,12,48),
+    new THREE.MeshStandardMaterial({color:0x3d3d3d,roughness:.25,metalness:.78})
+  );
+  buttonRing.rotation.x=Math.PI/2;
+  buttonRing.position.y=.13;
+  deckButtonGroup.add(buttonRing);
+
+  const statusLed=new THREE.Mesh(
+    new THREE.SphereGeometry(.038,16,16),
+    new THREE.MeshStandardMaterial({color:0x2b2b2b,emissive:0x000000,emissiveIntensity:0})
+  );
+  statusLed.position.set(-.34,.09,-.02);
+  deckButtonGroup.add(statusLed);
+
+  const tick33=new THREE.Mesh(
+    new THREE.BoxGeometry(.16,.012,.025),
+    new THREE.MeshStandardMaterial({color:0xd8d0c5,roughness:.5})
+  );
+  tick33.position.set(.40,.08,.11);
+  deckButtonGroup.add(tick33);
+
+  const tick45=new THREE.Mesh(
+    new THREE.BoxGeometry(.16,.012,.025),
+    new THREE.MeshStandardMaterial({color:0x8e857a,roughness:.5})
+  );
+  tick45.position.set(.40,.08,-.10);
+  deckButtonGroup.add(tick45);
+
   const armPivot=new THREE.Group();armPivot.position.set(2.55,.24,-1.48);scene.add(armPivot);
   const pivotBase=new THREE.Mesh(new THREE.CylinderGeometry(.43,.50,.30,48),new THREE.MeshStandardMaterial({color:0x111111,roughness:.25,metalness:.72}));pivotBase.castShadow=true;armPivot.add(pivotBase);
   const pivotCollar=new THREE.Mesh(new THREE.CylinderGeometry(.25,.29,.48,48),metal);pivotCollar.position.y=.28;armPivot.add(pivotCollar);
@@ -93,6 +142,7 @@ if(canvas){
   const key=new THREE.DirectionalLight(0xffd7aa,2.3);key.position.set(-4,7,5);key.castShadow=true;scene.add(key);
   const fill=new THREE.PointLight(0x5478a8,9,8,2);fill.position.set(-2,2,-4);scene.add(fill);
 
+  renderer.render(scene,camera); // first paint
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
   let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false,autoDropping=false,autoT=0;
   const armMeshes=[armHit,tube,headshell,cartridge,pivotBase,pivotCollar];
