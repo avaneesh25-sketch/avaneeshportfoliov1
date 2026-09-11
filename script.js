@@ -9,13 +9,13 @@ let currentPage='intro';
 function syncChapterChrome(page){
   currentPage=page;
   document.body.classList.toggle('chapter-mode',page!=='intro');
-  $('#chapterNav [data-chapter]').forEach(b=>b.classList.toggle('is-active',b.dataset.chapter===page));
+  $$('#chapterNav [data-chapter]').forEach(b=>b.classList.toggle('is-active',b.dataset.chapter===page));
 }
 
 function go(page,direction='next'){
   const target=$(`[data-page="${page}"]`);
   if(!target)return;
-  $('.page').forEach(p=>{
+  $$('.page').forEach(p=>{
     p.classList.remove('page-swipe-in-right','page-swipe-in-left');
     p.classList.toggle('page--active',p===target);
   });
@@ -27,7 +27,7 @@ function go(page,direction='next'){
   if(page!=='music')pauseVienna(false);
 }
 
-$('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
+$$('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
 
 function stepChapter(delta){
   if(currentPage==='intro'){go('about','next');return}
