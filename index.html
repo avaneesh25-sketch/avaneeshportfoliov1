@@ -60,12 +60,8 @@
       </aside>
 
       <aside class="music3d-now music3d-minimal">
-        <p id="musicInstruction">Press the record to begin.</p>
+        <p id="musicInstruction">Press the turntable button to drop the needle.</p>
       </aside>
-      <button id="dropNeedleButton" class="drop-needle-btn vinyl-play-btn" aria-label="Drop the needle and play Vienna">
-        <span class="vinyl-play-icon">▶</span>
-        <span class="vinyl-play-label">DROP THE NEEDLE</span>
-      </button>
 
       <div class="music3d-tip">Drag the needle<br>onto the record<br>to play. ↙</div>
       <div class="music3d-cup-label">Good Music<br>Better Decisions</div>
@@ -80,18 +76,7 @@
 
     <section class="page cv-page" data-page="cv" aria-label="CV"><div class="cv-wrap"><span class="section-num" style="text-align:center">05 / CV — PICK A LENS</span><h2>Same story.<br><em>Different lens.</em></h2><div class="cv-choice-grid"><a class="cv-choice" href="assets/Avaneesh%20Pramod_C7_Onepagerpm.pdf" target="_blank" rel="noopener"><small>LEFT / 01</small><strong>Product</strong><span>OPEN PRODUCT CV ↗</span></a><a class="cv-choice" href="assets/Avaneesh_Pramod_C7_Onepager_CoS%20(1).pdf" target="_blank" rel="noopener"><small>RIGHT / 02</small><strong>Founder's Office</strong><span>OPEN FOUNDER'S OFFICE CV ↗</span></a></div><div class="cv-side-note">Two versions. One trajectory.</div></div><button class="page-back" data-go="about">← BACK TO STORY</button><a class="page-next" href="mailto:avaneeshpramod25@gmail.com">CONNECT ↗</a></section>
   </main>
-  <script type="module" src="turntable3d.js?v=20260911-1512"></script>
+  <script type="module" src="turntable3d.js?v=20260911-physicalbutton"></script>
   <script src="script.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded',()=>{
-  const b=document.getElementById('dropNeedleButton');
-  if(b)b.addEventListener('click',()=>{
-    b.disabled=true;
-    b.textContent='LOWERING…';
-    window.dispatchEvent(new CustomEvent('turntable:autoDrop'));
-    setTimeout(()=>{b.textContent='NEEDLE DOWN';},1900);
-  });
-});
-</script>
 </body>
 </html>
