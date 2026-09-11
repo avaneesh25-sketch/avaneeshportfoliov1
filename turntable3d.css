@@ -56,3 +56,6 @@
 .lamp-blackout{position:absolute;inset:0;z-index:50;background:#000;opacity:0;pointer-events:none;transition:opacity .55s ease}
 .lamp-blackout.is-off{opacity:.985}
 .lamp-pull-hint{position:absolute;z-index:8;right:18.5vw;top:35vh;color:#d3bda4;font:500 16px Caveat,cursive;transform:rotate(-7deg);pointer-events:none;opacity:.72}
+
+.lamp-blackout{background:radial-gradient(circle at 78% 28%,rgba(18,10,5,.14),#000 58%)!important;transition:opacity .42s cubic-bezier(.4,0,.2,1)!important}
+.lamp-blackout.is-off{opacity:.992!important}
