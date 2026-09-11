@@ -11,13 +11,13 @@ const aboutImage=$('.about-photo img');if(aboutImage)aboutImage.src='assets/abou
 const transitionStyle=document.createElement('style');
 transitionStyle.textContent=`
 .crt-exit-noise{position:fixed;z-index:998;inset:0;pointer-events:none;opacity:0;visibility:hidden;background:#666;overflow:hidden}
-.crt-exit-noise:before{content:"";position:absolute;inset:-28%;background-image:repeating-radial-gradient(circle at 30% 20%,#eee 0 1px,#505050 1px 2px,#9a9a9a 2px 3px,#1d1d1d 3px 4px);background-size:5px 5px;animation:crtStatic .075s steps(2) infinite;filter:contrast(1.9) grayscale(1)}
+.crt-exit-noise:before{content:"";position:absolute;inset:-28%;background-image:repeating-radial-gradient(circle at 30% 20%,#eee 0 1px,#505050 1px 2px,#9a9a9a 2px 3px,#1d1d1d 3px 4px),repeating-linear-gradient(0deg,rgba(255,255,255,.07) 0 1px,rgba(0,0,0,.08) 1px 3px);background-size:5px 5px,100% 3px;animation:crtStatic .065s steps(2) infinite;filter:contrast(1.95) grayscale(1)}
 .crt-exit-noise:after{content:"NO SIGNAL";position:absolute;inset:0;display:grid;place-items:center;color:#eee;font:500 11px DM Mono,monospace;letter-spacing:.34em;text-shadow:0 0 7px rgba(255,255,255,.38)}
 .crt-impact-flash{position:fixed;z-index:999;inset:0;pointer-events:none;background:#fff;opacity:0;visibility:hidden}
 .about-page.crt-about-reveal .about-wrap{animation:crtAboutReveal .82s cubic-bezier(.2,.72,.2,1) both}
 .tv-set.crt-pull-in{will-change:transform,filter,opacity;z-index:997;position:relative}
 @keyframes crtStatic{0%{transform:translate(0,0)}25%{transform:translate(-1.4%,1.8%)}50%{transform:translate(1.2%,-1.2%)}75%{transform:translate(-.8%,-1.4%)}100%{transform:translate(1.5%,1%)}}
-@keyframes crtAboutReveal{0%{opacity:0;transform:translateY(22px)}100%{opacity:1;transform:translateY(0)}}
+#montage figure{transition:opacity var(--montage-speed,.72s) linear,filter var(--montage-speed,.72s) linear,transform var(--montage-speed,.72s) ease}.montage.montage-fast figure{animation-duration:.42s!important;transition-duration:.20s!important}@keyframes crtAboutReveal{0%{opacity:0;transform:translateY(22px)}100%{opacity:1;transform:translateY(0)}}
 `;
 document.head.appendChild(transitionStyle);
 const exitNoise=document.createElement('div');exitNoise.className='crt-exit-noise';document.body.appendChild(exitNoise);
@@ -29,61 +29,67 @@ async function transitionIntroToAbout(){
   clearIntroTimers();
   introAudio.pause();
 
-  const introPage=$('[data-page="intro"]');
   const aboutPage=$('[data-page="about"]');
   signalLost.textContent='NO SIGNAL';
   signalLost.classList.add('show');
 
-  // Pull the viewer into the TV itself — scale the TV, not the page.
+  // Quick "suction" into the CRT: tiny anticipation, then a hard accelerating yank.
   tv.classList.add('crt-pull-in');
   tv.style.transformOrigin='50% 50%';
 
   const pull=tv.animate([
     {transform:'scale(1)',filter:'brightness(1) contrast(1)',opacity:1,offset:0},
-    {transform:'scale(1.08)',filter:'brightness(.96) contrast(1.08)',opacity:1,offset:.28},
-    {transform:'scale(3.2)',filter:'brightness(.88) contrast(1.22)',opacity:1,offset:.62},
-    {transform:'scale(16)',filter:'brightness(.72) contrast(1.55)',opacity:1,offset:1}
-  ],{duration:1100,easing:'cubic-bezier(.55,.02,.92,.45)',fill:'forwards'});
+    {transform:'scale(.985)',filter:'brightness(.98) contrast(1.04)',opacity:1,offset:.12},
+    {transform:'scale(1.22)',filter:'brightness(.96) contrast(1.12)',opacity:1,offset:.26},
+    {transform:'scale(4.6)',filter:'brightness(.86) contrast(1.32) blur(.3px)',opacity:1,offset:.62},
+    {transform:'scale(19)',filter:'brightness(.64) contrast(1.75) blur(1px)',opacity:1,offset:1}
+  ],{
+    duration:620,
+    easing:'cubic-bezier(.72,.02,.98,.36)',
+    fill:'forwards'
+  });
 
-  // Static arrives before the bezel has completely left frame.
-  await wait(600);
+  // Bring in static only near the end so the zoom reads first.
+  await wait(380);
   exitNoise.style.visibility='visible';
-  exitNoise.animate([{opacity:0},{opacity:1}],{duration:280,easing:'ease-out',fill:'forwards'});
-
-  await wait(300);
-
-  // Impact flash at the moment we pass through the glass.
-  impactFlash.style.visibility='visible';
-  await impactFlash.animate([{opacity:0},{opacity:.9},{opacity:0}],{
-    duration:330,
-    easing:'cubic-bezier(.4,0,.2,1)',
+  exitNoise.animate([{opacity:0},{opacity:.18},{opacity:1}],{
+    duration:180,
+    easing:'linear',
     fill:'forwards',
-    offset:[0,.22,1]
-  }).finished.catch(()=>{});
+    offset:[0,.35,1]
+  });
+
+  await wait(115);
+
+  // Very short impact flash right as the glass fills the frame.
+  impactFlash.style.visibility='visible';
+  await impactFlash.animate(
+    [{opacity:0},{opacity:.72},{opacity:0}],
+    {duration:150,easing:'ease-out',fill:'forwards',offset:[0,.18,1]}
+  ).finished.catch(()=>{});
   impactFlash.style.visibility='hidden';
 
-  // CRT horizontal desync stutter.
+  // Short, punchy CRT desync after impact.
   await exitNoise.animate([
-    {transform:'translateX(0)'},
-    {transform:'translateX(-10px)'},
-    {transform:'translateX(8px)'},
-    {transform:'translateX(-6px)'},
-    {transform:'translateX(0)'}
-  ],{duration:190,iterations:1,easing:'steps(1,end)'}).finished.catch(()=>{});
+    {transform:'translate(0,0) scale(1)'},
+    {transform:'translate(-14px,1px) scale(1.01)'},
+    {transform:'translate(10px,-1px) scale(.995)'},
+    {transform:'translate(-7px,0) scale(1.005)'},
+    {transform:'translate(0,0) scale(1)'}
+  ],{duration:115,easing:'steps(1,end)'}).finished.catch(()=>{});
 
-  await wait(300);
+  await wait(170);
 
-  // Switch behind full static so there is never a hard visible page cut.
   go('about');
   aboutPage?.classList.add('crt-about-reveal');
 
-  await exitNoise.animate([{opacity:1},{opacity:0}],{
-    duration:430,easing:'ease-out',fill:'forwards'
+  await exitNoise.animate([{opacity:1},{opacity:.92},{opacity:0}],{
+    duration:360,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'
   }).finished.catch(()=>{});
+
   exitNoise.style.visibility='hidden';
   exitNoise.style.transform='';
 
-  // Reset intro scene after it is fully hidden.
   try{pull.cancel()}catch(e){}
   tv.style.transform='';
   tv.style.filter='';
@@ -93,10 +99,39 @@ async function transitionIntroToAbout(){
   signalLost.classList.remove('show');
   signalLost.textContent='BAD SIGNAL';
 
-  setTimeout(()=>aboutPage?.classList.remove('crt-about-reveal'),900);
+  setTimeout(()=>aboutPage?.classList.remove('crt-about-reveal'),800);
   introTransitioning=false;
 }
-async function startIntro(){clearIntroTimers();introTransitioning=false;tv.classList.remove('playing');signalLost.classList.remove('show');introNext.disabled=true;void tv.offsetWidth;tv.classList.add('playing');let audioStarted=false;if(soundEnabled){try{introAudio.currentTime=0;await introAudio.play();audioStarted=true}catch(e){}}if(audioStarted){introAudio.onended=transitionIntroToAbout;if(Number.isFinite(introAudio.duration)&&introAudio.duration>0)introTimer.push(setTimeout(transitionIntroToAbout,(introAudio.duration+.15)*1000))}else introTimer.push(setTimeout(transitionIntroToAbout,12800))}playIntro.addEventListener('click',startIntro);
+let introFastMontage=false;
+function setMontageSpeed(fast){
+  introFastMontage=fast;
+  document.documentElement.style.setProperty('--montage-speed',fast?'0.28s':'0.72s');
+  const m=$('#montage');
+  if(m)m.classList.toggle('montage-fast',fast);
+}
+async function startIntro(){
+  clearIntroTimers();introTransitioning=false;setMontageSpeed(false);
+  tv.classList.remove('playing');signalLost.classList.remove('show');introNext.disabled=true;
+  void tv.offsetWidth;tv.classList.add('playing');
+  let audioStarted=false;
+  if(soundEnabled){try{introAudio.currentTime=0;await introAudio.play();audioStarted=true}catch(e){}}
+  if(audioStarted){
+    introAudio.onended=transitionIntroToAbout;
+    const armFast=()=>{
+      if(Number.isFinite(introAudio.duration)&&introAudio.duration>0){
+        const ms=Math.max(0,(introAudio.duration-2.6-introAudio.currentTime)*1000);
+        introTimer.push(setTimeout(()=>setMontageSpeed(true),ms));
+      }
+    };
+    if(Number.isFinite(introAudio.duration)&&introAudio.duration>0)armFast();
+    else introAudio.addEventListener('loadedmetadata',armFast,{once:true});
+    if(Number.isFinite(introAudio.duration)&&introAudio.duration>0)introTimer.push(setTimeout(transitionIntroToAbout,(introAudio.duration+.08)*1000));
+  }else{
+    introTimer.push(setTimeout(()=>setMontageSpeed(true),10100));
+    introTimer.push(setTimeout(transitionIntroToAbout,12800));
+  }
+}
+playIntro.addEventListener('click',startIntro);
 
 
 const progress=$('#songProgress'),elapsed=$('#elapsedTime'),duration=$('#durationTime'),instruction=$('#musicInstruction'),artistAudio=$('#artistAudio');
