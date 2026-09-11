@@ -1,39 +1,45 @@
-/* Cinematic playlist — exact uploaded scene as the visual foundation */
-.music-page{background:#090603!important;isolation:isolate!important}
-.music-page .music-room{position:absolute!important;inset:0!important;z-index:0!important;background-image:url('assets/ChatGPT%20Image%20Sep%2010%2C%202026%2C%2008_41_27%20PM.png?v=2')!important;background-size:cover!important;background-position:center center!important;background-repeat:no-repeat!important;pointer-events:none!important}
-.music-page .music-room:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.02),transparent 17%,transparent 84%,rgba(0,0,0,.08));pointer-events:none}
+/* Photographic layered playlist scene */
+.music-page{background:#090603!important;isolation:isolate!important;--scene:url('assets/ChatGPT%20Image%20Sep%2010%2C%202026%2C%2008_41_27%20PM.png')}
+.music-page .music-room{position:absolute!important;inset:0!important;z-index:0!important;background-image:var(--scene)!important;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;pointer-events:none!important}
+.music-page .music-room:after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.025),transparent 18%,transparent 82%,rgba(0,0,0,.07));pointer-events:none}
 .music-page:after{z-index:1!important;opacity:.012!important;pointer-events:none!important}
 .music-page .vinyl-scene{position:absolute!important;inset:0!important;z-index:2!important;display:block!important;pointer-events:none!important}
 .music-page .record-crate,.music-page .now-playing,.music-page .record-copy,.music-page .player-card,.music-page .artist-drawer{display:none!important}
-.music-page .deck-wrap{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;pointer-events:none!important}
-.music-page .turntable{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;aspect-ratio:auto!important;background:transparent!important;border:0!important;box-shadow:none!important;transform:none!important;overflow:visible!important;pointer-events:none!important}
+.music-page .deck-wrap,.music-page .turntable{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;display:block!important;background:transparent!important;border:0!important;box-shadow:none!important;transform:none!important;overflow:visible!important;pointer-events:none!important}
 .music-page .turntable:before,.music-page .turntable:after,.music-page .turntable-mark,.music-page .needle-note{display:none!important}
 
-/* Spin only a light/reflection layer over the photographed vinyl. */
-.music-page .platter{position:absolute!important;left:31.0%!important;top:16.2%!important;width:36.7%!important;aspect-ratio:1!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;pointer-events:none!important}
-.music-page .record{position:absolute!important;inset:2.3%!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;overflow:hidden!important;pointer-events:none!important}
+/* Real-photo vinyl motion: duplicate the same scene and clip it to the record. */
+.music-page .photo-vinyl-layer{position:absolute;inset:0;z-index:3;background-image:var(--scene);background-size:cover;background-position:center;background-repeat:no-repeat;clip-path:circle(18.9% at 49.1% 36.9%);transform-origin:49.1% 36.9%;pointer-events:none;opacity:1}
+.music-page.is-playing .photo-vinyl-layer{animation:photoVinylSpin 2.55s linear infinite}
+@keyframes photoVinylSpin{to{transform:rotate(360deg)}}
+
+/* Keep a subtle highlight over the photographed record so the spin reads clearly. */
+.music-page .platter{position:absolute!important;left:30.3%!important;top:16.0%!important;width:37.7%!important;aspect-ratio:1!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;pointer-events:none!important;z-index:4!important}
+.music-page .record{position:absolute!important;inset:2.5%!important;border-radius:50%!important;background:transparent!important;box-shadow:none!important;overflow:hidden!important;pointer-events:none!important}
 .music-page .record-label{display:none!important}
-.music-page .record:before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 6deg,transparent 0 12%,rgba(255,255,255,.045) 17%,transparent 24% 48%,rgba(110,155,205,.035) 55%,transparent 63% 82%,rgba(238,174,95,.035) 87%,transparent 94%);mix-blend-mode:screen;opacity:.88}
-.music-page .record:after{content:'';position:absolute;inset:3%;border-radius:50%;background:repeating-radial-gradient(circle,transparent 0 5px,rgba(255,255,255,.009) 6px 7px)}
-.music-page .record.spinning{animation:sceneVinylSpin 2.55s linear infinite!important}
-@keyframes sceneVinylSpin{to{transform:rotate(360deg)}}
+.music-page .record:before{content:'';position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 8deg,transparent 0 13%,rgba(255,255,255,.035) 18%,transparent 26% 49%,rgba(122,166,216,.03) 55%,transparent 64% 83%,rgba(239,174,91,.03) 88%,transparent 95%);mix-blend-mode:screen}
+.music-page .record.spinning{animation:none!important}
 
-/* Interactive arm — sits over the photographed arm and becomes the moving version. */
-.music-page .tonearm{position:absolute!important;left:56.0%!important;top:13.0%!important;width:15.5%!important;height:44.5%!important;right:auto!important;bottom:auto!important;z-index:6!important;transform-origin:69% 16%!important;background:transparent!important;border:0!important;cursor:grab!important;transition:filter .2s ease!important;touch-action:none!important;pointer-events:auto!important;filter:drop-shadow(0 5px 5px rgba(0,0,0,.65))}
-.music-page .tonearm.dragging{cursor:grabbing!important;filter:drop-shadow(0 8px 8px rgba(0,0,0,.8))}
-.music-page .tonearm-pivot{position:absolute!important;right:8%!important;top:2%!important;width:58px!important;height:58px!important;border-radius:50%!important;background:radial-gradient(circle at 38% 34%,#827d76 0 7%,#3c3935 21%,#171615 49%,#070707 73%)!important;box-shadow:0 0 0 6px rgba(11,9,7,.9),0 8px 17px rgba(0,0,0,.7)!important}
-.music-page .tonearm-counterweight{position:absolute!important;right:1%!important;top:-1%!important;width:42px!important;height:32px!important;border-radius:12px!important;background:linear-gradient(90deg,#101010,#77736d 47%,#1b1a19)!important;box-shadow:0 4px 7px rgba(0,0,0,.72)!important}
-.music-page .tonearm-tube{position:absolute!important;right:19%!important;top:14%!important;width:7px!important;height:77%!important;border-radius:8px!important;background:linear-gradient(90deg,#282725,#e0ddd8 46%,#484541)!important;transform:rotate(30deg)!important;transform-origin:top center!important;box-shadow:2px 2px 4px rgba(0,0,0,.8)!important}
-.music-page .tonearm-head{position:absolute!important;left:14%!important;bottom:1%!important;width:49px!important;height:24px!important;border-radius:4px!important;background:linear-gradient(145deg,#2b2722,#080808)!important;transform:rotate(28deg)!important;box-shadow:0 5px 8px rgba(0,0,0,.75)!important}
-.music-page .tonearm-head i{position:absolute!important;left:8px!important;bottom:-9px!important;width:2px!important;height:11px!important;background:#d6b786!important}
-.music-page .tonearm.dropped{transform:rotate(-24deg)!important}
+/* Cover the arm baked into the photo so only the movable photographic layer is seen. */
+.music-page .arm-eraser{position:absolute;z-index:5;left:58.8%;top:11.1%;width:16.8%;height:45.5%;background:linear-gradient(145deg,rgba(36,29,23,.98),rgba(16,15,13,.98) 62%,rgba(34,27,21,.98));clip-path:polygon(55% 0,100% 0,100% 100%,0 100%,12% 76%,33% 58%,48% 34%);filter:brightness(.92);pointer-events:none}
+.music-page .arm-eraser:after{content:'';position:absolute;inset:0;background:radial-gradient(circle at 72% 15%,rgba(255,255,255,.045),transparent 13%),linear-gradient(90deg,transparent,rgba(255,255,255,.018),transparent);mix-blend-mode:screen}
 
-/* Keep portfolio controls above the cinematic scene. */
+/* Real-photo tonearm: same uploaded scene, clipped tightly around the arm and pivot. */
+.music-page .photo-arm-layer{position:absolute;inset:0;z-index:7;background-image:var(--scene);background-size:cover;background-position:center;background-repeat:no-repeat;clip-path:polygon(65.4% 10.4%,72.3% 10.2%,71.4% 18.3%,69.6% 27.8%,66.9% 37.0%,62.8% 46.2%,58.0% 50.6%,56.7% 47.0%,61.0% 42.7%,64.0% 34.0%,66.7% 25.2%,68.7% 17.2%);transform-origin:68.5% 15.8%;transform:rotate(var(--arm-angle,0deg));pointer-events:none;filter:drop-shadow(0 8px 8px rgba(0,0,0,.45))}
+
+/* Invisible but generous interaction zone; the photographed layer above does the visuals. */
+.music-page .tonearm{position:absolute!important;left:55.4%!important;top:10.2%!important;width:18.7%!important;height:47.5%!important;right:auto!important;bottom:auto!important;z-index:10!important;transform:none!important;background:transparent!important;border:0!important;cursor:grab!important;touch-action:none!important;pointer-events:auto!important;opacity:.001!important}
+.music-page .tonearm *{opacity:0!important}
+.music-page .tonearm.dragging{cursor:grabbing!important}
+.music-page .tonearm.dropped{transform:none!important}
+
 .music-page .page-back,.music-page .page-next{z-index:15!important;color:#f2e9de!important;text-shadow:0 2px 10px #000!important;pointer-events:auto!important}
 .site-nav{z-index:100!important}
 
 @media(max-width:900px){
-  .music-page .music-room{background-position:center center!important}
-  .music-page .platter{left:24.7%!important;top:24%!important;width:50%!important}
-  .music-page .tonearm{left:57.5%!important;top:20.5%!important;width:23%!important;height:43%!important}
+ .music-page .photo-vinyl-layer{clip-path:circle(25% at 49.5% 42%);transform-origin:49.5% 42%}
+ .music-page .arm-eraser{left:58%;top:19%;width:23%;height:44%}
+ .music-page .photo-arm-layer{transform-origin:69% 24%}
+ .music-page .tonearm{left:56%;top:18%;width:26%;height:45%}
+ .music-page .platter{left:24.5%!important;top:24%!important;width:50%!important}
 }
