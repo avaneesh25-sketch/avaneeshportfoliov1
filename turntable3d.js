@@ -265,12 +265,32 @@ if(canvas){
   latteTex.magFilter=THREE.LinearFilter;
   latteTex.anisotropy=renderer.capabilities.getMaxAnisotropy();
 
-  // Slightly domed latte surface.
-  const latteCap=new THREE.Mesh(
-    new THREE.SphereGeometry(.445,96,48,0,Math.PI*2,0,Math.PI*.10),
-    new THREE.MeshPhysicalMaterial({map:latteTex,roughness:.38,clearcoat:.12,clearcoatRoughness:.35,envMapIntensity:.45})
+  // Visible coffee surface: a top-facing textured disc with a tiny convex center.
+  // The previous spherical cap was flipped below the rim from this camera angle.
+  const latteMat=new THREE.MeshPhysicalMaterial({
+    map:latteTex,
+    color:0xffffff,
+    roughness:.34,
+    metalness:0,
+    clearcoat:.16,
+    clearcoatRoughness:.32,
+    envMapIntensity:.42,
+    side:THREE.DoubleSide
+  });
+  const latteSurface=new THREE.Mesh(new THREE.CircleGeometry(.445,128),latteMat);
+  latteSurface.rotation.x=-Math.PI/2;
+  latteSurface.position.y=.236;
+  latteSurface.renderOrder=4;
+  mug.add(latteSurface);
+
+  // Thin crema meniscus gives the coffee a slight dome without hiding the texture.
+  const cremaMeniscus=new THREE.Mesh(
+    new THREE.TorusGeometry(.438,.012,16,128),
+    new THREE.MeshPhysicalMaterial({color:0xc98649,roughness:.32,clearcoat:.12,clearcoatRoughness:.3})
   );
-  latteCap.scale.y=.22;latteCap.position.y=.215;latteCap.rotation.x=Math.PI;latteCap.renderOrder=3;mug.add(latteCap);
+  cremaMeniscus.rotation.x=Math.PI/2;
+  cremaMeniscus.position.y=.239;
+  mug.add(cremaMeniscus);
 
   const innerRing=new THREE.Mesh(new THREE.TorusGeometry(.45,.018,16,96),new THREE.MeshStandardMaterial({color:0x24160f,roughness:.48}));
   innerRing.rotation.x=Math.PI/2;innerRing.position.y=.225;mug.add(innerRing);
