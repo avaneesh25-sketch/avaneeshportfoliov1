@@ -79,9 +79,40 @@
 
     <section class="page cv-page" data-page="cv" aria-label="CV"><div class="cv-wrap"><span class="section-num" style="text-align:center">05 / CV — PICK A LENS</span><h2>Same story.<br><em>Different lens.</em></h2><div class="cv-choice-grid"><a class="cv-choice" href="assets/Avaneesh%20Pramod_C7_Onepagerpm.pdf" target="_blank" rel="noopener"><small>LEFT / 01</small><strong>Product</strong><span>OPEN PRODUCT CV ↗</span></a><a class="cv-choice" href="assets/Avaneesh_Pramod_C7_Onepager_CoS%20(1).pdf" target="_blank" rel="noopener"><small>RIGHT / 02</small><strong>Founder's Office</strong><span>OPEN FOUNDER'S OFFICE CV ↗</span></a></div><div class="cv-side-note">Two versions. One trajectory.</div></div><button class="page-back" data-go="about">← BACK TO STORY</button><a class="page-next" href="mailto:avaneeshpramod25@gmail.com">CONNECT ↗</a></section>
   </main>
-  <script type="module" src="turntable3d.js?v=20260911-lamppull"></script>
+  <script type="module" src="turntable3d.js?v=20260911-pullphysics"></script>
   <script src="script.js?v=20260911-labelmorph"></script>
   <script>
+    let lampAudioCtx=null;
+    function playLampClick(){
+      try{
+        lampAudioCtx=lampAudioCtx||new (window.AudioContext||window.webkitAudioContext)();
+        const ctx=lampAudioCtx;
+        const now=ctx.currentTime;
+
+        // short mechanical snap
+        const osc=ctx.createOscillator();
+        const gain=ctx.createGain();
+        osc.type='square';
+        osc.frequency.setValueAtTime(210,now);
+        osc.frequency.exponentialRampToValueAtTime(95,now+.055);
+        gain.gain.setValueAtTime(.0001,now);
+        gain.gain.exponentialRampToValueAtTime(.14,now+.004);
+        gain.gain.exponentialRampToValueAtTime(.0001,now+.065);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(now);osc.stop(now+.07);
+
+        // tiny contact tick
+        const buffer=ctx.createBuffer(1,Math.floor(ctx.sampleRate*.035),ctx.sampleRate);
+        const data=buffer.getChannelData(0);
+        for(let i=0;i<data.length;i++)data[i]=(Math.random()*2-1)*(1-i/data.length);
+        const noise=ctx.createBufferSource();noise.buffer=buffer;
+        const ng=ctx.createGain();ng.gain.setValueAtTime(.045,now);
+        ng.gain.exponentialRampToValueAtTime(.0001,now+.035);
+        noise.connect(ng).connect(ctx.destination);noise.start(now);
+      }catch(e){}
+    }
+
+    window.addEventListener('lamp:click',playLampClick);
     window.addEventListener('lamp:toggle',e=>{
       const o=document.getElementById('lampBlackout');
       if(!o)return;
