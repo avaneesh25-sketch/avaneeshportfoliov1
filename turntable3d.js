@@ -23,15 +23,13 @@ if(canvas){
   // Self-contained reflected-light environment. No remote module/assets can block rendering.
   const pmremGenerator=new THREE.PMREMGenerator(renderer);
   const envScene=new THREE.Scene();
-  envScene.background=new THREE.Color(0x24130b);
+  envScene.background=new THREE.Color(0x1b0f0a);
   const envRoom=new THREE.Mesh(
     new THREE.BoxGeometry(20,12,20),
-    new THREE.MeshBasicMaterial({color:0x2b160d,side:THREE.BackSide})
+    new THREE.MeshBasicMaterial({color:0x2a1710,side:THREE.BackSide})
   );
   envScene.add(envRoom);
-  const envWarm=new THREE.PointLight(0xff8b35,55,18);envWarm.position.set(5,4,2);envScene.add(envWarm);
-  const envCool=new THREE.PointLight(0x6688aa,16,15);envCool.position.set(-5,3,-2);envScene.add(envCool);
-  scene.environment=pmremGenerator.fromScene(envScene,.04).texture;
+  scene.environment=pmremGenerator.fromScene(envScene,.08).texture;
   pmremGenerator.dispose();
 
   const pm=new THREE.MeshStandardMaterial({color:0x15120f,roughness:.48,metalness:.32});
@@ -40,13 +38,18 @@ if(canvas){
   const metal=new THREE.MeshStandardMaterial({color:0xa9a6a1,roughness:.2,metalness:.88});
   const cream=new THREE.MeshStandardMaterial({color:0xd8c6a6,roughness:.7,metalness:0});
 
-  const table=new THREE.Mesh(new THREE.BoxGeometry(18,.58,10.6),new THREE.MeshStandardMaterial({color:0x4a2411,roughness:.48,metalness:.02}));table.position.y=-.69;table.receiveShadow=true;scene.add(table);
-  const deskLip=new THREE.Mesh(new THREE.BoxGeometry(18,.16,10.72),new THREE.MeshStandardMaterial({color:0x241006,roughness:.62}));deskLip.position.y=-.96;scene.add(deskLip);
-  const grainMat=new THREE.MeshStandardMaterial({color:0x6a3518,roughness:.7,transparent:true,opacity:.42});
-  for(let i=-4;i<=4;i++){const grain=new THREE.Mesh(new THREE.BoxGeometry(17.5,.008,.018),grainMat);grain.position.set(0,-.395,i*1.05);scene.add(grain)}
+  const woodCanvas=document.createElement('canvas');woodCanvas.width=1024;woodCanvas.height=512;
+  const wctx=woodCanvas.getContext('2d');
+  const grad=wctx.createLinearGradient(0,0,1024,0);grad.addColorStop(0,'#2b150b');grad.addColorStop(.35,'#4b2511');grad.addColorStop(.72,'#3b1c0e');grad.addColorStop(1,'#5b2d13');wctx.fillStyle=grad;wctx.fillRect(0,0,1024,512);
+  for(let y=0;y<512;y+=7){const wobble=Math.sin(y*.09)*16;wctx.strokeStyle=`rgba(130,72,35,${.08+(y%21)/500})`;wctx.lineWidth=1;wctx.beginPath();wctx.moveTo(0,y);for(let x=0;x<=1024;x+=32)wctx.lineTo(x,y+Math.sin(x*.018+y*.05)*3+wobble*.08);wctx.stroke()}
+  const woodTex=new THREE.CanvasTexture(woodCanvas);woodTex.wrapS=woodTex.wrapT=THREE.RepeatWrapping;woodTex.repeat.set(2.2,1.5);
+  const tableMat=new THREE.MeshPhysicalMaterial({map:woodTex,color:0xffffff,roughness:.48,metalness:0,clearcoat:.16,clearcoatRoughness:.45,envMapIntensity:.35});
+  const table=new THREE.Mesh(new THREE.BoxGeometry(18,.58,10.6),tableMat);table.position.y=-.69;table.receiveShadow=true;scene.add(table);
+  const deskLip=new THREE.Mesh(new THREE.BoxGeometry(18,.16,10.72),new THREE.MeshStandardMaterial({color:0x241006,roughness:.68}));deskLip.position.y=-.96;scene.add(deskLip);
   const back=new THREE.Mesh(new THREE.PlaneGeometry(22,10),new THREE.MeshStandardMaterial({color:0x160b06,roughness:.9}));back.position.set(0,3,-5.4);scene.add(back);
 
-  const base=new THREE.Mesh(new THREE.BoxGeometry(7,.42,5),new THREE.MeshStandardMaterial({color:0x18130f,roughness:.3,metalness:.32}));base.position.set(-.1,-.22,.1);base.castShadow=base.receiveShadow=true;scene.add(base);
+  const baseMat=new THREE.MeshPhysicalMaterial({color:0x14110f,roughness:.28,metalness:.18,clearcoat:.32,clearcoatRoughness:.22,envMapIntensity:.5});
+  const base=new THREE.Mesh(new THREE.BoxGeometry(7,.42,5),baseMat);base.position.set(-.1,-.22,.1);base.castShadow=base.receiveShadow=true;scene.add(base);
   const frontTrim=new THREE.Mesh(new THREE.BoxGeometry(6.86,.09,.08),metal);frontTrim.position.set(-.1,-.34,2.61);scene.add(frontTrim);
   [[-2.7,-1.75],[2.5,-1.75],[-2.7,1.75],[2.5,1.75]].forEach(([x,z])=>{const foot=new THREE.Mesh(new THREE.CylinderGeometry(.17,.19,.18,24),black);foot.position.set(x,-.53,z);scene.add(foot)});
   const rim=new THREE.Mesh(new THREE.BoxGeometry(7.16,.12,5.16),new THREE.MeshStandardMaterial({color:0x38251b,roughness:.34,metalness:.24}));rim.position.set(-.1,-.46,.1);scene.add(rim);
@@ -63,8 +66,8 @@ if(canvas){
   }
   const grooveNormal=new THREE.CanvasTexture(grooveCanvas);grooveNormal.wrapS=grooveNormal.wrapT=THREE.RepeatWrapping;
   const vinylMat=new THREE.MeshPhysicalMaterial({
-    color:0x080808,roughness:.34,metalness:.08,clearcoat:.6,clearcoatRoughness:.15,
-    normalMap:grooveNormal,normalScale:new THREE.Vector2(.42,.42),envMapIntensity:1.35
+    color:0x090909,roughness:.39,metalness:.03,clearcoat:.42,clearcoatRoughness:.22,
+    normalMap:grooveNormal,normalScale:new THREE.Vector2(.72,.72),envMapIntensity:.58
   });
   const record=new THREE.Mesh(new THREE.CylinderGeometry(2.12,2.12,.065,192),vinylMat);record.position.y=.115;record.castShadow=true;platter.add(record);
   const labelCanvas=document.createElement('canvas');labelCanvas.width=1024;labelCanvas.height=1024;
@@ -218,20 +221,20 @@ if(canvas){
   const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(0,2.20,0);lamp.add(bulbMesh);
   const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(4.55,1.85,-1.35);bulb.castShadow=true;scene.add(bulb);
 
-  const lampPullString=new THREE.Group();lampPullString.position.set(4.86,1.93,-1.05);scene.add(lampPullString);
-  const chainMat=new THREE.MeshStandardMaterial({color:0xc6a77f,roughness:.42,metalness:.14});
-  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,1.24,12),chainMat);
-  pullLine.position.y=-.60;pullLine.castShadow=true;lampPullString.add(pullLine);
-  for(let i=0;i<8;i++){const bead=new THREE.Mesh(new THREE.SphereGeometry(.028,12,12),chainMat);bead.position.y=-.12-i*.14;lampPullString.add(bead)}
-  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.095,24,24),new THREE.MeshStandardMaterial({color:0x6b4c31,roughness:.36,metalness:.10}));
-  pullBead.position.y=-1.28;pullBead.castShadow=true;lampPullString.add(pullBead);
-  const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.24,.24,1.7,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
-  pullHit.position.set(4.86,1.12,-1.05);scene.add(pullHit);
+  const lampPullString=new THREE.Group();lampPullString.position.set(4.95,2.12,-.45);scene.add(lampPullString);
+  const chainMat=new THREE.MeshStandardMaterial({color:0xd4b486,roughness:.34,metalness:.08,emissive:0x2a170d,emissiveIntensity:.22});
+  const pullLine=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,1.42,14),chainMat);
+  pullLine.position.y=-.70;pullLine.castShadow=true;lampPullString.add(pullLine);
+  for(let i=0;i<12;i++){const bead=new THREE.Mesh(new THREE.SphereGeometry(.034,14,14),chainMat);bead.position.y=-.08-i*.115;lampPullString.add(bead)}
+  const pullBead=new THREE.Mesh(new THREE.SphereGeometry(.12,28,28),new THREE.MeshStandardMaterial({color:0x8a613e,roughness:.32,metalness:.05}));
+  pullBead.scale.set(.82,1.28,.82);pullBead.position.y=-1.47;pullBead.castShadow=true;lampPullString.add(pullBead);
+  const pullHit=new THREE.Mesh(new THREE.CylinderGeometry(.30,.30,1.95,16),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
+  pullHit.position.set(4.95,1.12,-.45);scene.add(pullHit);
   let lampOn=true,pullAngle=0,pullVel=0,pullTarget=0,pullImpulse=0;
 
-  scene.add(new THREE.HemisphereLight(0x9bb1d0,0x2a1208,1.15));
-  const key=new THREE.DirectionalLight(0xffd7aa,2.3);key.position.set(-4,7,5);key.castShadow=true;scene.add(key);
-  const fill=new THREE.PointLight(0x5478a8,9,8,2);fill.position.set(-2,2,-4);scene.add(fill);
+  scene.add(new THREE.HemisphereLight(0x8f785f,0x241209,.72));
+  const key=new THREE.DirectionalLight(0xffc58a,1.25);key.position.set(-4,6,5);key.castShadow=true;scene.add(key);
+  const fill=new THREE.PointLight(0x6d4a35,4.5,8,2);fill.position.set(-2,2,-4);scene.add(fill);
 
   renderer.render(scene,camera); // first paint
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
