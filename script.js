@@ -3,8 +3,62 @@ const $=(s,r=document)=>r.querySelector(s);const $$=(s,r=document)=>[...r.queryS
 const gate=$('#audioGate'),introAudio=$('#introAudio'),viennaAudio=$('#viennaAudio'),tv=$('#tvSet'),playIntro=$('#playIntro'),signalLost=$('#signalLost'),introNext=$('#introNext');
 let soundEnabled=true,introTimer=[],introTransitioning=false;
 function clearIntroTimers(){introTimer.forEach(clearTimeout);introTimer=[]}
-function go(page){const target=$(`[data-page="${page}"]`);if(!target)return;$$('.page').forEach(p=>p.classList.toggle('page--active',p===target));if(page!=='music')pauseVienna(false)}
-$$('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
+const chapterOrder=['about','work','music','cv'];
+let currentPage='intro';
+
+function syncChapterChrome(page){
+  currentPage=page;
+  document.body.classList.toggle('chapter-mode',page!=='intro');
+  $('#chapterNav [data-chapter]').forEach(b=>b.classList.toggle('is-active',b.dataset.chapter===page));
+}
+
+function go(page,direction='next'){
+  const target=$(`[data-page="${page}"]`);
+  if(!target)return;
+  $('.page').forEach(p=>{
+    p.classList.remove('page-swipe-in-right','page-swipe-in-left');
+    p.classList.toggle('page--active',p===target);
+  });
+  if(page!=='intro'){
+    void target.offsetWidth;
+    target.classList.add(direction==='prev'?'page-swipe-in-left':'page-swipe-in-right');
+  }
+  syncChapterChrome(page);
+  if(page!=='music')pauseVienna(false);
+}
+
+$('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
+
+function stepChapter(delta){
+  if(currentPage==='intro'){go('about','next');return}
+  const idx=Math.max(0,chapterOrder.indexOf(currentPage));
+  const next=(idx+delta+chapterOrder.length)%chapterOrder.length;
+  go(chapterOrder[next],delta<0?'prev':'next');
+}
+$('#loopPrev')?.addEventListener('click',()=>stepChapter(-1));
+$('#loopNext')?.addEventListener('click',()=>stepChapter(1));
+
+let swipeStartX=0,swipeStartY=0,swipeTracking=false;
+document.addEventListener('touchstart',e=>{
+  if(!document.body.classList.contains('chapter-mode')||!e.touches?.length)return;
+  swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;swipeTracking=true;
+},{passive:true});
+document.addEventListener('touchend',e=>{
+  if(!swipeTracking||!document.body.classList.contains('chapter-mode'))return;
+  swipeTracking=false;
+  const t=e.changedTouches?.[0];if(!t)return;
+  const dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;
+  if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.2)return;
+  // Literal gesture: swipe RIGHT advances, swipe LEFT goes back.
+  stepChapter(dx>0?1:-1);
+},{passive:true});
+
+window.addEventListener('keydown',e=>{
+  if(!document.body.classList.contains('chapter-mode'))return;
+  if(e.key==='ArrowRight')stepChapter(1);
+  if(e.key==='ArrowLeft')stepChapter(-1);
+});
+syncChapterChrome('intro');
 function enter(withSound){soundEnabled=withSound;gate.classList.add('hidden');setTimeout(()=>gate.remove(),800)}
 $('#enterWithSound')?.addEventListener('click',()=>enter(true));$('#enterMuted')?.addEventListener('click',()=>enter(false));
 const aboutImage=$('.about-photo img');if(aboutImage)aboutImage.src='assets/about.jpeg';
