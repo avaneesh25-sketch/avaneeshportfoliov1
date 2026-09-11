@@ -144,7 +144,7 @@ if(canvas){
 
   renderer.render(scene,camera); // first paint
   const ray=new THREE.Raycaster(),mouse=new THREE.Vector2();
-  let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false,autoDropping=false,autoT=0;
+  let dragging=false,startX=0,baseAngle=arm.rotation.y,dropped=false,playing=false,autoDropping=false,autoLifting=false,autoT=0;
   const armMeshes=[armHit,tube,headshell,cartridge,pivotBase,pivotCollar];
   const mugHit=new THREE.Mesh(new THREE.CylinderGeometry(.68,.68,1.25,32),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));
   mugHit.position.copy(mug.position);scene.add(mugHit);
@@ -158,19 +158,39 @@ if(canvas){
   function hitDeckButton(e){setPointer(e);return ray.intersectObject(buttonHit,false).length>0}
   canvas.addEventListener('pointerdown',e=>{
     if(hitDeckButton(e)){
-      if(!dropped&&!autoDropping){buttonPressT=.18;statusLed.material.color.setHex(0xff8a3b);statusLed.material.emissive.setHex(0xff5b16);statusLed.material.emissiveIntensity=3;window.dispatchEvent(new CustomEvent('turntable:autoDrop'))}
+      buttonPressT=.18;
+      if(dropped && !autoLifting){
+        autoLifting=true;autoDropping=false;autoT=0;
+        playing=false;
+        statusLed.material.color.setHex(0x2b2b2b);
+        statusLed.material.emissive.setHex(0x000000);
+        statusLed.material.emissiveIntensity=0;
+        // Music stops immediately as the stylus begins lifting off the record.
+        window.dispatchEvent(new CustomEvent('turntable:lift'));
+      } else if(!dropped && !autoDropping && !autoLifting){
+        statusLed.material.color.setHex(0xff8a3b);
+        statusLed.material.emissive.setHex(0xff5b16);
+        statusLed.material.emissiveIntensity=3;
+        window.dispatchEvent(new CustomEvent('turntable:autoDrop'));
+      }
       return;
     }
     if(hitMug(e)){iceActive=true;iceTime=0;canvas.style.cursor='pointer'}
   });
   canvas.addEventListener('pointermove',e=>{if(hitDeckButton(e)){canvas.style.cursor='pointer'}else if(!iceActive){canvas.style.cursor='default'}});
-  window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping)return;autoDropping=true;autoT=0;});
+  window.addEventListener('turntable:autoDrop',()=>{if(dropped||autoDropping||autoLifting)return;autoDropping=true;autoT=0;});
   window.addEventListener('turntable:ended',()=>{playing=false;statusLed.material.color.setHex(0x2b2b2b);statusLed.material.emissive.setHex(0x000000);statusLed.material.emissiveIntensity=0;});
 
   const clock=new THREE.Clock();
   function smoothstep(t){return t*t*(3-2*t)}
   function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing)platter.rotation.y-=dt*1.65;
     if(buttonPressT>0){buttonPressT-=dt;deckButton.position.y=.055}else{deckButton.position.y=.085}
+    if(autoLifting){
+      autoT+=dt/1.35;
+      const t=Math.min(autoT,1),e=smoothstep(t);
+      arm.rotation.y=THREE.MathUtils.lerp(DROP_ANGLE,REST_ANGLE,e);
+      if(t>=1){autoLifting=false;dropped=false;arm.rotation.y=REST_ANGLE}
+    }
     if(autoDropping){
       autoT+=dt/1.8;
       const t=Math.min(autoT,1),e=smoothstep(t);
