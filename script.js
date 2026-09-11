@@ -166,9 +166,17 @@ async function transitionIntroToAbout(){
   setTimeout(()=>aboutPage?.classList.remove('crt-about-reveal'),850);
   introTransitioning=false;
 }
+let introFastMontage=false;
+function setMontageSpeed(fast){
+  introFastMontage=fast;
+  document.documentElement.style.setProperty('--montage-speed',fast?'0.28s':'0.72s');
+  const m=$('#montage');
+  if(m)m.classList.toggle('montage-fast',fast);
+}
 async function startIntro(){
   clearIntroTimers();introTransitioning=false;setMontageSpeed(false);
-  tv.classList.remove('playing');signalLost.classList.remove('show');introNext.disabled=true;
+  if(!tv||!signalLost)return;
+  tv.classList.remove('playing');signalLost.classList.remove('show');if(introNext)introNext.disabled=true;
   void tv.offsetWidth;tv.classList.add('playing');
   let audioStarted=false;
   if(soundEnabled){try{introAudio.currentTime=0;await introAudio.play();audioStarted=true}catch(e){}}
