@@ -48,7 +48,9 @@ if(canvas){
   const armPivot=new THREE.Group();armPivot.position.set(2.45,.22,-1.45);scene.add(armPivot);
   const pivotBase=new THREE.Mesh(new THREE.CylinderGeometry(.48,.55,.35,48),new THREE.MeshStandardMaterial({color:0x151515,roughness:.28,metalness:.7}));pivotBase.castShadow=true;armPivot.add(pivotBase);
   const cap=new THREE.Mesh(new THREE.CylinderGeometry(.27,.27,.3,48),metal);cap.position.y=.27;armPivot.add(cap);
-  const arm=new THREE.Group();armPivot.add(arm);arm.rotation.y=-.08;
+  const arm=new THREE.Group();armPivot.add(arm);
+  const REST_ANGLE=.12, DROP_ANGLE=-.68;
+  arm.rotation.y=REST_ANGLE;
   const tube=new THREE.Mesh(new THREE.CylinderGeometry(.055,.055,3.72,20),metal);tube.rotation.z=Math.PI/2;tube.position.set(-1.72,.3,.06);tube.castShadow=true;arm.add(tube);
   const elbow=new THREE.Mesh(new THREE.TorusGeometry(.48,.055,16,48,Math.PI*.52),metal);elbow.rotation.set(Math.PI/2,0,-.25);elbow.position.set(-3.42,.3,.18);arm.add(elbow);
   const cartridge=new THREE.Mesh(new THREE.BoxGeometry(.55,.18,.35),new THREE.MeshStandardMaterial({color:0x101010,roughness:.3,metalness:.6}));cartridge.position.set(-3.62,.23,.54);cartridge.rotation.y=-.18;arm.add(cartridge);
@@ -57,19 +59,24 @@ if(canvas){
 
   const powerKnob=new THREE.Mesh(new THREE.CylinderGeometry(.18,.18,.12,32),metal);powerKnob.position.set(2.75,.08,1.75);scene.add(powerKnob);
   const powerDot=new THREE.Mesh(new THREE.SphereGeometry(.035,12,12),new THREE.MeshStandardMaterial({color:0xe78b43,emissive:0xe05c1b,emissiveIntensity:3}));powerDot.position.set(2.75,.17,1.75);scene.add(powerDot);
-  const mug=new THREE.Group();mug.position.set(4.4,-.15,2.55);scene.add(mug);
-  const cup=new THREE.Mesh(new THREE.CylinderGeometry(.48,.42,.9,48),new THREE.MeshStandardMaterial({color:0x111111,roughness:.4,metalness:.15}));cup.castShadow=true;mug.add(cup);
-  const coffee=new THREE.Mesh(new THREE.CylinderGeometry(.41,.41,.015,48),new THREE.MeshStandardMaterial({color:0x3a1606,roughness:.25}));coffee.position.y=.46;mug.add(coffee);
-  const handle=new THREE.Mesh(new THREE.TorusGeometry(.32,.08,16,40,Math.PI*1.55),new THREE.MeshStandardMaterial({color:0x111111,roughness:.4}));handle.rotation.y=Math.PI/2;handle.position.set(.48,.05,0);mug.add(handle);
-
+  const mug=new THREE.Group();mug.position.set(4.35,-.12,2.55);mug.rotation.y=-.18;scene.add(mug);
+  const ceramic=new THREE.MeshStandardMaterial({color:0x17120f,roughness:.26,metalness:.08});
+  const cup=new THREE.Mesh(new THREE.CylinderGeometry(.46,.37,.82,64,1,true),ceramic);cup.castShadow=true;mug.add(cup);
+  const cupBottom=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.055,64),ceramic);cupBottom.position.y=-.41;mug.add(cupBottom);
+  const rimOuter=new THREE.Mesh(new THREE.TorusGeometry(.46,.035,16,64),ceramic);rimOuter.rotation.x=Math.PI/2;rimOuter.position.y=.41;mug.add(rimOuter);
+  const inner=new THREE.Mesh(new THREE.CylinderGeometry(.405,.405,.035,64),new THREE.MeshStandardMaterial({color:0x070504,roughness:.5}));inner.position.y=.385;mug.add(inner);
+  const coffee=new THREE.Mesh(new THREE.CylinderGeometry(.37,.37,.018,64),new THREE.MeshStandardMaterial({color:0x321306,roughness:.18,metalness:.02}));coffee.position.y=.41;mug.add(coffee);
+  const coffeeGlow=new THREE.Mesh(new THREE.TorusGeometry(.31,.012,10,48),new THREE.MeshStandardMaterial({color:0x8b4a24,roughness:.28}));coffeeGlow.rotation.x=Math.PI/2;coffeeGlow.position.y=.425;mug.add(coffeeGlow);
+  const handle=new THREE.Mesh(new THREE.TorusGeometry(.31,.07,18,56,Math.PI*1.55),ceramic);handle.rotation.set(Math.PI/2,0,-Math.PI/2);handle.position.set(.46,.02,0);mug.add(handle);
+  const saucer=new THREE.Mesh(new THREE.CylinderGeometry(.62,.67,.055,64),ceramic);saucer.position.y=-.48;saucer.scale.z=.72;mug.add(saucer);
   const lamp=new THREE.Group();lamp.position.set(5.15,-.35,-2.35);scene.add(lamp);
   const lampBase=new THREE.Mesh(new THREE.CylinderGeometry(.78,.9,.18,48),new THREE.MeshStandardMaterial({color:0x17120f,roughness:.3,metalness:.62}));lampBase.castShadow=true;lamp.add(lampBase);
   const lampBaseRing=new THREE.Mesh(new THREE.TorusGeometry(.78,.055,12,48),metal);lampBaseRing.rotation.x=Math.PI/2;lampBaseRing.position.y=.1;lamp.add(lampBaseRing);
   const lampStem=new THREE.Mesh(new THREE.CylinderGeometry(.075,.09,2.35,20),new THREE.MeshStandardMaterial({color:0x2a211b,metalness:.78,roughness:.25}));lampStem.position.set(0,1.18,0);lamp.add(lampStem);
-  const neck=new THREE.Mesh(new THREE.TorusGeometry(.48,.075,16,48,Math.PI*.72),new THREE.MeshStandardMaterial({color:0x2a211b,metalness:.78,roughness:.25}));neck.position.set(-.35,2.25,0);neck.rotation.set(Math.PI/2,0,-.45);lamp.add(neck);
-  const shade=new THREE.Mesh(new THREE.CylinderGeometry(.62,1.38,.92,64,1,true),new THREE.MeshStandardMaterial({color:0xa84b12,roughness:.42,metalness:.16,side:THREE.DoubleSide}));shade.position.set(-.62,2.62,0);shade.rotation.z=-.18;shade.castShadow=true;lamp.add(shade);
-  const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(-.62,2.18,0);lamp.add(bulbMesh);
-  const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(4.55,1.82,-2.35);bulb.castShadow=true;scene.add(bulb);
+  const neck=new THREE.Mesh(new THREE.TorusGeometry(.48,.075,16,48,Math.PI*.72),new THREE.MeshStandardMaterial({color:0x2a211b,metalness:.78,roughness:.25}));neck.position.set(0,2.25,0);neck.rotation.set(Math.PI/2,0,0);lamp.add(neck);
+  const shade=new THREE.Mesh(new THREE.CylinderGeometry(.62,1.38,.92,64,1,true),new THREE.MeshStandardMaterial({color:0xa84b12,roughness:.42,metalness:.16,side:THREE.DoubleSide}));shade.position.set(0,2.68,0);shade.rotation.z=0;shade.castShadow=true;lamp.add(shade);
+  const bulbMesh=new THREE.Mesh(new THREE.SphereGeometry(.2,24,24),new THREE.MeshStandardMaterial({color:0xffd6a0,emissive:0xff7a20,emissiveIntensity:5}));bulbMesh.position.set(0,2.20,0);lamp.add(bulbMesh);
+  const bulb=new THREE.PointLight(0xff8c37,105,10,1.7);bulb.position.set(5.15,1.85,-2.35);bulb.castShadow=true;scene.add(bulb);
 
   scene.add(new THREE.HemisphereLight(0x9bb1d0,0x2a1208,1.15));
   const key=new THREE.DirectionalLight(0xffd7aa,2.3);key.position.set(-4,7,5);key.castShadow=true;scene.add(key);
@@ -81,9 +88,9 @@ if(canvas){
 
   function hitArm(e){const r=canvas.getBoundingClientRect();mouse.x=((e.clientX-r.left)/r.width)*2-1;mouse.y=-((e.clientY-r.top)/r.height)*2+1;ray.setFromCamera(mouse,camera);return ray.intersectObjects(armMeshes,false).length>0}
   canvas.addEventListener('pointerdown',e=>{if(dropped)return;if(hitArm(e)){dragging=true;startX=e.clientX;baseAngle=arm.rotation.y;canvas.setPointerCapture(e.pointerId);canvas.style.cursor='grabbing'}});
-  canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=(e.clientX-startX)/innerWidth;arm.rotation.y=THREE.MathUtils.clamp(baseAngle-dx*2.7,-.78,.14)});
-  canvas.addEventListener('pointerup',e=>{if(!dragging)return;dragging=false;canvas.style.cursor='default';if(arm.rotation.y<-.55){arm.rotation.y=-.68;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}else{arm.rotation.y=-.08}});
-  canvas.addEventListener('pointercancel',()=>{dragging=false;canvas.style.cursor='default';if(!dropped)arm.rotation.y=-.08});
+  canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=(e.clientX-startX)/innerWidth;arm.rotation.y=THREE.MathUtils.clamp(baseAngle-dx*2.7,-.78,REST_ANGLE)});
+  canvas.addEventListener('pointerup',e=>{if(!dragging)return;dragging=false;canvas.style.cursor='default';if(arm.rotation.y<-.55){arm.rotation.y=DROP_ANGLE;dropped=true;playing=true;window.dispatchEvent(new CustomEvent('turntable:drop'))}else{arm.rotation.y=REST_ANGLE}});
+  canvas.addEventListener('pointercancel',()=>{dragging=false;canvas.style.cursor='default';if(!dropped)arm.rotation.y=REST_ANGLE});
   window.addEventListener('turntable:ended',()=>{playing=false});
 
   const clock=new THREE.Clock();
