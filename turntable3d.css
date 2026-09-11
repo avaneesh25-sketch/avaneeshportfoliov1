@@ -17,3 +17,7 @@
 #turntableCanvas{pointer-events:auto!important}
 .music3d-now,.music3d-tip,.music3d-cup-label{pointer-events:none!important}
 .music3d-now a{pointer-events:auto!important}
+
+.drop-needle-btn{margin-top:20px;border:1px solid rgba(239,230,217,.45);background:rgba(10,7,4,.35);color:#f2e6d6;padding:12px 18px;font:500 8px 'DM Mono',monospace;letter-spacing:.2em;cursor:pointer;backdrop-filter:blur(6px);transition:.25s}
+.drop-needle-btn:hover{background:rgba(255,255,255,.08);border-color:#f2e6d6}
+.drop-needle-btn:disabled{opacity:.6;cursor:default}
