@@ -11,15 +11,15 @@ if(canvas){
 
   function frameTurntableCamera(){
     const w=window.innerWidth,h=window.innerHeight;
-    const portrait=w<760 || w/h<.78;
+    const portrait=w<760 || w/h<.82;
 
     camera.aspect=w/h;
 
     if(portrait){
       // Pull the camera back on phones so the full deck fits inside the narrow horizontal FOV.
-      camera.fov=42;
-      camera.position.set(.15,8.2,15.8);
-      camera.lookAt(.35,.12,.25);
+      camera.fov=46;
+      camera.position.set(.45,8.45,17.4);
+      camera.lookAt(.75,.18,.20);
     }else{
       // Preserve the laptop/desktop composition exactly as designed.
       camera.fov=36;
