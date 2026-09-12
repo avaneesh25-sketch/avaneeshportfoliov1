@@ -39,14 +39,21 @@ function stepChapter(delta){
 $('#loopPrev')?.addEventListener('click',()=>stepChapter(-1));
 $('#loopNext')?.addEventListener('click',()=>stepChapter(1));
 
-let swipeStartX=0,swipeStartY=0,swipeTracking=false;
+let swipeStartX=0,swipeStartY=0,swipeTracking=false,swipeFromArtistCrate=false;
+function swipeStartedInArtistCrate(target){
+  return !!target?.closest?.('.music3d-crate');
+}
 document.addEventListener('touchstart',e=>{
   if(!document.body.classList.contains('chapter-mode')||!e.touches?.length)return;
+  swipeFromArtistCrate=swipeStartedInArtistCrate(e.target);
   swipeStartX=e.touches[0].clientX;swipeStartY=e.touches[0].clientY;swipeTracking=true;
 },{passive:true});
 document.addEventListener('touchend',e=>{
   if(!swipeTracking||!document.body.classList.contains('chapter-mode'))return;
   swipeTracking=false;
+  const fromArtistCrate=swipeFromArtistCrate;
+  swipeFromArtistCrate=false;
+  if(fromArtistCrate)return;
   const t=e.changedTouches?.[0];if(!t)return;
   const dx=t.clientX-swipeStartX,dy=t.clientY-swipeStartY;
   if(Math.abs(dx)<70||Math.abs(dx)<Math.abs(dy)*1.2)return;
