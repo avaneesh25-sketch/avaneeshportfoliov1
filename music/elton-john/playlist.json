@@ -1,3 +1,8 @@
 {
-  "tracks": []
+  "tracks": [
+    {
+      "title": "Yellow Brick Road",
+      "src": "music/elton-john/yellow%20brick%20road.weba"
+    }
+  ]
 }
