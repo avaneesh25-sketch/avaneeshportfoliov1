@@ -508,6 +508,24 @@ if(canvas){
       statusLed.material.emissiveIntensity=0;
       window.dispatchEvent(new CustomEvent('turntable:lift'));
     }else if(!autoLifting){
+      pendingTrackSwitch=false;
+      autoDropping=true;
+      autoT=0;
+    }
+  });
+  window.addEventListener('turntable:switchTrack',()=>{
+    pendingTrackSwitch=true;
+    playProgress=0;
+    if(dropped||playing||autoDropping){
+      autoDropping=false;
+      autoLifting=true;
+      autoT=0;
+      playing=false;
+      statusLed.material.color.setHex(0x2b2b2b);
+      statusLed.material.emissive.setHex(0x000000);
+      statusLed.material.emissiveIntensity=0;
+      window.dispatchEvent(new CustomEvent('turntable:lift'));
+    }else if(!autoLifting){
       // Already at rest: drop immediately for the newly selected track.
       pendingTrackSwitch=false;
       autoDropping=true;
