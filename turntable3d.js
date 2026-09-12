@@ -33,7 +33,8 @@ if(canvas){
   frameTurntableCamera();
 
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
+  const maxDpr=()=>window.innerWidth<760?1.25:1.5;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,maxDpr()));
   renderer.setSize(innerWidth,innerHeight,false);
   renderer.shadowMap.enabled=true;
   renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -431,7 +432,8 @@ if(canvas){
 
   scene.add(new THREE.HemisphereLight(0x8f785f,0x241209,.72));
   const key=new THREE.DirectionalLight(0xffc58a,1.15);key.position.set(-4,6,5);key.castShadow=true;
-  key.shadow.mapSize.set(2048,2048);
+  const shadowSize=window.innerWidth<760?1024:2048;
+  key.shadow.mapSize.set(shadowSize,shadowSize);
   key.shadow.bias=-0.0002;
   key.shadow.normalBias=.01;
   key.shadow.radius=3;
@@ -519,9 +521,24 @@ if(canvas){
   window.addEventListener('turntable:progress',e=>{playProgress=THREE.MathUtils.clamp(Number(e.detail?.progress)||0,0,1)});
   window.addEventListener('turntable:ended',()=>{playing=false;statusLed.material.color.setHex(0x2b2b2b);statusLed.material.emissive.setHex(0x000000);statusLed.material.emissiveIntensity=0;});
 
+  let sceneActive=document.querySelector('.music3d-page')?.classList.contains('page--active')||false;
+  window.addEventListener('portfolio:page',e=>{
+    sceneActive=e.detail?.page==='music';
+    clock.getDelta();
+  });
+  document.addEventListener('visibilitychange',()=>clock.getDelta());
+
   const clock=new THREE.Clock();
+  let labelDrawAccumulator=0;
   function smoothstep(t){return t*t*(3-2*t)}
-  function animate(){requestAnimationFrame(animate);const dt=clock.getDelta();if(playing){platter.rotation.y-=dt*1.65}
+  function animate(){
+    if(!sceneActive||document.hidden){
+      setTimeout(()=>requestAnimationFrame(animate),140);
+      return;
+    }
+    requestAnimationFrame(animate);
+    const dt=clock.getDelta();
+    if(playing){platter.rotation.y-=dt*1.65}
     {
       // Damped pendulum-ish motion for the pull cord.
       const stiffness=13.0,damping=4.8;
@@ -545,10 +562,14 @@ if(canvas){
     }
     if(morphT<1){
       morphT=Math.min(1,morphT+dt/1.55);
-      const mid=1-Math.abs(morphT-.5)*2;
-      const shown=morphT<.5?runeVersion(morphFrom,mid):runeVersion(morphTo,mid);
-      drawRecordLabel(shown,morphArtist,mid);
-      if(morphT>=1){labelTitle=morphTo;labelArtist=morphArtist;drawRecordLabel(labelTitle,labelArtist,0)}
+      labelDrawAccumulator+=dt;
+      if(labelDrawAccumulator>=1/30||morphT>=1){
+        labelDrawAccumulator=0;
+        const mid=1-Math.abs(morphT-.5)*2;
+        const shown=morphT<.5?runeVersion(morphFrom,mid):runeVersion(morphTo,mid);
+        drawRecordLabel(shown,morphArtist,mid);
+        if(morphT>=1){labelTitle=morphTo;labelArtist=morphArtist;drawRecordLabel(labelTitle,labelArtist,0)}
+      }
     }
     if(buttonPressT>0){buttonPressT-=dt;deckButton.position.y=.055}else{deckButton.position.y=.085}
     if(autoLifting){
@@ -597,6 +618,7 @@ if(canvas){
 
   addEventListener('resize',()=>{
     frameTurntableCamera();
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,maxDpr()));
     renderer.setSize(innerWidth,innerHeight,false);
   });
 }
