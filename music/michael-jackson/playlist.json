@@ -1,3 +1,8 @@
 {
-  "tracks": []
+  "tracks": [
+    {
+      "title": "Chicago",
+      "src": "music/michael-jackson/Michael%20Jackson%20-%20Chicago%20%28Official%20Audio%29.mp3"
+    }
+  ]
 }
