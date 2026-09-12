@@ -1,4 +1,4 @@
-# Loading screen media
+# Intro / loading screen media
 
 Upload intro photos/videos into this folder, then add them to `manifest.json`.
 
@@ -14,12 +14,12 @@ The sequence automatically adjusts its speed to the number of items:
 
 Example item:
 ```json
-{ "type": "image", "src": "content/loading/my-photo.jpg", "alt": "Avaneesh" }
+{ "type": "image", "src": "content/intro/my-photo.jpg", "alt": "Avaneesh" }
 ```
 
 Video:
 ```json
-{ "type": "video", "src": "content/loading/my-video.mp4" }
+{ "type": "video", "src": "content/intro/my-video.mp4" }
 ```
 
 The order in manifest.json is the playback order.

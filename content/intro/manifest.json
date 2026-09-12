@@ -1,0 +1,19 @@
+{
+  "sequenceSeconds": 11.4,
+  "items": [
+    {
+      "type": "image",
+      "src": "content/intro/photo-01.jpeg",
+      "alt": "Avaneesh"
+    },
+    {
+      "type": "video",
+      "src": "content/intro/clip-01.mp4"
+    },
+    {
+      "type": "image",
+      "src": "content/intro/photo-03.jpeg",
+      "alt": "Avaneesh"
+    }
+  ]
+}

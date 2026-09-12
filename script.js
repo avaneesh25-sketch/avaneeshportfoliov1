@@ -65,7 +65,7 @@ const aboutImage=$('.about-photo img');
 
 async function loadLoadingMedia(){
   try{
-    const res=await fetch('content/loading/manifest.json?ts='+Date.now(),{cache:'no-store'});
+    const res=await fetch('content/intro/manifest.json?ts='+Date.now(),{cache:'no-store'});
     if(!res.ok)return;
     const cfg=await res.json();
     const items=(cfg.items||[]).filter(x=>x&&x.src);
