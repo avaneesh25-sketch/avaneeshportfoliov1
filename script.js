@@ -433,4 +433,5 @@ if(artistAudio)artistAudio.addEventListener('ended',()=>{const n=artistState.ind
 $('.music3d-sleeve').forEach(s=>s.addEventListener('click',()=>loadArtistPlaylist(s.dataset.artist)));
 syncArtistCardsFromFolders();
 updateArtistCard('billy-joel','Vienna');
+morphVinylLabel('Vienna','BILLY JOEL');
 window.addEventListener('wheel',e=>{if(!$('.content-page.page--active'))e.preventDefault()},{passive:false});
