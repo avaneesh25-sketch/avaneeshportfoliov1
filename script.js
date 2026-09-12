@@ -61,7 +61,98 @@ window.addEventListener('keydown',e=>{
 try{syncChapterChrome('intro')}catch(e){console.error('chapter nav init failed',e)}
 function enter(withSound){soundEnabled=withSound;if(gate){gate.classList.add('hidden');setTimeout(()=>gate.remove(),800)}}
 $('#enterWithSound')?.addEventListener('click',()=>enter(true));$('#enterMuted')?.addEventListener('click',()=>enter(false));
-const aboutImage=$('.about-photo img');if(aboutImage)aboutImage.src='assets/about.jpeg';
+const aboutImage=$('.about-photo img');
+
+async function loadLoadingMedia(){
+  try{
+    const res=await fetch('content/loading/manifest.json?ts='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return;
+    const cfg=await res.json();
+    const items=(cfg.items||[]).filter(x=>x&&x.src);
+    const montage=$('#montage');
+    if(!montage||!items.length)return;
+
+    montage.innerHTML='';
+    const sequenceSeconds=Number(cfg.sequenceSeconds)||11.4;
+    const slot=Math.max(.42,Math.min(2.3,sequenceSeconds/items.length));
+    const duration=Math.max(.5,slot*1.12);
+
+    items.forEach((item,i)=>{
+      const figure=document.createElement('figure');
+      figure.dataset.dynamic='true';
+      figure.style.setProperty('--item-delay',(.12+i*slot)+'s');
+      figure.style.setProperty('--item-duration',duration+'s');
+
+      if((item.type||'image').toLowerCase()==='video'){
+        const video=document.createElement('video');
+        video.src=item.src;
+        video.muted=true;
+        video.loop=true;
+        video.playsInline=true;
+        video.preload='metadata';
+        video.setAttribute('aria-hidden','true');
+        figure.appendChild(video);
+      }else{
+        const img=document.createElement('img');
+        img.src=item.src;
+        img.alt=item.alt||'Avaneesh';
+        img.loading='eager';
+        figure.appendChild(img);
+      }
+      montage.appendChild(figure);
+    });
+  }catch(e){console.warn('loading media config unavailable',e)}
+}
+
+async function loadAboutContent(){
+  try{
+    const res=await fetch('content/about/about.json?ts='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return;
+    const cfg=await res.json();
+    if(aboutImage&&cfg.image)aboutImage.src=cfg.image;
+    const heading=$('.about-text h2');
+    if(heading&&cfg.headlineHtml)heading.innerHTML=cfg.headlineHtml;
+    const aboutText=$('.about-text');
+    if(aboutText&&Array.isArray(cfg.paragraphs)){
+      $('.about-text p').forEach(p=>p.remove());
+      cfg.paragraphs.forEach(t=>{
+        const p=document.createElement('p');
+        p.textContent=t;
+        aboutText.appendChild(p);
+      });
+    }
+  }catch(e){console.warn('about config unavailable',e)}
+}
+
+async function loadWorkFromResume(){
+  try{
+    const res=await fetch('content/work/resume.json?ts='+Date.now(),{cache:'no-store'});
+    if(!res.ok)return;
+    const cfg=await res.json();
+    const grid=$('.work-grid');
+    if(grid&&Array.isArray(cfg.work)&&cfg.work.length){
+      grid.innerHTML=cfg.work.map((item,i)=>`
+        <article>
+          <span>${String(i+1).padStart(2,'0')}</span>
+          <h3>${item.title||''}</h3>
+          <p>${item.description||''}</p>
+          <strong>${item.metric||''}</strong>
+          <small>${item.metricLabel||''}</small>
+        </article>`).join('');
+    }
+    const label=$('[data-page="work"] .section-num');
+    if(label)label.textContent=cfg.label||'03 / SELECTED WORK — FROM CURRENT RESUME';
+
+    const cvs=$('.cv-choice');
+    if(cvs[0]&&cfg.productResume)cvs[0].href=cfg.productResume;
+    if(cvs[1]&&cfg.foundersOfficeResume)cvs[1].href=cfg.foundersOfficeResume;
+  }catch(e){console.warn('resume config unavailable',e)}
+}
+
+async function loadPortfolioContent(){
+  await Promise.all([loadLoadingMedia(),loadAboutContent(),loadWorkFromResume()]);
+}
+loadPortfolioContent();
 const transitionStyle=document.createElement('style');
 transitionStyle.textContent=`
 .crt-exit-noise{position:fixed;z-index:998;inset:0;pointer-events:none;opacity:0;visibility:hidden;background:#666;overflow:hidden}

@@ -1,0 +1,31 @@
+{
+  "label": "03 / SELECTED WORK — FROM CURRENT RESUME",
+  "productResume": "content/work/product-resume.pdf",
+  "foundersOfficeResume": "content/work/founders-office-resume.pdf",
+  "work": [
+    {
+      "title": "Yokogawa",
+      "description": "Process safety, automation, client requirements and cross-functional delivery.",
+      "metric": "20%",
+      "metricLabel": "handover cycle-time reduction"
+    },
+    {
+      "title": "Coffee Koffee",
+      "description": "A campus coffee venture built through sourcing, pricing and customer feedback.",
+      "metric": "0→50",
+      "metricLabel": "cups/day"
+    },
+    {
+      "title": "7 Senses",
+      "description": "Storefront, catalogue, suppliers, Meta ads and conversion experiments.",
+      "metric": "1K+",
+      "metricLabel": "storefront users"
+    },
+    {
+      "title": "Hardware builds",
+      "description": "Wearable bio-tracker, therapeutic exoskeleton and Tesla turbine prototypes.",
+      "metric": "3",
+      "metricLabel": "hands-on builds"
+    }
+  ]
+}
