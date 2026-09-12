@@ -289,22 +289,16 @@ const progress=$('#songProgress'),elapsed=$('#elapsedTime'),duration=$('#duratio
 const formatTime=t=>{if(!Number.isFinite(t))return '—:—';const m=Math.floor(t/60),s=Math.floor(t%60);return `${m}:${String(s).padStart(2,'0')}`};
 async function playSelectedFromTurntable(){
   const artist=artistNames[artistState.slug]||'BILLY JOEL';
-  if(artistState.slug==='billy-joel' && (!artistState.tracks.length || artistState.tracks[0]?.src==='assets/vienna.mp3.mp3')){
-    if(artistAudio)artistAudio.pause();
-    if(instruction)instruction.textContent='Needle down. Vienna is playing.';
-    if(soundEnabled){try{viennaAudio.currentTime=0;await viennaAudio.play()}catch(e){}}
-    return;
-  }
   viennaAudio.pause();
   if(artistState.tracks.length){
     await playArtistTrack(0);
   }else if(instruction){
-    instruction.textContent=`${artist} has no uploaded tracks yet.`;
+    instruction.textContent=artist+' has no uploaded tracks yet.';
   }
 }
 function pauseVienna(){viennaAudio.pause();if(artistAudio)artistAudio.pause();}
 window.addEventListener('turntable:drop',playSelectedFromTurntable);
-window.addEventListener('turntable:lift',()=>{pauseVienna();if(instruction)instruction.textContent='Press the turntable button to lower the needle.'});
+window.addEventListener('turntable:lift',()=>{pauseVienna();if(instruction&&!instruction.textContent.includes('switching'))instruction.textContent='Press the turntable button to lower the needle.'});
 viennaAudio.addEventListener('loadedmetadata',()=>{if(duration)duration.textContent=formatTime(viennaAudio.duration)});
 viennaAudio.addEventListener('timeupdate',()=>{if(!viennaAudio.duration)return;const p=viennaAudio.currentTime/viennaAudio.duration;if(progress)progress.style.width=`${p*100}%`;if(elapsed)elapsed.textContent=formatTime(viennaAudio.currentTime);if(duration)duration.textContent=formatTime(viennaAudio.duration);window.dispatchEvent(new CustomEvent('turntable:progress',{detail:{progress:p}}))});
 viennaAudio.addEventListener('ended',()=>{if(instruction)instruction.textContent='Side finished. The needle stays where you left it.';window.dispatchEvent(new CustomEvent('turntable:ended'))});
@@ -324,7 +318,7 @@ async function probeDurations(tracks){
 }
 function cleanTrackTitle(filename,slug){
   let title=decodeURIComponent(filename||'')
-    .replace(/\.(mp3|m4a|wav|ogg|aac|flac)$/i,'')
+    .replace(/\.(mp3|m4a|wav|ogg|aac|flac|weba)$/i,'')
     .replace(/\[[^\]]*(official|audio|video|lyric)[^\]]*\]/ig,'')
     .replace(/\([^)]*(official|audio|video|lyric)[^)]*\)/ig,'')
     .replace(/\s+-\s+(official\s+)?(audio|video|lyric video).*$/i,'')
@@ -353,7 +347,7 @@ async function discoverTracksFromFolder(slug){
     const files=await res.json();
     if(!Array.isArray(files))return [];
     return files
-      .filter(f=>f&&f.type==='file'&&/\.(mp3|m4a|wav|ogg|aac|flac)$/i.test(f.name||''))
+      .filter(f=>f&&f.type==='file'&&/\.(mp3|m4a|wav|ogg|aac|flac|weba)$/i.test(f.name||''))
       .sort((a,b)=>(a.name||'').localeCompare(b.name||'',undefined,{numeric:true,sensitivity:'base'}))
       .map(f=>({title:cleanTrackTitle(f.name,slug),src:'music/'+encodeURIComponent(slug)+'/'+encodeURIComponent(f.name)}));
   }catch(e){
@@ -391,27 +385,44 @@ async function syncArtistCardsFromFolders(){
 async function loadArtistPlaylist(slug){
   const artist=artistNames[slug]||slug.toUpperCase();
   const sameArtist=artistState.slug===slug;
+  const wasPlaying=!!((artistAudio&&!artistAudio.paused)||(viennaAudio&&!viennaAudio.paused));
+
   $$('.music3d-sleeve').forEach(x=>{
     x.classList.toggle('is-active',x.dataset.artist===slug);
     x.classList.remove('is-playing');
   });
+
   if(artistAudio)artistAudio.pause();
   viennaAudio.pause();
-  window.dispatchEvent(new CustomEvent('turntable:lift'));
-  artistState.slug=slug;artistState.index=0;artistState.durations=[];artistState.totalDuration=0;
+
+  artistState.slug=slug;
+  artistState.index=0;
+  artistState.durations=[];
+  artistState.totalDuration=0;
   artistState.tracks=await getArtistTracks(slug);
+
   if(slug==='billy-joel'&&!artistState.tracks.length){
     artistState.tracks=[{title:'Vienna',src:'assets/vienna.mp3.mp3'}];
   }
+
   if(artistState.tracks.length)await probeDurations(artistState.tracks);
+
   const first=artistState.tracks[0];
   const nextTitle=first?.title||artist;
   artistState.selectedTitle=nextTitle;
+
+  // Change the record immediately on selection.
+  morphVinylLabel(nextTitle,artist);
   updateArtistCard(slug,first?.title||'');
-  if(!sameArtist)morphVinylLabel(nextTitle,artist);
+
   if(instruction)instruction.textContent=artistState.tracks.length
-    ? artist+' — '+nextTitle+' selected. Press the turntable button to lower the needle.'
+    ? artist+' — '+nextTitle+(wasPlaying?' switching…':' selected. Press the turntable button to lower the needle.')
     : artist+' selected — add audio files inside music/'+slug+'/';
+
+  if(wasPlaying&&artistState.tracks.length){
+    // The 3D scene lifts to rest, then automatically drops and emits turntable:drop.
+    window.dispatchEvent(new CustomEvent('turntable:switchTrack'));
+  }
 }
 async function playArtistTrack(i){
   const track=artistState.tracks[i];if(!track||!artistAudio)return;
