@@ -1,3 +1,8 @@
 {
-  "tracks": []
+  "tracks": [
+    {
+      "title": "The Hills of Aberfeldy",
+      "src": "music/ed-sheeran/Ed%20Sheeran%20-%20The%20Hills%20of%20Aberfeldy%20%5BOfficial%20Video%5D.mp3"
+    }
+  ]
 }
