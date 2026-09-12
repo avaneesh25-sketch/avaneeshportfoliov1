@@ -481,6 +481,9 @@ if(canvas){
         statusLed.material.color.setHex(0xff8a3b);
         statusLed.material.emissive.setHex(0xff5b16);
         statusLed.material.emissiveIntensity=3;
+        // Start selected audio muted under this real user gesture.
+        // It is unmuted only when the stylus reaches the record.
+        window.dispatchEvent(new CustomEvent('turntable:primeSelected'));
         window.dispatchEvent(new CustomEvent('turntable:autoDrop'));
       }
       return;
