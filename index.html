@@ -83,6 +83,14 @@
       .loop-nav{width:40px;height:40px;font-size:21px}
       .loop-nav--prev{left:10px}.loop-nav--next{right:10px}
     }
+    /* mobile turntable framing: keep the full player visible without touching desktop */
+    @media (max-width:760px){
+      .music3d-page{overflow:hidden}
+      #turntableCanvas{
+        width:100vw!important;
+        height:100dvh!important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -151,7 +159,7 @@
       }
     },2500);
   </script>
-  <script type="module" src="turntable3d.js?v=20260911-finalmerge"></script>
+  <script type="module" src="turntable3d.js?v=20260912-mobile-framing"></script>
   <script src="script.js?v=20260912-tv-suction-restored"></script>
   <script>
     let lampAudioCtx=null;
