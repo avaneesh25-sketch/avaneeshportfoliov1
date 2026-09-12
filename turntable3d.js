@@ -8,8 +8,29 @@ if(canvas){
   scene.fog=new THREE.FogExp2(0x090604,.035);
 
   const camera=new THREE.PerspectiveCamera(36,innerWidth/innerHeight,.1,100);
-  camera.position.set(.1,7.2,10.6);
-  camera.lookAt(.1,.15,.1);
+
+  function frameTurntableCamera(){
+    const w=window.innerWidth,h=window.innerHeight;
+    const portrait=w<760 || w/h<.78;
+
+    camera.aspect=w/h;
+
+    if(portrait){
+      // Pull the camera back on phones so the full deck fits inside the narrow horizontal FOV.
+      camera.fov=42;
+      camera.position.set(.15,8.2,15.8);
+      camera.lookAt(.35,.12,.25);
+    }else{
+      // Preserve the laptop/desktop composition exactly as designed.
+      camera.fov=36;
+      camera.position.set(.1,7.2,10.6);
+      camera.lookAt(.1,.15,.1);
+    }
+
+    camera.updateProjectionMatrix();
+  }
+
+  frameTurntableCamera();
 
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
@@ -546,5 +567,8 @@ if(canvas){
     if(iceActive){iceTime+=dt;iceCubes.forEach((ice,i)=>{const a=iceTime*6.4+ice.userData.phase;ice.position.x=ice.userData.home.x+Math.sin(a)*.045;ice.position.z=ice.userData.home.z+Math.cos(a*1.08)*.045;ice.position.y=.465+Math.abs(Math.sin(a*.72))*.015;ice.rotation.y+=dt*(i%2?2.2:-2.4);ice.rotation.x=.08+Math.sin(a*.8)*.07});if(iceTime>1.1){iceActive=false;iceCubes.forEach(ice=>ice.position.copy(ice.userData.home))}}
     renderer.render(scene,camera)}animate();
 
-  addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight,false)});
+  addEventListener('resize',()=>{
+    frameTurntableCamera();
+    renderer.setSize(innerWidth,innerHeight,false);
+  });
 }
