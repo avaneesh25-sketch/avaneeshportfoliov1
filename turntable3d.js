@@ -509,7 +509,7 @@ if(canvas){
       statusLed.material.color.setHex(0x2b2b2b);
       statusLed.material.emissive.setHex(0x000000);
       statusLed.material.emissiveIntensity=0;
-      window.dispatchEvent(new CustomEvent('turntable:lift'));
+      window.dispatchEvent(new CustomEvent('turntable:lift',{detail:{switching:true}}));
     }else if(!autoLifting){
       pendingTrackSwitch=false;
       autoDropping=true;
