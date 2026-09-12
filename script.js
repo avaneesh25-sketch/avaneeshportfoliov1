@@ -69,14 +69,128 @@ transitionStyle.textContent=`
 .crt-exit-noise:after{content:"NO SIGNAL";position:absolute;inset:0;display:grid;place-items:center;color:#eee;font:500 11px DM Mono,monospace;letter-spacing:.34em;text-shadow:0 0 7px rgba(255,255,255,.38)}
 .crt-impact-flash{position:fixed;z-index:999;inset:0;pointer-events:none;background:#fff;opacity:0;visibility:hidden}
 .about-page.crt-about-reveal .about-wrap{animation:crtAboutReveal .82s cubic-bezier(.2,.72,.2,1) both}
-.tv-stage{overflow:visible!important}.intro-page{overflow:visible!important}.tv-set.crt-pull-in{will-change:transform,filter,opacity;position:fixed!important;z-index:9999!important;left:50%!important;top:50%!important;margin:0!important;transform-origin:50% 50%!important}
+.tv-stage{overflow:visible!important}.intro-page{overflow:visible!important}.tv-set.crt-pull-in{will-change:transform,filter,opacity;position:fixed!important;z-index:9999!important;margin:0!important;transform-origin:50% 50%!important}
 @keyframes crtStatic{0%{transform:translate(0,0)}25%{transform:translate(-1.4%,1.8%)}50%{transform:translate(1.2%,-1.2%)}75%{transform:translate(-.8%,-1.4%)}100%{transform:translate(1.5%,1%)}}
 #montage figure{transition:opacity var(--montage-speed,.72s) linear,filter var(--montage-speed,.72s) linear,transform var(--montage-speed,.72s) ease}.montage.montage-fast figure{animation-duration:.42s!important;transition-duration:.20s!important}@keyframes crtAboutReveal{0%{opacity:0;transform:translateY(22px)}100%{opacity:1;transform:translateY(0)}}
 `;
 document.head.appendChild(transitionStyle);
 const exitNoise=document.createElement('div');exitNoise.className='crt-exit-noise';document.body.appendChild(exitNoise);
 const impactFlash=document.createElement('div');impactFlash.className='crt-impact-flash';document.body.appendChild(impactFlash);
-function transitionIntroToAbout(){if(introTransitioning)return;introTransitioning=true;clearIntroTimers();introAudio.pause();const introPage=$('[data-page="intro"]');signalLost.textContent='NO SIGNAL';signalLost.classList.add('show');setTimeout(()=>{exitNoise.classList.add('show');introPage?.classList.add('crt-sucked')},180);setTimeout(()=>{go('about');syncChapterChrome?.('about')},1050);setTimeout(()=>{exitNoise.classList.remove('show');introPage?.classList.remove('crt-sucked');tv.classList.remove('playing');signalLost.classList.remove('show');signalLost.textContent='BAD SIGNAL';introTransitioning=false},1500)}
+function wait(ms){return new Promise(r=>setTimeout(r,ms))}
+async function transitionIntroToAbout(){
+  if(introTransitioning)return;
+  introTransitioning=true;
+  clearIntroTimers();
+  introAudio.pause();
+
+  const aboutPage=$('[data-page="about"]');
+  const rect=tv.getBoundingClientRect();
+  const cx=rect.left+rect.width/2;
+  const cy=rect.top+rect.height/2;
+  const dx=cx-window.innerWidth/2;
+  const dy=cy-window.innerHeight/2;
+
+  signalLost.textContent='NO SIGNAL';
+  signalLost.classList.add('show');
+
+  // Lock TV to the viewport at its exact current visual position.
+  tv.classList.add('crt-pull-in');
+  tv.style.width=rect.width+'px';
+  tv.style.height=rect.height+'px';
+  tv.style.left='50%';
+  tv.style.top='50%';
+  tv.style.position='fixed';
+  tv.style.zIndex='9999';
+  tv.style.margin='0';
+  tv.style.transformOrigin='50% 50%';
+
+  const startTransform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(1)`;
+  tv.style.transform=startTransform;
+
+  // Fast suction: small anticipation, then hard acceleration into the glass.
+  const pull=tv.animate([
+    {transform:startTransform,filter:'blur(0px) brightness(1) contrast(1)',offset:0},
+    {transform:`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px)) scale(.98)`,filter:'blur(0px) brightness(.98) contrast(1.03)',offset:.10},
+    {transform:'translate(-50%,-50%) scale(1.55)',filter:'blur(0px) brightness(1.02) contrast(1.12)',offset:.28},
+    {transform:'translate(-50%,-50%) scale(7.5)',filter:'blur(1.5px) brightness(1.08) contrast(1.28)',offset:.62},
+    {transform:'translate(-50%,-50%) scale(46)',filter:'blur(12px) brightness(1.25) contrast(1.55)',offset:1}
+  ],{
+    duration:680,
+    easing:'cubic-bezier(.78,.02,.98,.28)',
+    fill:'forwards'
+  });
+
+  // Let the TV visibly grow first, then flood the screen with grey CRT noise.
+  await wait(400);
+  exitNoise.style.visibility='visible';
+  exitNoise.style.opacity='0';
+  exitNoise.style.transform='translateX(0)';
+  exitNoise.animate(
+    [{opacity:0},{opacity:.22,offset:.35},{opacity:1}],
+    {duration:190,easing:'linear',fill:'forwards'}
+  );
+
+  await wait(145);
+
+  // Impact flash + tiny jolt as the viewer "hits" the screen.
+  impactFlash.style.visibility='visible';
+  const shake=document.body.animate([
+    {transform:'translateX(0)'},
+    {transform:'translateX(5px)'},
+    {transform:'translateX(-4px)'},
+    {transform:'translateX(3px)'},
+    {transform:'translateX(0)'}
+  ],{duration:135,easing:'steps(1,end)'});
+  await impactFlash.animate(
+    [{opacity:0},{opacity:.82,offset:.18},{opacity:0}],
+    {duration:150,easing:'ease-out',fill:'forwards'}
+  ).finished.catch(()=>{});
+  impactFlash.style.visibility='hidden';
+  await shake.finished.catch(()=>{});
+
+  // Grey/no-signal hold.
+  await exitNoise.animate([
+    {transform:'translateX(0)'},
+    {transform:'translateX(-10px)'},
+    {transform:'translateX(7px)'},
+    {transform:'translateX(-4px)'},
+    {transform:'translateX(0)'}
+  ],{duration:110,easing:'steps(1,end)'}).finished.catch(()=>{});
+  await wait(260);
+
+  // Switch pages while grey static fully covers the viewport.
+  go('about');
+  aboutPage?.classList.add('crt-about-reveal');
+
+  // Grey scene dissolves to reveal About.
+  await exitNoise.animate(
+    [{opacity:1},{opacity:.92,offset:.25},{opacity:0}],
+    {duration:520,easing:'cubic-bezier(.2,.7,.2,1)',fill:'forwards'}
+  ).finished.catch(()=>{});
+
+  exitNoise.style.visibility='hidden';
+  exitNoise.style.opacity='0';
+  exitNoise.style.transform='';
+
+  try{pull.cancel()}catch(e){}
+  tv.style.width='';
+  tv.style.height='';
+  tv.style.left='';
+  tv.style.top='';
+  tv.style.position='';
+  tv.style.zIndex='';
+  tv.style.margin='';
+  tv.style.transform='';
+  tv.style.filter='';
+  tv.style.opacity='';
+  tv.style.transformOrigin='';
+  tv.classList.remove('crt-pull-in','playing');
+  signalLost.classList.remove('show');
+  signalLost.textContent='BAD SIGNAL';
+
+  setTimeout(()=>aboutPage?.classList.remove('crt-about-reveal'),900);
+  introTransitioning=false;
+}
 async function startIntro(){clearIntroTimers();introTransitioning=false;tv.classList.remove('playing');signalLost.classList.remove('show');introNext.disabled=true;void tv.offsetWidth;tv.classList.add('playing');let audioStarted=false;if(soundEnabled){try{introAudio.currentTime=0;await introAudio.play();audioStarted=true}catch(e){}}if(audioStarted){introAudio.onended=transitionIntroToAbout;if(Number.isFinite(introAudio.duration)&&introAudio.duration>0)introTimer.push(setTimeout(transitionIntroToAbout,(introAudio.duration+.15)*1000))}else introTimer.push(setTimeout(transitionIntroToAbout,12800))}playIntro?.addEventListener('click',startIntro);
 
 
