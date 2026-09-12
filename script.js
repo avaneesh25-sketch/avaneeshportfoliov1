@@ -291,9 +291,13 @@ function primeSelectedAudio(track){
   if(!artistAudio||!track||!soundEnabled)return;
   try{
     const target=new URL(track.src,location.href).href;
-    if(artistAudio.src!==target)artistAudio.src=track.src;
+    if(artistAudio.src!==target){
+      artistAudio.src=track.src;
+      artistAudio.load();
+    }
     artistAudio.currentTime=0;
-    artistAudio.muted=true;
+    artistAudio.muted=false;
+    artistAudio.volume=.001;
     const p=artistAudio.play();
     if(p&&p.catch)p.catch(()=>{});
   }catch(e){}
@@ -315,7 +319,10 @@ async function playSelectedFromTurntable(){
 }
 function pauseVienna(){viennaAudio.pause();if(artistAudio)artistAudio.pause();}
 window.addEventListener('turntable:drop',playSelectedFromTurntable);
-window.addEventListener('turntable:lift',()=>{pauseVienna();if(instruction&&!instruction.textContent.includes('switching'))instruction.textContent='Press the turntable button to lower the needle.'});
+window.addEventListener('turntable:lift',e=>{
+  if(!e.detail?.switching)pauseVienna();
+  if(instruction&&!instruction.textContent.includes('switching'))instruction.textContent='Press the turntable button to lower the needle.';
+});
 viennaAudio.addEventListener('loadedmetadata',()=>{if(duration)duration.textContent=formatTime(viennaAudio.duration)});
 viennaAudio.addEventListener('timeupdate',()=>{if(!viennaAudio.duration)return;const p=viennaAudio.currentTime/viennaAudio.duration;if(progress)progress.style.width=`${p*100}%`;if(elapsed)elapsed.textContent=formatTime(viennaAudio.currentTime);if(duration)duration.textContent=formatTime(viennaAudio.duration);window.dispatchEvent(new CustomEvent('turntable:progress',{detail:{progress:p}}))});
 viennaAudio.addEventListener('ended',()=>{if(instruction)instruction.textContent='Side finished. The needle stays where you left it.';window.dispatchEvent(new CustomEvent('turntable:ended'))});
@@ -385,9 +392,9 @@ async function playArtistTrack(i){
   const track=artistState.tracks[i];if(!track||!artistAudio)return;
   artistState.index=i;
   const target=new URL(track.src,location.href).href;
-  const alreadyPrimed=artistAudio.src===target&&!artistAudio.paused;
   if(artistAudio.src!==target){
     artistAudio.src=track.src;
+    artistAudio.load();
     artistAudio.currentTime=0;
   }
   const artist=artistNames[artistState.slug]||'';
@@ -397,7 +404,7 @@ async function playArtistTrack(i){
   if(soundEnabled){
     artistAudio.muted=false;
     artistAudio.volume=1;
-    if(!alreadyPrimed){
+    if(artistAudio.paused){
       try{await artistAudio.play()}catch(e){
         if(instruction)instruction.textContent='Tap the turntable button once more to allow audio.';
       }
