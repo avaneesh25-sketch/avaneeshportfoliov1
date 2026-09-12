@@ -374,7 +374,7 @@ async function loadArtistPlaylist(slug){
   const sameArtist=artistState.slug===slug;
   const wasPlaying=!!((artistAudio&&!artistAudio.paused)||(viennaAudio&&!viennaAudio.paused));
   if(wasPlaying&&immediateTrack)primeSelectedAudio(immediateTrack);
-  $$$('.music3d-sleeve').forEach(x=>{x.classList.toggle('is-active',x.dataset.artist===slug);x.classList.remove('is-playing');});
+  $('.music3d-sleeve').forEach(x=>{x.classList.toggle('is-active',x.dataset.artist===slug);x.classList.remove('is-playing');});
   if(artistAudio)artistAudio.pause();
   viennaAudio.pause();
   artistState.slug=slug;artistState.index=0;artistState.durations=[];artistState.totalDuration=0;
@@ -421,5 +421,4 @@ if(artistAudio)artistAudio.addEventListener('ended',()=>{const n=artistState.ind
 $$('.music3d-sleeve').forEach(s=>s.addEventListener('click',()=>loadArtistPlaylist(s.dataset.artist)));
 syncArtistCardsFromFolders();
 updateArtistCard('billy-joel','Vienna');
-morphVinylLabel('Vienna','BILLY JOEL');
 window.addEventListener('wheel',e=>{if(!$('.content-page.page--active'))e.preventDefault()},{passive:false});
