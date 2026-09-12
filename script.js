@@ -114,7 +114,7 @@ async function loadAboutContent(){
     if(heading&&cfg.headlineHtml)heading.innerHTML=cfg.headlineHtml;
     const aboutText=$('.about-text');
     if(aboutText&&Array.isArray(cfg.paragraphs)){
-      $('.about-text p').forEach(p=>p.remove());
+      $$('.about-text p').forEach(p=>p.remove());
       cfg.paragraphs.forEach(t=>{
         const p=document.createElement('p');
         p.textContent=t;
@@ -143,7 +143,7 @@ async function loadWorkFromResume(){
     const label=$('[data-page="work"] .section-num');
     if(label)label.textContent=cfg.label||'03 / SELECTED WORK — FROM CURRENT RESUME';
 
-    const cvs=$('.cv-choice');
+    const cvs=$$('.cv-choice');
     if(cvs[0]&&cfg.productResume)cvs[0].href=cfg.productResume;
     if(cvs[1]&&cfg.foundersOfficeResume)cvs[1].href=cfg.foundersOfficeResume;
   }catch(e){console.warn('resume config unavailable',e)}
@@ -386,7 +386,7 @@ async function loadArtistPlaylist(slug){
   const artist=artistNames[slug]||slug.toUpperCase();
   const sameArtist=artistState.slug===slug;
   const wasPlaying=!!((artistAudio&&!artistAudio.paused)||(viennaAudio&&!viennaAudio.paused));
-  $$('.music3d-sleeve').forEach(x=>{x.classList.toggle('is-active',x.dataset.artist===slug);x.classList.remove('is-playing');});
+  $$$('.music3d-sleeve').forEach(x=>{x.classList.toggle('is-active',x.dataset.artist===slug);x.classList.remove('is-playing');});
   if(artistAudio)artistAudio.pause();
   viennaAudio.pause();
   artistState.slug=slug;artistState.index=0;artistState.durations=[];artistState.totalDuration=0;
