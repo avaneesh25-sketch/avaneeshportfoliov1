@@ -115,3 +115,79 @@
   white-space:nowrap!important;
   pointer-events:none!important;
 }
+
+/* mobile artist selector — keep song/artist choice visible on phones */
+@media (max-width:760px){
+  .music3d-crate{
+    display:flex!important;
+    position:absolute!important;
+    left:12px!important;
+    right:12px!important;
+    top:72px!important;
+    bottom:auto!important;
+    width:auto!important;
+    height:auto!important;
+    padding:8px 4px 14px!important;
+    gap:8px!important;
+    overflow-x:auto!important;
+    overflow-y:visible!important;
+    background:linear-gradient(180deg,rgba(10,7,5,.88),rgba(10,7,5,.38),transparent)!important;
+    border:0!important;
+    box-shadow:none!important;
+    transform:none!important;
+    z-index:20!important;
+    scrollbar-width:none!important;
+    -webkit-overflow-scrolling:touch;
+  }
+  .music3d-crate::-webkit-scrollbar{display:none!important}
+
+  .music3d-sleeve{
+    flex:0 0 128px!important;
+    min-width:128px!important;
+    height:70px!important;
+    margin:0!important;
+    padding:10px 11px!important;
+    border-radius:3px!important;
+    overflow:visible!important;
+    scroll-snap-align:start;
+  }
+
+  .music3d-sleeve strong{
+    font-size:14px!important;
+    line-height:1!important;
+  }
+
+  .music3d-sleeve small{
+    font-size:6px!important;
+    margin-top:4px!important;
+    letter-spacing:.12em!important;
+  }
+
+  .music3d-sleeve .hover-vinyl{
+    width:48px!important;
+    height:48px!important;
+    top:-24px!important;
+    right:8px!important;
+  }
+
+  /* On touch screens, keep the selected artist's half-vinyl visible.
+     Hover-only behavior remains unchanged on desktop. */
+  .music3d-sleeve.is-active .hover-vinyl{
+    opacity:1!important;
+    transform:translateY(0) rotate(0deg)!important;
+    animation:halfVinylSpin 1.85s linear infinite!important;
+  }
+
+  .crate-apple-link,.crate-note{
+    display:none!important;
+  }
+
+  /* Give the 3D scene room below the mobile shelf. */
+  .music3d-now{
+    right:16px!important;
+    left:16px!important;
+    bottom:7vh!important;
+    width:auto!important;
+    text-align:center!important;
+  }
+}
