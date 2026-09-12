@@ -287,6 +287,23 @@ async function startIntro(){clearIntroTimers();introTransitioning=false;tv.class
 
 const progress=$('#songProgress'),elapsed=$('#elapsedTime'),duration=$('#durationTime'),instruction=$('#musicInstruction'),artistAudio=$('#artistAudio');
 const formatTime=t=>{if(!Number.isFinite(t))return '—:—';const m=Math.floor(t/60),s=Math.floor(t%60);return `${m}:${String(s).padStart(2,'0')}`};
+function primeSelectedAudio(track){
+  if(!artistAudio||!track||!soundEnabled)return;
+  try{
+    const target=new URL(track.src,location.href).href;
+    if(artistAudio.src!==target)artistAudio.src=track.src;
+    artistAudio.currentTime=0;
+    artistAudio.muted=true;
+    const p=artistAudio.play();
+    if(p&&p.catch)p.catch(()=>{});
+  }catch(e){}
+}
+
+window.addEventListener('turntable:primeSelected',()=>{
+  const track=artistState.tracks[artistState.index]||artistState.tracks[0];
+  primeSelectedAudio(track);
+});
+
 async function playSelectedFromTurntable(){
   const artist=artistNames[artistState.slug]||'BILLY JOEL';
   viennaAudio.pause();
@@ -349,6 +366,7 @@ async function loadArtistPlaylist(slug){
   if(immediateTrack)morphVinylLabel(immediateTrack.title,artist);
   const sameArtist=artistState.slug===slug;
   const wasPlaying=!!((artistAudio&&!artistAudio.paused)||(viennaAudio&&!viennaAudio.paused));
+  if(wasPlaying&&immediateTrack)primeSelectedAudio(immediateTrack);
   $$$('.music3d-sleeve').forEach(x=>{x.classList.toggle('is-active',x.dataset.artist===slug);x.classList.remove('is-playing');});
   if(artistAudio)artistAudio.pause();
   viennaAudio.pause();
@@ -366,12 +384,25 @@ async function loadArtistPlaylist(slug){
 async function playArtistTrack(i){
   const track=artistState.tracks[i];if(!track||!artistAudio)return;
   artistState.index=i;
-  artistAudio.src=track.src;
+  const target=new URL(track.src,location.href).href;
+  const alreadyPrimed=artistAudio.src===target&&!artistAudio.paused;
+  if(artistAudio.src!==target){
+    artistAudio.src=track.src;
+    artistAudio.currentTime=0;
+  }
   const artist=artistNames[artistState.slug]||'';
   morphVinylLabel(track.title||artist||'VINYL',artist);
   updateArtistCard(artistState.slug,track.title||artist,true);
   if(instruction)instruction.textContent=artist+' — '+(track.title||artist)+' playing.';
-  if(soundEnabled)try{await artistAudio.play()}catch(e){}
+  if(soundEnabled){
+    artistAudio.muted=false;
+    artistAudio.volume=1;
+    if(!alreadyPrimed){
+      try{await artistAudio.play()}catch(e){
+        if(instruction)instruction.textContent='Tap the turntable button once more to allow audio.';
+      }
+    }
+  }
 }
 if(artistAudio)artistAudio.addEventListener('timeupdate',()=>{
   const prior=artistState.durations.slice(0,artistState.index).reduce((a,b)=>a+b,0);
