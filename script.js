@@ -316,20 +316,13 @@ async function probeDurations(tracks){
   const durations=await Promise.all(tracks.map(t=>new Promise(resolve=>{const a=new Audio();a.preload='metadata';a.src=t.src;const done=()=>resolve(Number.isFinite(a.duration)?a.duration:0);a.addEventListener('loadedmetadata',done,{once:true});a.addEventListener('error',()=>resolve(0),{once:true})})));
   artistState.durations=durations;artistState.totalDuration=durations.reduce((a,b)=>a+b,0);
 }
-function cleanTrackTitle(filename,slug){
-  let title=decodeURIComponent(filename||'')
-    .replace(/\.(mp3|m4a|wav|ogg|aac|flac|weba|weba)$/i,'')
-    .replace(/\[[^\]]*(official|audio|video|lyric)[^\]]*\]/ig,'')
-    .replace(/\([^)]*(official|audio|video|lyric)[^)]*\)/ig,'')
-    .replace(/\s+-\s+(official\s+)?(audio|video|lyric video).*$/i,'')
-    .trim();
-  const artist=artistNames[slug]||'';
-  const lower=title.toLowerCase(), artistLower=artist.toLowerCase();
-  if(artist&&lower.startsWith(artistLower)){
-    title=title.slice(artist.length).replace(/^\s*[-–—:]\s*/,'').trim();
-  }
-  return title||artist;
-}
+const musicLibrary={
+  'billy-joel':[{title:'Vienna',src:'assets/vienna.mp3.mp3'}],
+  'ed-sheeran':[{title:'The Hills of Aberfeldy',src:'music/ed-sheeran/Ed%20Sheeran%20-%20The%20Hills%20of%20Aberfeldy%20%5BOfficial%20Video%5D.mp3'}],
+  'michael-jackson':[{title:'Chicago',src:'music/michael-jackson/Michael%20Jackson%20-%20Chicago%20%28Official%20Audio%29.mp3'}],
+  'queen':[{title:'Love Of My Life',src:'music/queen/Queen%20-%20Love%20Of%20My%20Life%20%5BLyrics%5D.mp3'}],
+  'elton-john':[{title:'Yellow Brick Road',src:'music/elton-john/yellow%20brick%20road.weba'}]
+};
 
 function updateArtistCard(slug,title,playing=false){
   const card=document.querySelector('.music3d-sleeve[data-artist="'+slug+'"]');
@@ -339,51 +332,21 @@ function updateArtistCard(slug,title,playing=false){
   card.classList.toggle('is-playing',!!playing);
 }
 
-async function discoverTracksFromFolder(slug){
-  try{
-    const url='https://api.github.com/repos/avaneesh25-sketch/avaneeshportfoliov1/contents/music/'+encodeURIComponent(slug)+'?ref=main';
-    const res=await fetch(url,{cache:'no-store'});
-    if(!res.ok)return [];
-    const files=await res.json();
-    if(!Array.isArray(files))return [];
-    return files
-      .filter(f=>f&&f.type==='file'&&/\.(mp3|m4a|wav|ogg|aac|flac|weba|weba)$/i.test(f.name||''))
-      .sort((a,b)=>(a.name||'').localeCompare(b.name||'',undefined,{numeric:true,sensitivity:'base'}))
-      .map(f=>({title:cleanTrackTitle(f.name,slug),src:'music/'+encodeURIComponent(slug)+'/'+encodeURIComponent(f.name)}));
-  }catch(e){
-    console.warn('music folder discovery failed',slug,e);
-    return [];
-  }
-}
-
 async function getArtistTracks(slug){
-  let configured=[];
-  try{
-    const res=await fetch('music/'+slug+'/playlist.json?ts='+Date.now(),{cache:'no-store'});
-    if(res.ok){
-      const data=await res.json();
-      configured=(Array.isArray(data)?data:(data.tracks||[])).filter(t=>t&&t.src);
-    }
-  }catch(e){}
-  const discovered=await discoverTracksFromFolder(slug);
-  const seen=new Set(), merged=[];
-  for(const t of configured.concat(discovered)){
-    const key=(t.src||'').toLowerCase();
-    if(!key||seen.has(key))continue;
-    seen.add(key);
-    merged.push(t);
-  }
-  return merged;
+  return (musicLibrary[slug]||[]).map(t=>({...t}));
 }
 
 async function syncArtistCardsFromFolders(){
-  await Promise.all(Object.keys(artistNames).map(async slug=>{
-    const tracks=await getArtistTracks(slug);
+  Object.keys(artistNames).forEach(slug=>{
+    const tracks=musicLibrary[slug]||[];
     updateArtistCard(slug,tracks[0]?.title||'');
-  }));
+  });
 }
+
 async function loadArtistPlaylist(slug){
   const artist=artistNames[slug]||slug.toUpperCase();
+  const immediateTrack=(musicLibrary[slug]||[])[0];
+  if(immediateTrack)morphVinylLabel(immediateTrack.title,artist);
   const sameArtist=artistState.slug===slug;
   const wasPlaying=!!((artistAudio&&!artistAudio.paused)||(viennaAudio&&!viennaAudio.paused));
   $$$('.music3d-sleeve').forEach(x=>{x.classList.toggle('is-active',x.dataset.artist===slug);x.classList.remove('is-playing');});
@@ -396,7 +359,6 @@ async function loadArtistPlaylist(slug){
   const first=artistState.tracks[0];
   const nextTitle=first?.title||artist;
   artistState.selectedTitle=nextTitle;
-  morphVinylLabel(nextTitle,artist);
   updateArtistCard(slug,first?.title||'');
   if(instruction)instruction.textContent=artistState.tracks.length ? artist+' — '+nextTitle+(wasPlaying?' switching…':' selected. Press the turntable button to lower the needle.') : artist+' selected — add audio files inside music/'+slug+'/';
   if(wasPlaying&&artistState.tracks.length){window.dispatchEvent(new CustomEvent('turntable:switchTrack'));}
