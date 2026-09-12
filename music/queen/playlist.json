@@ -1,3 +1,8 @@
 {
-  "tracks": []
+  "tracks": [
+    {
+      "title": "Love Of My Life",
+      "src": "music/queen/Queen%20-%20Love%20Of%20My%20Life%20%5BLyrics%5D.mp3"
+    }
+  ]
 }
