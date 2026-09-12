@@ -418,7 +418,7 @@ if(artistAudio)artistAudio.addEventListener('timeupdate',()=>{
   window.dispatchEvent(new CustomEvent('turntable:progress',{detail:{progress:Math.min(1,(prior+current)/total)}}));
 });
 if(artistAudio)artistAudio.addEventListener('ended',()=>{const n=artistState.index+1;if(n<artistState.tracks.length)playArtistTrack(n);else if(instruction)instruction.textContent='Playlist finished.'});
-$('.music3d-sleeve').forEach(s=>s.addEventListener('click',()=>loadArtistPlaylist(s.dataset.artist)));
+$$('.music3d-sleeve').forEach(s=>s.addEventListener('click',()=>loadArtistPlaylist(s.dataset.artist)));
 syncArtistCardsFromFolders();
 updateArtistCard('billy-joel','Vienna');
 morphVinylLabel('Vienna','BILLY JOEL');
