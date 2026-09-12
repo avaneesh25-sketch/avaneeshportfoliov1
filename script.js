@@ -25,7 +25,7 @@ function go(page,direction='next'){
   }
   syncChapterChrome(page);
   window.dispatchEvent(new CustomEvent('portfolio:page',{detail:{page}}));
-  if(page!=='music')pauseVienna(false);
+  if(page!=='music'&&typeof pauseAllMusic==='function')pauseAllMusic();
 }
 
 $$('[data-go]').forEach(el=>el.addEventListener('click',()=>go(el.dataset.go)));
@@ -251,7 +251,7 @@ async function transitionIntroToAbout(){
   await wait(260);
 
   // Switch pages while grey static fully covers the viewport.
-  go('about');
+  try{go('about')}catch(e){console.error('about navigation failed',e)}
   aboutPage?.classList.add('crt-about-reveal');
 
   // Grey scene dissolves to reveal About.
