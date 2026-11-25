@@ -21,3 +21,6 @@ Run `python scripts/import_v3_assets.py` at repo root to retrieve and pack the o
 - `beans.glb`: no verified suitable file yet; procedural instanced beans are fallback.
 
 Keep each source's license link and author credit in website credits. Do not imply AirPods were designed by the portfolio owner. Verify model size and separate components after obtaining each binary. No production website code is modified by this importer.
+
+## Chair
+- `assets/models/chair.glb`: Office Chair by Tevy, CC0 1.0, v1 LOD0. https://tevy.dev/models/office-chair — pinned binary https://tevy.dev/models/office-chair/v1/lod0.glb. Listed 9,287 triangles, 426 KB, 0.65 × 1.13 × 0.67 m. Seat height 0.49 m. Orientation needs rendered verification.

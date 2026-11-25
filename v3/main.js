@@ -8,7 +8,9 @@ const guideButton=document.querySelector('#guide');
 const resetButton=document.querySelector('#reset');
 const error=document.querySelector('#error');
 const W=1.8;
-const DESK_HEIGHT=.75, EYE_HEIGHT=1.62;
+const DESK_HEIGHT=.75, EYE_HEIGHT=1.62, SEATED_EYE=1.25;
+const CHAIR_Z=.93, CHAIR_FINAL_Z=.80;
+const CHAIR_URL='https://tevy.dev/models/office-chair/v1/lod0.glb';
 const assets=new URL('../assets/',import.meta.url);
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x1b1713);
@@ -47,7 +49,7 @@ wall.position.set(0,2.2,-1.15);wall.receiveShadow=true;scene.add(wall);
 const baseboard=new THREE.Mesh(new THREE.BoxGeometry(12,.09,.025),new THREE.MeshStandardMaterial({color:0x2b241e,roughness:.87}));
 baseboard.position.set(0,.045,-1.13);scene.add(baseboard);
 
-let desk=null,bounds=null,ready=false;
+let desk=null,bounds=null,ready=false,chair=null,chairStatus='';
 const guides=new THREE.Group();guides.visible=false;scene.add(guides);
 const walkUI=document.querySelector('#walk');
 const walkCopy=document.querySelector('#walk-copy');
@@ -56,6 +58,7 @@ const skipButton=document.querySelector('#skip');
 const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)');
 const coarse=matchMedia('(pointer: coarse)');
 const startPos=new THREE.Vector3(),endPos=new THREE.Vector3(),lookStart=new THREE.Vector3(),lookEnd=new THREE.Vector3(),look=new THREE.Vector3();
+const approachPos=new THREE.Vector3(),sidePos=new THREE.Vector3(),standPos=new THREE.Vector3();
 let progress=0,desired=0,arrived=false,raf=0,lastTime=0,lastMouse=null,touchId=null,lastTouch=null;
 let dimensions='';
 function ease(t){return t*t*(3-2*t)}
@@ -65,26 +68,39 @@ function setPath(){
   camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   const height=bounds?.max.y??DESK_HEIGHT;
-  const size=bounds?bounds.getSize(new THREE.Vector3()):new THREE.Vector3(1.8,.75,.66);
-  const vf=THREE.MathUtils.degToRad(camera.fov);
-  const hf=2*Math.atan(Math.tan(vf/2)*camera.aspect);
-  // Eye level stays constant; adapt only distance and FOV for narrower displays.
-  const endZ=Math.max(1.32,size.x*.60/Math.tan(hf/2)+size.z*.22,size.z*.5+.85);
-  startPos.set(-.20,EYE_HEIGHT,endZ+2.8);
-  endPos.set(.04,EYE_HEIGHT,endZ);
-  lookStart.set(0,height+.18,0);
-  lookEnd.set(0,height+.04,0);
+  startPos.set(-.20,EYE_HEIGHT,3.7);
+  approachPos.set(.80,EYE_HEIGHT,1.72);
+  sidePos.set(.64,EYE_HEIGHT,.97);
+  standPos.set(0,EYE_HEIGHT,.94);
+  endPos.set(0,SEATED_EYE,CHAIR_FINAL_Z);
+  lookStart.set(0,height+.15,0);
+  lookEnd.set(0,height+.12,-.10);
 }
 function applyCamera(){
   const t=THREE.MathUtils.clamp(progress,0,1);
-  // Short, gentle head movement fades at both ends; no perpetual camera motion.
-  const envelope=Math.sin(Math.PI*t)*(1-ease(Math.max(0,(t-.76)/.24)));
-  const path=t<.80?t:(.80+.20*(1-Math.pow(1-(t-.80)/.20,1.4)));
-  camera.position.lerpVectors(startPos,endPos,path);
-  camera.position.x+=Math.sin(t*Math.PI*16)*.025*envelope;
-  camera.position.y+=Math.sin(t*Math.PI*32)*.017*envelope;
+  const walking=t<.79;
+  // Approach to the side of the chair, step in front of the backrest,
+  // then lower into the seat. The last segment also rolls the chair forward.
+  if(t<.48)camera.position.lerpVectors(startPos,approachPos,ease(t/.48));
+  else if(t<.65)camera.position.lerpVectors(approachPos,sidePos,ease((t-.48)/.17));
+  else if(t<.79)camera.position.lerpVectors(sidePos,standPos,ease((t-.65)/.14));
+  else camera.position.lerpVectors(standPos,endPos,ease((t-.79)/.21));
+  if(walking){
+    const u=t/.79;
+    const envelope=Math.sin(Math.PI*u);
+    camera.position.x+=Math.sin(u*Math.PI*16)*.018*envelope;
+    camera.position.y+=Math.sin(u*Math.PI*32)*.015*envelope;
+  }
+  const portrait=camera.aspect<1;
+  const sit=ease(THREE.MathUtils.clamp((t-.65)/.35,0,1));
+  const fov=THREE.MathUtils.lerp(portrait?67:45,portrait?82:65,sit);
+  if(Math.abs(camera.fov-fov)>.01){camera.fov=fov;camera.updateProjectionMatrix()}
   look.lerpVectors(lookStart,lookEnd,ease(t));
   camera.lookAt(look);
+  if(chair){
+    const nextZ=THREE.MathUtils.lerp(CHAIR_Z,CHAIR_FINAL_Z,sit);
+    if(Math.abs(chair.position.z-nextZ)>.0001){chair.position.z=nextZ;renderer.shadowMap.needsUpdate=true}
+  }
   walkBar.style.transform='scaleX('+t.toFixed(3)+')';
 }
 function invalidate(){
@@ -101,7 +117,7 @@ function frame(now){
     if(progress===1&&!arrived){
       arrived=true;
       walkUI.dataset.arrived='true';
-      status.textContent=dimensions+' · You have arrived.';
+      status.textContent=dimensions+' · Seated at the desk.';
       skipButton.disabled=true;
     }
   }
@@ -238,6 +254,26 @@ async function placeImported(item,top){
 }
 
 const loader=new GLTFLoader();
+async function loadChair(){
+  let loaded;
+  try{loaded=await loader.loadAsync(new URL('models/chair.glb',assets).href)}
+  catch(localError){
+    try{loaded=await loader.loadAsync(CHAIR_URL)}
+    catch(remoteError){console.warn('Chair unavailable',remoteError);chairStatus=' · Chair asset unavailable';return}
+  }
+  const root=loaded.scene;
+  chair=new THREE.Group();const model=new THREE.Group();model.add(root);chair.add(model);
+  // Source is in metres; normalize uniformly to listed overall height.
+  let b=new THREE.Box3().setFromObject(root),s=b.getSize(new THREE.Vector3());
+  if(!Number.isFinite(s.y)||s.y<=0){chair=null;chairStatus=' · Chair geometry invalid';return}
+  root.scale.multiplyScalar(1.13/s.y);model.updateMatrixWorld(true);b.setFromObject(model);
+  const center=b.getCenter(new THREE.Vector3());
+  model.position.set(-center.x,-b.min.y,-center.z);
+  // Assume +Z is the seat-facing direction; rotate to face the desk (-Z).
+  chair.rotation.y=Math.PI;chair.position.set(0,0,CHAIR_Z);
+  chair.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  scene.add(chair);chairStatus=' · Ergonomic chair';
+}
 async function start(){
   const [model,environment]=await Promise.allSettled([
     loader.loadAsync(new URL('models/desk.glb',assets).href),
@@ -280,10 +316,13 @@ async function start(){
   // Only verified imported objects are rendered; remaining models use toggleable outlines.
   const top=bounds.max.y;
   arrangement.forEach(item=>footprint(item,top+.004));
-  const outcomes=await Promise.allSettled(arrangement.filter(item=>item.file).map(item=>placeImported(item,top+.002)));
+  const [outcomes]=await Promise.all([
+    Promise.allSettled(arrangement.filter(item=>item.file).map(item=>placeImported(item,top+.002))),
+    loadChair().catch(e=>{console.warn(e);chairStatus=' · Chair unavailable'})
+  ]);
   const imported=outcomes.filter(r=>r.status==='fulfilled').length;
   outcomes.filter(r=>r.status==='rejected').forEach(r=>console.warn(r.reason));
-  dimensions=(size.x*100).toFixed(0)+' × '+(size.z*100).toFixed(0)+' × '+(size.y*100).toFixed(0)+' cm · eye level 162 cm · '+imported+'/2 imported objects'+(environment.status==='rejected'?' · HDRI unavailable':'');
+  dimensions=(size.x*100).toFixed(0)+' × '+(size.z*100).toFixed(0)+' × '+(size.y*100).toFixed(0)+' cm · standing 162 cm / seated 125 cm'+chairStatus+(environment.status==='rejected'?' · HDRI unavailable':'');
   ready=true;
   guideButton.disabled=false;resetButton.disabled=false;skipButton.disabled=false;
   renderer.shadowMap.needsUpdate=true;setPath();replay();
