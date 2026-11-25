@@ -1,0 +1,30 @@
+name: Import V3 CC0 models
+on:
+  push:
+    branches: [portfolio-v3]
+    paths:
+      - 'scripts/import_v3_assets.py'
+      - '.github/workflows/import-v3-assets.yml'
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  import:
+    if: github.ref == 'refs/heads/portfolio-v3'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: portfolio-v3
+      - name: Download and pack licensed assets
+        run: python3 scripts/import_v3_assets.py
+      - name: Commit imported assets to V3 only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add assets/models assets/hdri assets/textures
+          if ! git diff --cached --quiet; then
+            git commit -m "Import Poly Haven CC0 V3 assets"
+            git push origin HEAD:portfolio-v3
+          fi
