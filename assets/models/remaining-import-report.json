@@ -1,0 +1,286 @@
+{
+  "models": [
+    {
+      "bytes": 21460,
+      "sha256": "9ef56a1afc806d6392fe7a11ee12f9fc43feaff155f88262fc155ed7467e419e",
+      "triangles_mesh_total": 528,
+      "mesh_nodes": [
+        {
+          "name": "coffee-mug_0",
+          "mesh": 0
+        },
+        {
+          "name": "coffee-mug_1",
+          "mesh": 1
+        },
+        {
+          "name": "coffee-mug_2",
+          "mesh": 2
+        }
+      ],
+      "animations": 0,
+      "extensionsRequired": [
+        "KHR_mesh_quantization"
+      ],
+      "file": "mug.glb",
+      "source": "https://3dassets.dev/assets/music-recording-studio-and-instruments-coffee-mug-91bac0a5",
+      "download": "https://cdn.3dassets.dev/assets/33831/v1/model.glb",
+      "license": "CC0 1.0",
+      "notes": "Generic stoneware mug; color and separate handle need inspection."
+    },
+    {
+      "bytes": 26224,
+      "sha256": "f31936cd768713567f2459a82cec405fd5ae85d8867b362f85ebf02cb1420fc2",
+      "triangles_mesh_total": 556,
+      "mesh_nodes": [
+        {
+          "name": "headphones-over-ear_0",
+          "mesh": 0
+        },
+        {
+          "name": "headphones-over-ear_1",
+          "mesh": 1
+        },
+        {
+          "name": "headphones-over-ear_2",
+          "mesh": 2
+        }
+      ],
+      "animations": 0,
+      "extensionsRequired": [
+        "KHR_mesh_quantization"
+      ],
+      "file": "headphones.glb",
+      "source": "https://3dassets.dev/assets/computers-and-desk-gadgets-headphones-over-ear-bc21b783",
+      "download": "https://cdn.3dassets.dev/assets/38851/v1/model.glb",
+      "license": "CC0 1.0",
+      "notes": "Generic over-ear headphones; AI-assisted library."
+    },
+    {
+      "bytes": 14124,
+      "sha256": "a404d5f6a1a7194908710a864f79a6987d75095bd9f1df8622f5bd45ec527b57",
+      "triangles_mesh_total": 272,
+      "mesh_nodes": [
+        {
+          "name": "earbuds-charging-case_0",
+          "mesh": 0
+        },
+        {
+          "name": "earbuds-charging-case_1",
+          "mesh": 1
+        },
+        {
+          "name": "earbuds-charging-case_2",
+          "mesh": 2
+        },
+        {
+          "name": "earbuds-charging-case_3",
+          "mesh": 3
+        }
+      ],
+      "animations": 0,
+      "extensionsRequired": [
+        "KHR_mesh_quantization"
+      ],
+      "file": "earbuds-candidate.glb",
+      "source": "https://3dassets.dev/assets/computers-and-desk-gadgets-earbuds-charging-case-39e4bff6",
+      "download": "https://cdn.3dassets.dev/assets/38852/v1/model.glb",
+      "license": "CC0 1.0",
+      "notes": "Generic wireless earbuds; NOT verified AirPods Pro 2. AI-assisted library."
+    },
+    {
+      "bytes": 47052,
+      "sha256": "29678a25099beed66d4b225b439e0c5fe05ecced4362791d130a15eeb7386146",
+      "triangles_mesh_total": 1168,
+      "mesh_nodes": [
+        {
+          "name": "desk-writing_0",
+          "mesh": 0
+        },
+        {
+          "name": "desk-writing_1",
+          "mesh": 1
+        },
+        {
+          "name": "drawer-1/carcass",
+          "mesh": 2
+        },
+        {
+          "name": "drawer-1/black",
+          "mesh": 3
+        },
+        {
+          "name": "drawer-2/carcass",
+          "mesh": 4
+        },
+        {
+          "name": "drawer-2/black",
+          "mesh": 5
+        },
+        {
+          "name": "drawer-3/carcass",
+          "mesh": 6
+        },
+        {
+          "name": "drawer-3/black",
+          "mesh": 7
+        },
+        {
+          "name": "desk-writing_8",
+          "mesh": 8
+        }
+      ],
+      "animations": 2,
+      "extensionsRequired": [
+        "KHR_mesh_quantization"
+      ],
+      "file": "study-desk-candidate.glb",
+      "source": "https://3dassets.dev/assets/bedroom-and-living-room-furniture-desk-writing-2f6be817",
+      "download": "https://cdn.3dassets.dev/assets/38795/v1/model.glb",
+      "license": "CC0 1.0",
+      "notes": "Writing desk candidate; not swapped into scene pending visual inspection."
+    },
+    {
+      "bytes": 40736,
+      "sha256": "2436c3fe76148e7a018fa1c5689690f5df705ba7102b2f4fa5d4def72f2a2b3b",
+      "triangles_mesh_total": 848,
+      "mesh_nodes": [
+        {
+          "name": "turntable-deck_0",
+          "mesh": 0
+        },
+        {
+          "name": "turntable-deck_1",
+          "mesh": 1
+        },
+        {
+          "name": "turntable-deck_2",
+          "mesh": 2
+        },
+        {
+          "name": "turntable-deck_3",
+          "mesh": 3
+        },
+        {
+          "name": "platter",
+          "mesh": 4
+        },
+        {
+          "name": "platter/mat",
+          "mesh": 5
+        }
+      ],
+      "animations": 1,
+      "extensionsRequired": [
+        "KHR_mesh_quantization"
+      ],
+      "file": "turntable-dj-alt.glb",
+      "source": "https://3dassets.dev/assets/nightclub-and-dj-booth-turntable-deck-aa917183",
+      "download": "https://cdn.3dassets.dev/assets/34088/v1/model.glb",
+      "license": "CC0 1.0",
+      "notes": "DJ deck alternate; NOT AT-LP60X."
+    },
+    {
+      "bytes": 1310564,
+      "sha256": "13c44f5dd72485332d0fca26953c65aa05a324be89217a0205d9696cc320273e",
+      "triangles_mesh_total": 12980,
+      "mesh_nodes": [
+        {
+          "name": "turntable_body",
+          "mesh": 0
+        },
+        {
+          "name": "turntable_platter",
+          "mesh": 1
+        },
+        {
+          "name": "turntable_power_led",
+          "mesh": 2
+        },
+        {
+          "name": "turntable_tonearm",
+          "mesh": 3
+        }
+      ],
+      "animations": 0,
+      "extensionsRequired": [],
+      "file": "turntable-candidate.glb",
+      "source": "https://grab3d.com/models/electronics/turntable/",
+      "download": "https://grab3d.com/dl/turntable/turntable.glb",
+      "license": "CC0 1.0",
+      "notes": "Stylized, NOT AT-LP60X. Source describes separately movable parts. Inspect before adapting."
+    },
+    {
+      "bytes": 21916,
+      "sha256": "aac44434b181b5694ed10a7c387780c2b2b98d0b0221a9910c000cc2fa5a1948",
+      "triangles_mesh_total": 1024,
+      "mesh_nodes": [
+        {
+          "name": "Bean_00",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_01",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_02",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_03",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_04",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_05",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_06",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_07",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_08",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_09",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_10",
+          "mesh": 0
+        },
+        {
+          "name": "Bean_11",
+          "mesh": 0
+        }
+      ],
+      "animations": 0,
+      "extensionsRequired": [],
+      "file": "beans.glb",
+      "source": "Original procedural geometry",
+      "download": null,
+      "license": "CC0 1.0",
+      "notes": "Twelve independently movable bean nodes; no downloaded model. CC0 dedication for this geometry."
+    }
+  ],
+  "errors": [
+    {
+      "file": "earbuds-alt.glb",
+      "error": "Needs additional decoder"
+    },
+    {
+      "file": "study-desk-alt.glb",
+      "error": "Needs additional decoder"
+    }
+  ]
+}
