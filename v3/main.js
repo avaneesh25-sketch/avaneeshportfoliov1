@@ -8,6 +8,7 @@ const guideButton=document.querySelector('#guide');
 const resetButton=document.querySelector('#reset');
 const error=document.querySelector('#error');
 const W=1.8;
+const DESK_HEIGHT=.75, EYE_HEIGHT=1.62;
 const assets=new URL('../assets/',import.meta.url);
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x1b1713);
@@ -60,18 +61,19 @@ let dimensions='';
 function ease(t){return t*t*(3-2*t)}
 function setPath(){
   const portrait=innerWidth/innerHeight<1;
-  camera.fov=portrait?53:39;
+  camera.fov=portrait?67:45;
   camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
-  const height=bounds?.max.y??.75;
-  const size=bounds?bounds.getSize(new THREE.Vector3()):new THREE.Vector3(1.8,.75,.8);
+  const height=bounds?.max.y??DESK_HEIGHT;
+  const size=bounds?bounds.getSize(new THREE.Vector3()):new THREE.Vector3(1.8,.75,.66);
   const vf=THREE.MathUtils.degToRad(camera.fov);
   const hf=2*Math.atan(Math.tan(vf/2)*camera.aspect);
-  const endZ=Math.max(1.55,size.x*.57/Math.tan(hf/2),size.z*.5+1.15);
-  startPos.set(-.20,1.67,endZ+2.8);
-  endPos.set(.06,height+1.0,endZ);
-  lookStart.set(0,height+.05,0);
-  lookEnd.set(0,height*.76,-.02);
+  // Eye level stays constant; adapt only distance and FOV for narrower displays.
+  const endZ=Math.max(1.32,size.x*.60/Math.tan(hf/2)+size.z*.22,size.z*.5+.85);
+  startPos.set(-.20,EYE_HEIGHT,endZ+2.8);
+  endPos.set(.04,EYE_HEIGHT,endZ);
+  lookStart.set(0,height+.18,0);
+  lookEnd.set(0,height+.04,0);
 }
 function applyCamera(){
   const t=THREE.MathUtils.clamp(progress,0,1);
@@ -179,11 +181,62 @@ guideButton.addEventListener('click',()=>{
   invalidate();
 });
 
-function footprint(w,d,x,z,y){
-  const points=[[-w/2,-d/2],[w/2,-d/2],[w/2,d/2],[-w/2,d/2],[-w/2,-d/2]].map(([a,b])=>new THREE.Vector3(x+a,y,z+b));
+const RAD=Math.PI/180;
+// x=right, z=toward viewer, positive yaw turns the front toward camera-right.
+const arrangement=[
+  {name:'CRT',w:.45,d:.353,x:-.49,z:-.055,yaw:13,file:'crt.glb'},
+  {name:'AT-LP60X',w:.3595,d:.3733,x:.60,z:-.065,yaw:-12},
+  {name:'Notebook',w:.148,d:.210,x:.025,z:.075,yaw:8,file:'notebook.glb',node:'binder_notebook_closed'},
+  {name:'Coffee mug',w:.09,d:.09,x:-.64,z:.245,yaw:25},
+  {name:'AirPods Pro 2',w:.0606,d:.0452,x:.30,z:.205,yaw:-16},
+  {name:'Headphones',w:.18,d:.16,x:.13,z:-.21,yaw:-10}
+];
+function footprint(item,y){
+  const {w,d,x,z,yaw}=item;
+  const points=[[-w/2,-d/2],[w/2,-d/2],[w/2,d/2],[-w/2,d/2],[-w/2,-d/2]].map(([a,b])=>new THREE.Vector3(a,0,b));
   const outline=new THREE.Line(new THREE.BufferGeometry().setFromPoints(points),new THREE.LineBasicMaterial({color:0xe6d8be}));
-  guides.add(outline);
+  outline.position.set(x,y,z);outline.rotation.y=yaw*RAD;guides.add(outline);
 }
+// The downloaded desk is a single mesh only 55 cm tall. Extend the middle
+// of the legs, keeping the top assembly and the bottom 8 cm unscaled.
+function raiseDeskGeometry(model,originalHeight,targetHeight){
+  const delta=targetHeight-originalHeight;
+  if(Math.abs(delta)<.001)return;
+  const bottom=.08,upper=originalHeight-.065;
+  model.traverse(o=>{
+    if(!o.isMesh)return;
+    const g=o.geometry.clone(),p=g.getAttribute('position');
+    for(let i=0;i<p.count;i++){
+      const y=p.getY(i);
+      const weight=THREE.MathUtils.clamp((y-bottom)/(upper-bottom),0,1);
+      p.setY(i,y+delta*weight);
+    }
+    p.needsUpdate=true;g.computeVertexNormals();g.computeBoundingBox();g.computeBoundingSphere();o.geometry=g;
+  });
+}
+async function placeImported(item,top){
+  const loaded=await loader.loadAsync(new URL('models/'+item.file,assets).href);
+  const root=loaded.scene;
+  let object=root;
+  if(item.node){
+    const found=root.getObjectByName(item.node);
+    if(!found)throw new Error('Closed notebook node not found');
+    object=found.clone(true);
+  }
+  const pivot=new THREE.Group(),model=new THREE.Group();
+  model.add(object);pivot.add(model);
+  let b=new THREE.Box3().setFromObject(model),s=b.getSize(new THREE.Vector3());
+  if(item.node&&s.x>s.z){object.rotation.y+=Math.PI/2;model.updateMatrixWorld(true);b.setFromObject(model);s=b.getSize(s)}
+  if(s.x<=0||s.z<=0)throw new Error('Invalid model bounds '+item.name);
+  const factor=Math.min(item.w/s.x,item.d/s.z);
+  object.scale.multiplyScalar(factor);model.updateMatrixWorld(true);b.setFromObject(model);
+  const center=b.getCenter(new THREE.Vector3());
+  model.position.set(-center.x,-b.min.y,-center.z);
+  pivot.position.set(item.x,top,item.z);pivot.rotation.y=item.yaw*RAD;
+  pivot.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  scene.add(pivot);
+}
+
 const loader=new GLTFLoader();
 async function start(){
   const [model,environment]=await Promise.allSettled([
@@ -208,7 +261,11 @@ async function start(){
   // Uniform scale only; rotate the model if its long axis is depth.
   if(size.z>size.x){original.rotation.y+=Math.PI/2;desk.updateMatrixWorld(true);b.setFromObject(desk);size=b.getSize(size)}
   if(!Number.isFinite(size.x)||size.x<=0)throw new Error('Invalid desk bounds');
-  desk.scale.setScalar(W/size.x);
+  // Verified desk GLB contains one identity-transform mesh in metres.
+  // Correct height before uniform width normalization.
+  const scale=W/size.x;
+  raiseDeskGeometry(original,size.y,DESK_HEIGHT/scale);
+  desk.scale.setScalar(scale);
   desk.updateMatrixWorld(true);b.setFromObject(desk);
   const center=b.getCenter(new THREE.Vector3());
   desk.position.set(-center.x,-b.min.y,-center.z);
@@ -220,15 +277,13 @@ async function start(){
   });
   scene.add(desk);desk.updateMatrixWorld(true);bounds=new THREE.Box3().setFromObject(desk);
   size=bounds.getSize(new THREE.Vector3());
-  // Real AT-LP60X footprint; all other guides use approximate physical sizes.
-  const top=bounds.max.y+.004;
-  const depth=size.z;
-  footprint(.3595,.3733,.53,0,top);
-  footprint(.43,.36,-.42,-Math.max(0,(depth-.36)/2-.04),top);
-  footprint(.148,.210,.03,.10,top);
-  footprint(.09,.09,-.64,.17,top);
-  footprint(.0606,.0452,.31,.17,top);
-  dimensions=(size.x*100).toFixed(0)+' × '+(size.z*100).toFixed(0)+' × '+(size.y*100).toFixed(0)+' cm · original model proportions'+(environment.status==='rejected'?' · HDRI unavailable':'');
+  // Only verified imported objects are rendered; remaining models use toggleable outlines.
+  const top=bounds.max.y;
+  arrangement.forEach(item=>footprint(item,top+.004));
+  const outcomes=await Promise.allSettled(arrangement.filter(item=>item.file).map(item=>placeImported(item,top+.002)));
+  const imported=outcomes.filter(r=>r.status==='fulfilled').length;
+  outcomes.filter(r=>r.status==='rejected').forEach(r=>console.warn(r.reason));
+  dimensions=(size.x*100).toFixed(0)+' × '+(size.z*100).toFixed(0)+' × '+(size.y*100).toFixed(0)+' cm · eye level 162 cm · '+imported+'/2 imported objects'+(environment.status==='rejected'?' · HDRI unavailable':'');
   ready=true;
   guideButton.disabled=false;resetButton.disabled=false;skipButton.disabled=false;
   renderer.shadowMap.needsUpdate=true;setPath();replay();
