@@ -30,3 +30,6 @@ See `scripts/import_v3_props.py` for source URLs, pinned binary URLs, CC0 proven
 
 ## AT-LP120XUSB-inspired turntable
 `turntable-lp120x.glb` is original procedural geometry, modeled from the public product dimensions 452 × 352 mm and visual characteristics of the black Audio-Technica AT-LP120XUSB. Reference: https://audio-technica.co.in/product/at-lp120xusb-bk-ind/ . Not an official model or scanned replica. Dust cover omitted for visibility; no manufacturer logo. Platter and tonearm independently grouped. Existing CC0 Grab3D and DJ deck models remain loading alternatives.
+
+## Active turntable selection
+The scene now prioritizes the existing third-party CC0 `turntable-dj-alt.glb` from https://3dassets.dev/assets/nightclub-and-dj-booth-turntable-deck-aa917183 (direct file https://cdn.3dassets.dev/assets/34088/v1/model.glb). Imported and validated in the previous asset workflow. Source lists a direct-drive design, S-shaped tonearm, pitch fader, magenta slipmat, 450 × 360 mm footprint and one spin animation. AI-assisted source model, not an exact branded product. The custom LP120X-inspired model is retained in the asset directory but no longer selected by the scene.
