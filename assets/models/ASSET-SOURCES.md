@@ -24,3 +24,6 @@ Keep each source's license link and author credit in website credits. Do not imp
 
 ## Chair
 - `assets/models/chair.glb`: Office Chair by Tevy, CC0 1.0, v1 LOD0. https://tevy.dev/models/office-chair — pinned binary https://tevy.dev/models/office-chair/v1/lod0.glb. Listed 9,287 triangles, 426 KB, 0.65 × 1.13 × 0.67 m. Seat height 0.49 m. Orientation needs rendered verification.
+
+## Remaining prop import (candidate models, not exact branded replicas)
+See `scripts/import_v3_props.py` for source URLs, pinned binary URLs, CC0 provenance and alternatives. `remaining-import-report.json` records actual downloads, SHA-256, mesh nodes, triangles and errors. 3DAssets.dev models are AI-assisted per their listings. No claim of exact AirPods Pro 2 or AT-LP60X geometry; keep candidates separate until approved. Original procedural coffee bean geometry is included under CC0. All GLBs must pass header, self-contained buffer/image and decoder-compatibility checks. Final visual and exploded-component validation remains required. Existing scene and production are untouched during acquisition.
