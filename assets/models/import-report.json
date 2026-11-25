@@ -1,0 +1,67 @@
+{
+  "models": [
+    {
+      "file": "assets/models/crt.glb",
+      "bytes": 530224,
+      "triangles": 1918,
+      "mesh_nodes": [
+        {
+          "name": "Television_01",
+          "mesh": 0
+        }
+      ],
+      "source": "https://polyhaven.com/a/Television_01",
+      "license": "CC0"
+    },
+    {
+      "file": "assets/models/desk.glb",
+      "bytes": 553376,
+      "triangles": 952,
+      "mesh_nodes": [
+        {
+          "name": "WoodenTable_01",
+          "mesh": 0
+        }
+      ],
+      "source": "https://polyhaven.com/a/WoodenTable_01",
+      "license": "CC0"
+    },
+    {
+      "file": "assets/models/notebook.glb",
+      "bytes": 1888132,
+      "triangles": 18077,
+      "mesh_nodes": [
+        {
+          "name": "binder_notebook",
+          "mesh": 0
+        },
+        {
+          "name": "binder_notebook_closed",
+          "mesh": 1
+        }
+      ],
+      "source": "https://polyhaven.com/a/binder_notebook",
+      "license": "CC0"
+    }
+  ],
+  "other": [
+    {
+      "file": "assets/hdri/studio.hdr",
+      "bytes": 1625726
+    },
+    {
+      "file": "assets/textures/wood-color.jpg",
+      "bytes": 987969
+    },
+    {
+      "file": "assets/textures/wood-normal.jpg",
+      "bytes": 625535
+    },
+    {
+      "file": "assets/textures/wood-roughness.jpg",
+      "bytes": 618983
+    }
+  ],
+  "errors": [],
+  "credit": "Powered by Poly Haven (https://polyhaven.com/). Models and textures CC0."
+}
