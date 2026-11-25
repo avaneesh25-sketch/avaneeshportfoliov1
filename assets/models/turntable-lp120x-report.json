@@ -1,0 +1,13 @@
+{
+  "file": "turntable-lp120x.glb",
+  "bytes": 549920,
+  "triangles": 13992,
+  "meshNodes": 134,
+  "groups": [
+    "platter",
+    "tonearm_base",
+    "tonearm"
+  ],
+  "reference": "https://audio-technica.co.in/product/at-lp120xusb-bk-ind/",
+  "notes": "Original procedural approximation; no dust cover or logo; closed product height reference 141.6 mm, model shown without cover."
+}

@@ -201,7 +201,7 @@ const RAD=Math.PI/180;
 // x=right, z=toward viewer, positive yaw turns the front toward camera-right.
 const arrangement=[
   {name:'CRT',w:.45,d:.353,x:-.49,z:-.055,yaw:13,file:'crt.glb'},
-  {name:'Turntable',w:.3595,d:.3733,x:.59,z:-.065,yaw:-12,file:'turntable-candidate.glb',alternates:['turntable-dj-alt.glb']},
+  {name:'Turntable',w:.452,d:.352,x:.59,z:-.065,yaw:-12,file:'turntable-lp120x.glb',alternates:['turntable-candidate.glb','turntable-dj-alt.glb']},
   {name:'Notebook',w:.148,d:.210,x:.025,z:.075,yaw:8,file:'notebook.glb',node:'binder_notebook_closed'},
   {name:'Coffee mug',w:.12,d:.09,x:-.64,z:.245,yaw:25,file:'mug.glb'},
   {name:'Coffee beans',w:.052,d:.039,x:-.48,z:.27,yaw:16,file:'beans.glb'},

@@ -27,3 +27,6 @@ Keep each source's license link and author credit in website credits. Do not imp
 
 ## Remaining prop import (candidate models, not exact branded replicas)
 See `scripts/import_v3_props.py` for source URLs, pinned binary URLs, CC0 provenance and alternatives. `remaining-import-report.json` records actual downloads, SHA-256, mesh nodes, triangles and errors. 3DAssets.dev models are AI-assisted per their listings. No claim of exact AirPods Pro 2 or AT-LP60X geometry; keep candidates separate until approved. Original procedural coffee bean geometry is included under CC0. All GLBs must pass header, self-contained buffer/image and decoder-compatibility checks. Final visual and exploded-component validation remains required. Existing scene and production are untouched during acquisition.
+
+## AT-LP120XUSB-inspired turntable
+`turntable-lp120x.glb` is original procedural geometry, modeled from the public product dimensions 452 × 352 mm and visual characteristics of the black Audio-Technica AT-LP120XUSB. Reference: https://audio-technica.co.in/product/at-lp120xusb-bk-ind/ . Not an official model or scanned replica. Dust cover omitted for visibility; no manufacturer logo. Platter and tonearm independently grouped. Existing CC0 Grab3D and DJ deck models remain loading alternatives.
