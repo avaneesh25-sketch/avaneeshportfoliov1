@@ -1,0 +1,12 @@
+{
+  "source": "https://tevy.dev/models/office-chair/v1/lod0.glb",
+  "license": "CC0 1.0",
+  "bytes": 436548,
+  "sha256": "afb893f580fc71bcec661f0da12e5899c04c40786ee5c877bc7ef7c8d4de4087",
+  "nodes": [
+    "office-chair_base",
+    "seat_mesh",
+    "seat",
+    "office-chair"
+  ]
+}
