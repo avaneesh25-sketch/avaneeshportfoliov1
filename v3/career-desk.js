@@ -62,7 +62,7 @@ export function showCareer(key='overview'){
  const detail=careerDetails[key]||careerDetails.overview;
  document.querySelector('#career-title').textContent=detail.title;document.querySelector('#career-summary').textContent=detail.summary;
  const list=document.querySelector('#career-bullets');list.replaceChildren(...detail.bullets.map(s=>{const li=document.createElement('li');li.textContent=s;return li}));
- panel.hidden=false;
+ panel.hidden=false;window.dispatchEvent(new CustomEvent('portfolio:career-open'));
  [...document.querySelector('#career-tabs').children].forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.key===key)));
 }
 document.querySelector('#career-close').addEventListener('click',()=>panel.hidden=true);

@@ -13,6 +13,9 @@ const W=2.72, D=.75;
 const DESK_HEIGHT=.75, EYE_HEIGHT=1.62, SEATED_EYE=1.25;
 const CHAIR_Z=.93, CHAIR_FINAL_Z=.80;
 const loadReport=[];
+const funnel=[];window.__portfolioFunnel=funnel;
+function mark(name){if(funnel.some(e=>e.name===name))return;const entry={name,ms:Math.round(performance.now())};funnel.push(entry);window.dispatchEvent(new CustomEvent('portfolio:milestone',{detail:entry}));}
+mark('room_script_started');
 const newModels={'chair-executive.glb':'https://cdn.3dassets.dev/assets/16982/v1/model.glb','wall-speaker.glb':'https://cdn.3dassets.dev/assets/38854/v1/model.glb'};
 const assets=new URL('../assets/',import.meta.url);
 const scene=new THREE.Scene();
@@ -64,6 +67,7 @@ const startPos=new THREE.Vector3(),endPos=new THREE.Vector3(),lookStart=new THRE
 const approachPos=new THREE.Vector3(),sidePos=new THREE.Vector3(),standPos=new THREE.Vector3();
 let progress=0,desired=0,arrived=false,raf=0,lastTime=0,lastMouse=null,touchId=null,lastTouch=null;
 let dimensions='';
+let rendered=false,assetComplete=false;
 let station=0,stationTarget=0,headYaw=0,headTarget=0,headPitch=0,pitchTarget=0,wear=0,wearing=false,headphones=null,hands=null,phoneHome=null,phonePickup=null,seatLockTime=0;
 const stationUI=document.querySelector('#station-status'),wearButton=document.querySelector('#wear-headphones');
 const clamp=THREE.MathUtils.clamp;
@@ -134,7 +138,8 @@ function frame(now){
       arrived=true;seatLockTime=now;walkUI.dataset.arrived='true';skipButton.disabled=true;
       status.textContent='Seated · Scroll down or swipe left to move to the work station.';
       stationUI.textContent='Music station';wearButton.disabled=!headphones;
-      if(headphones&&!reduceMotion.matches)beginWear();
+      mark('seated');
+      document.querySelector('#entry-actions').classList.add('compact');
     }
     const speed=reduceMotion.matches?1:1-Math.exp(-dt*6);
     for(const k of [0]){
@@ -147,11 +152,14 @@ function frame(now){
   applyCamera();
   updateWear(dt);
   renderer.render(scene,camera);
+  if(ready&&!rendered){rendered=true;mark('room_first_render')}
+  if(arrived&&station>.95)mark('workstation_reached');
   const moving=Math.abs(desired-progress)+Math.abs(stationTarget-station)+Math.abs(headTarget-headYaw)+Math.abs(pitchTarget-headPitch)>.0001;
   if((moving||wearing)&&!document.hidden)invalidate();else lastTime=0;
 }
 function moveStation(delta){
-  if(!arrived||wearing)return;
+  if(!arrived)return;
+  if(wearing){resetWear();wearButton.disabled=!headphones}
   stationTarget=clamp(stationTarget+delta,0,1);headTarget=0;pitchTarget=0;
   stationUI.textContent=stationTarget>.5?'Work station':'Music station';document.querySelector('#music-panel').classList.toggle('work-side',stationTarget>.5);document.querySelector('#career-open').hidden=stationTarget<=.5;invalidate();
 }
@@ -162,14 +170,15 @@ function turnHead(dx,dy){
 }
 function advance(pixels){
   if(!ready||arrived)return;
-  const budget=coarse.matches?420:850;
+  if(pixels>0)mark('walk_started');
+  const budget=coarse.matches?300:480;
   desired=clamp(desired+pixels/budget,0,1);invalidate();
 }
 function replay(){
   if(!ready)return;
   progress=desired=0;arrived=false;station=stationTarget=0;headYaw=headTarget=headPitch=pitchTarget=0;
   lastMouse=null;touchId=null;lastTouch=null;lastTime=0;
-  resetWear();document.querySelector('#music-panel').classList.remove('work-side');document.querySelector('#career-open').hidden=true;document.querySelector('#career-panel').hidden=true;walkUI.dataset.arrived='false';status.textContent=dimensions;stationUI.textContent='Entrance';skipButton.disabled=false;wearButton.disabled=true;
+  resetWear();document.querySelector('#entry-actions').classList.remove('compact');document.querySelector('#music-panel').classList.remove('work-side');document.querySelector('#career-open').hidden=true;document.querySelector('#career-panel').hidden=true;walkUI.dataset.arrived='false';status.textContent=dimensions;stationUI.textContent='Entrance';skipButton.disabled=false;wearButton.disabled=true;
   if(reduceMotion.matches)skip();else invalidate();
 }
 function skip(){if(!ready||arrived)return;desired=1;if(reduceMotion.matches)progress=1;invalidate();}
@@ -280,15 +289,16 @@ async function getGLB(file){
   let failure;
   for(let i=0;i<2;i++){
     const url=i&&newModels[file]?newModels[file]:local;
-    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),8000);
+    const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),4500);
     try{
       const response=await fetch(url,{signal:ctl.signal,cache:i?'reload':'default'});
+      if(response.status===404&&!newModels[file]){const e=new Error('Missing '+file);e.permanent=true;throw e}
       if(!response.ok)throw new Error('HTTP '+response.status+' '+file);
       const binary=await response.arrayBuffer();
       clearTimeout(timer);
       if(binary.byteLength<20||new DataView(binary).getUint32(0,true)!==0x46546c67)throw new Error('Invalid GLB '+file);
       return await loader.parseAsync(binary,new URL('.',url).href);
-    }catch(e){failure=e;if(i===0)await sleep(350)}
+    }catch(e){failure=e;if(e.permanent)break;if(i===0)await sleep(150)}
     finally{clearTimeout(timer)}
   }
   throw failure;
@@ -408,23 +418,43 @@ function fallbackDesk(){
   return g;
 }
 async function start(){
-  const environment=await new RGBELoader().loadAsync(new URL('hdri/studio.hdr',assets).href).catch(()=>null);
-  if(environment){environment.mapping=THREE.EquirectangularReflectionMapping;scene.environment=environment;scene.environmentIntensity=.7}
-  // Phase 1: native solid L-shaped geometry, dimensions in metres. Finish textures deferred.
+  // Render a useful shell before waiting for optional network assets.
   desk=buildLDesk();scene.add(desk);desk.updateMatrixWorld(true);bounds=new THREE.Box3().setFromObject(desk);
-  buildWorkstation(scene);
-  buildCareerDesk(scene);
-  const top=DESK_HEIGHT;
-  arrangement.forEach(item=>footprint(item,top+.004));
-  createPosters();
-  const outcomes=await Promise.allSettled([...arrangement.map(item=>placeImported(item,top+.002)),loadChair(),loadWallSpeakers()]);
-  outcomes.filter(r=>r.status==='rejected').forEach(r=>console.warn(r.reason));
+  buildWorkstation(scene);buildCareerDesk(scene);
+  arrangement.forEach(item=>footprint(item,DESK_HEIGHT+.004));createPosters();
   hands=createHands();camera.add(hands.root);scene.add(camera);hands.root.visible=false;
-  dimensions='L-shaped desk · 2.72 m × 1.95 m · 75 cm high'+chairStatus;
-  window.__v3AssetReport=loadReport;console.table(loadReport);
+  dimensions='Two workstations · Scroll to explore, or jump directly to work.';
+  window.__v3AssetReport=loadReport;
   ready=true;document.querySelector('#load-turntable').disabled=false;
   guideButton.disabled=false;resetButton.disabled=false;skipButton.disabled=false;
   renderer.shadowMap.needsUpdate=true;setPath();replay();
+  mark('room_interactive');
+  if(new URLSearchParams(location.search).get('station')==='work')enterStation(1);
+  // Allow the first useful frame to paint before parsing additional GLBs.
+  await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
+  const tasks=[
+    new RGBELoader().loadAsync(new URL('hdri/studio.hdr',assets).href).then(env=>{env.mapping=THREE.EquirectangularReflectionMapping;scene.environment=env;scene.environmentIntensity=.7;invalidate()}),
+    loadChair().then(()=>{renderer.shadowMap.needsUpdate=true;invalidate()}),
+    loadWallSpeakers().then(()=>{renderer.shadowMap.needsUpdate=true;invalidate()}),
+    ...arrangement.map(item=>placeImported(item,DESK_HEIGHT+.002).then(()=>{
+      if(item.name==='Headphones'&&arrived&&!wearing)wearButton.disabled=false;
+      renderer.shadowMap.needsUpdate=true;invalidate();
+    }))
+  ];
+  const outcomes=await Promise.allSettled(tasks);
+  outcomes.filter(r=>r.status==='rejected').forEach(r=>console.warn(r.reason));
+  assetComplete=true;mark('room_assets_settled');console.table(loadReport);
+}
+function enterStation(target){
+  if(!ready)return false;
+  if(wearing)resetWear();
+  progress=desired=1;arrived=true;station=stationTarget=target;headYaw=headTarget=headPitch=pitchTarget=0;
+  walkUI.dataset.arrived='true';skipButton.disabled=true;wearButton.disabled=!headphones;
+  document.querySelector('#entry-actions').classList.add('compact');
+  document.querySelector('#music-panel').classList.toggle('work-side',target===1);
+  document.querySelector('#career-open').hidden=target!==1;
+  status.textContent=target?'Selected work · Click an object to explore.':'Music station · Choose an artist or put on headphones.';
+  stationUI.textContent=target?'Work station':'Music station';mark('seated');if(target)mark('workstation_reached');invalidate();return true;
 }
 function resetWear(){
   wearing=false;wear=0;
@@ -435,7 +465,7 @@ function resetWear(){
 function beginWear(){
   if(!arrived||!headphones||wearing||wear>=1)return;
   if(station>.06||stationTarget>.06){stationTarget=0;headTarget=0;pitchTarget=0;stationUI.textContent='Return to music station, then put on headphones';invalidate();return}
-  wearing=true;wear=0;headTarget=0;pitchTarget=0;hands.root.visible=true;wearButton.disabled=true;
+  mark('headphones_started');wearing=true;wear=0;headTarget=0;pitchTarget=0;hands.root.visible=true;wearButton.disabled=true;
   stationUI.textContent='Putting on headphones…';invalidate();
 }
 const phonePos=new THREE.Vector3(),localPos=new THREE.Vector3(),pickupQuat=new THREE.Quaternion();
@@ -458,11 +488,15 @@ function updateWear(dt){
     if(wear>.88)headphones.visible=false;
   }
   renderer.shadowMap.needsUpdate=true;
-  if(wear>=1){wearing=false;hands.root.visible=false;headphones.visible=false;wearButton.disabled=false;wearButton.textContent='Headphones on · Remove';stationUI.textContent='Music station · Headphones on';}
+  if(wear>=1){mark('headphones_completed');wearing=false;hands.root.visible=false;headphones.visible=false;wearButton.disabled=false;wearButton.textContent='Headphones on · Remove';stationUI.textContent='Music station · Headphones on';}
 }
 wearButton.addEventListener('click',()=>{if(wear>=1){resetWear();renderer.shadowMap.needsUpdate=true;invalidate()}else beginWear()});
-document.querySelector('#station-left').addEventListener('click',()=>{if(!arrived)skip();else moveStation(1)});
-document.querySelector('#station-right').addEventListener('click',()=>{if(!arrived)skip();else moveStation(-1)});
+document.querySelector('#station-left').addEventListener('click',()=>{if(!arrived)enterStation(1);else moveStation(1)});
+document.querySelector('#station-right').addEventListener('click',()=>{if(!arrived)enterStation(0);else moveStation(-1)});
+document.querySelector('#quick-work').addEventListener('click',e=>{if(enterStation(1)){e.preventDefault();mark('quick_work');showCareer('overview')}});
+document.querySelector('#explore-room').addEventListener('click',e=>{if(ready){e.preventDefault();mark('room_explore');skip()}});
+window.addEventListener('portfolio:career-open',()=>mark('career_opened'));
+document.querySelectorAll('a[data-resume]').forEach(a=>a.addEventListener('click',()=>mark('resume_clicked')));
 
 const tracks=[["billy-joel","Billy Joel","Vienna","#d2b77f","#252e39","assets/vienna.mp3.mp3"],["ed-sheeran","Ed Sheeran","The Hills of Aberfeldy","#d0a17a","#213e35","music/ed-sheeran/Ed%20Sheeran%20-%20The%20Hills%20of%20Aberfeldy%20%5BOfficial%20Video%5D.mp3"],["michael-jackson","Michael Jackson","Chicago","#d5c9b0","#25232b","music/michael-jackson/Michael%20Jackson%20-%20Chicago%20%28Official%20Audio%29.mp3"],["queen","Queen","Love Of My Life","#e4bd73","#762e2d","music/queen/Queen%20-%20Love%20Of%20My%20Life%20%5BLyrics%5D.mp3"],["elton-john","Elton John","Yellow Brick Road","#f0cb71","#293b63","music/elton-john/yellow%20brick%20road.weba"]];
 const audio=new Audio(); audio.preload='none'; audio.volume=.72;
@@ -556,6 +590,7 @@ function updateMusic(){
  invalidate();
 }
 function selectArtist(i){
+ mark('music_selected');
  if(active!==i){audio.pause();active=i;audio.src=new URL('../'+tracks[i][5],import.meta.url).href}
  audio.play().catch(e=>{nowPlaying.textContent='Playback unavailable · '+tracks[i][2];console.warn(e)});updateMusic();
 }
