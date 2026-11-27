@@ -107,7 +107,7 @@ function applyCamera(){
   if(arrived){
     camera.position.lerpVectors(musicSeat,workSeat,ease(station));
     const yaw=ease(station)*Math.PI/2+headYaw;
-    const pitch=-.075+headPitch;
+    const pitch=-.075+headPitch-(wearing?.37*Math.sin(Math.PI*clamp(wear/.76,0,1)):0);
     lookDir.set(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));
     look.copy(camera.position).add(lookDir);
     camera.lookAt(look);
@@ -203,8 +203,7 @@ canvas.addEventListener('pointerdown',e=>{
 canvas.addEventListener('pointermove',e=>{
   if(e.pointerId!==touchId||!lastTouch)return;
   const p=[e.clientX,e.clientY],dx=p[0]-lastTouch[0],dy=p[1]-lastTouch[1];
-  if(e.pointerType==='mouse'&&arrived)turnHead(dx,dy);
-  else gesture(dx,dy,true);
+  gesture(dx,dy,true);
   lastTouch=p;
 },{passive:true});
 function endTouch(e){if(e.pointerId===touchId){touchId=null;lastTouch=null}}
@@ -430,7 +429,7 @@ function resetWear(){
 }
 function beginWear(){
   if(!arrived||!headphones||wearing||wear>=1)return;
-  if(station>.06||stationTarget>.06){stationTarget=0;headTarget=0;pitchTarget=0;invalidate();return}
+  if(station>.06||stationTarget>.06){stationTarget=0;headTarget=0;pitchTarget=0;stationUI.textContent='Return to music station, then put on headphones';invalidate();return}
   wearing=true;wear=0;headTarget=0;pitchTarget=0;hands.root.visible=true;wearButton.disabled=true;
   stationUI.textContent='Putting on headphones…';invalidate();
 }
@@ -563,7 +562,7 @@ function musicHit(e){
  raycaster.setFromCamera(ndc,camera);return raycaster.intersectObjects(hits,false)[0]?.object;
 }
 canvas.addEventListener('pointerdown',e=>{pressStart=[e.clientX,e.clientY]});
-canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9)return;const target=musicHit(e);if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();else if(arrived&&!wearing&&headphones?.visible){const hit=raycaster.intersectObject(headphones,true);if(hit.length)beginWear()}pressStart=null});
+canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9){pressStart=null;return;}const target=musicHit(e);if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();else if(arrived&&!wearing&&headphones?.visible){const hit=raycaster.intersectObject(headphones,true);if(hit.length)beginWear()}pressStart=null});
 canvas.addEventListener('pointermove',e=>{canvas.style.cursor=musicHit(e)?'pointer':'default'},{passive:true});
 canvas.addEventListener('pointercancel',()=>{pressStart=null});
 
