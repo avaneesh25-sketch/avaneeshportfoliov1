@@ -5,6 +5,7 @@ import {buildLDesk,buildWorkstation,createHands} from './room-phase1.js';
 import {buildCareerDesk,careerDetails,showCareer,careerTarget} from './career-desk.js';
 import {makePhotoAlbum} from './photo-album.js';
 import {initAlbum} from './album-view.js';
+import {createPhotoCloud} from './photo-cloud.js';
 
 const container=document.querySelector('#scene');
 const status=document.querySelector('#status');
@@ -72,6 +73,7 @@ let dimensions='';
 let rendered=false,assetComplete=false,photoBook=null;
 const album=initAlbum(document.querySelector('#album-panel'),{onOpen(){photoBook?.open();mark('album_opened');invalidate()},onPage(c,item){photoBook?.updatePage(c,item);invalidate()},onClose(){photoBook?.close();invalidate()}});
 window.addEventListener('portfolio:album-texture',()=>invalidate());
+const cloud=createPhotoCloud({camera,scene,canvas:renderer.domElement,getBook:()=>photoBook,requestRender:()=>invalidate(),onOpen(){photoBook?.open();mark('album_cloud_opened');document.body.classList.add('cloud-active')},onClose(){photoBook?.close();document.body.classList.remove('cloud-active')}});
 let station=0,stationTarget=0,headYaw=0,headTarget=0,headPitch=0,pitchTarget=0,wear=0,wearing=false,headphones=null,hands=null,phoneHome=null,phonePickup=null,seatLockTime=0;
 const stationUI=document.querySelector('#station-status'),wearButton=document.querySelector('#wear-headphones');
 const clamp=THREE.MathUtils.clamp;
@@ -156,21 +158,22 @@ function frame(now){
   applyCamera();
   updateWear(dt);
   const bookMoving=photoBook?.tick(dt,reduceMotion.matches)||false;
+  const cloudMoving=cloud.tick(dt);
   if(bookMoving)renderer.shadowMap.needsUpdate=true;
   renderer.render(scene,camera);
   if(ready&&!rendered){rendered=true;mark('room_first_render')}
   if(arrived&&station>.95)mark('workstation_reached');
   const moving=Math.abs(desired-progress)+Math.abs(stationTarget-station)+Math.abs(headTarget-headYaw)+Math.abs(pitchTarget-headPitch)>.0001;
-  if((moving||wearing||bookMoving)&&!document.hidden)invalidate();else lastTime=0;
+  if((moving||wearing||bookMoving||cloudMoving)&&!document.hidden)invalidate();else lastTime=0;
 }
 function moveStation(delta){
-  if(!arrived||album.isOpen)return;
+  if(!arrived||(album.isOpen||cloud.isOpen))return;
   if(wearing){resetWear();wearButton.disabled=!headphones}
   stationTarget=clamp(stationTarget+delta,0,1);headTarget=0;pitchTarget=0;
   stationUI.textContent=stationTarget>.5?'Work station':'Music station';document.querySelector('#music-panel').classList.toggle('work-side',stationTarget>.5);document.querySelector('#career-open').hidden=stationTarget<=.5;invalidate();
 }
 function turnHead(dx,dy){
-  if(!arrived||wearing||album.isOpen)return;
+  if(!arrived||wearing||(album.isOpen||cloud.isOpen))return;
   headTarget=clamp(headTarget-dx*.0035,-.42,.42);
   pitchTarget=clamp(pitchTarget+dy*.0025,-.34,.22);invalidate();
 }
@@ -184,7 +187,7 @@ function replay(){
   if(!ready)return;
   progress=desired=0;arrived=false;station=stationTarget=0;headYaw=headTarget=headPitch=pitchTarget=0;
   lastMouse=null;touchId=null;lastTouch=null;lastTime=0;
-  album.close();resetWear();document.querySelector('#entry-actions').classList.remove('compact');document.querySelector('#music-panel').classList.remove('work-side');document.querySelector('#career-open').hidden=true;document.querySelector('#career-panel').hidden=true;walkUI.dataset.arrived='false';status.textContent=dimensions;stationUI.textContent='Entrance';skipButton.disabled=false;wearButton.disabled=true;
+  cloud.close();album.close();resetWear();document.querySelector('#entry-actions').classList.remove('compact');document.querySelector('#music-panel').classList.remove('work-side');document.querySelector('#career-open').hidden=true;document.querySelector('#career-panel').hidden=true;walkUI.dataset.arrived='false';status.textContent=dimensions;stationUI.textContent='Entrance';skipButton.disabled=false;wearButton.disabled=true;
   if(reduceMotion.matches)skip();else invalidate();
 }
 function skip(){if(!ready||arrived)return;desired=1;if(reduceMotion.matches)progress=1;invalidate();}
@@ -195,7 +198,7 @@ function gesture(dx,dy,drag=false){
   else turnHead(dx,dy);
 }
 window.addEventListener('wheel',e=>{
-  if(album.isOpen||e.target.closest?.('button,a,input,#music-panel,#career-panel,#album-panel'))return;
+  if((album.isOpen||cloud.isOpen)||e.target.closest?.('button,a,input,#music-panel,#career-panel,#album-panel'))return;
   e.preventDefault();
   const mult=e.deltaMode===1?16:e.deltaMode===2?innerHeight:1;
   gesture(e.deltaX*mult,e.deltaY*mult);
@@ -203,7 +206,7 @@ window.addEventListener('wheel',e=>{
 const canvas=renderer.domElement;
 window.addEventListener('pointermove',e=>{
   if(e.pointerType!=='mouse'||!ready)return;
-  if(album.isOpen||e.target.closest?.('button,a,input,#music-panel,#career-panel,#album-panel')){lastMouse=null;return}
+  if((album.isOpen||cloud.isOpen)||e.target.closest?.('button,a,input,#music-panel,#career-panel,#album-panel')){lastMouse=null;return}
   const p=[e.clientX,e.clientY];
   if(lastMouse){
     const dx=p[0]-lastMouse[0],dy=p[1]-lastMouse[1];
@@ -225,7 +228,7 @@ canvas.addEventListener('pointermove',e=>{
 function endTouch(e){if(e.pointerId===touchId){touchId=null;lastTouch=null}}
 canvas.addEventListener('pointerup',endTouch);canvas.addEventListener('pointercancel',endTouch);canvas.addEventListener('lostpointercapture',endTouch);
 window.addEventListener('keydown',e=>{
-  if(!ready||album.isOpen||e.target.closest?.('button,a,input'))return;
+  if(!ready||(album.isOpen||cloud.isOpen)||e.target.closest?.('button,a,input'))return;
   if(e.key==='Escape'&&!arrived){skip();return}
   if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','W','s','S',' '].includes(e.key))return;
   e.preventDefault();
@@ -499,7 +502,7 @@ function updateWear(dt){
 wearButton.addEventListener('click',()=>{if(wear>=1){resetWear();renderer.shadowMap.needsUpdate=true;invalidate()}else beginWear()});
 document.querySelector('#station-left').addEventListener('click',()=>{if(!arrived)enterStation(1);else moveStation(1)});
 document.querySelector('#station-right').addEventListener('click',()=>{if(!arrived)enterStation(0);else moveStation(-1)});
-document.querySelector('#album-link').addEventListener('click',e=>{if(ready){e.preventDefault();enterStation(1);album.open()}});
+document.querySelector('#album-link').addEventListener('click',e=>{if(ready){e.preventDefault();enterStation(1);cloud.open()}});
 document.querySelector('#quick-work').addEventListener('click',e=>{if(enterStation(1)){e.preventDefault();mark('quick_work');showCareer('overview')}});
 document.querySelector('#explore-room').addEventListener('click',e=>{if(ready){e.preventDefault();mark('room_explore');skip()}});
 window.addEventListener('portfolio:career-open',()=>mark('career_opened'));
@@ -609,7 +612,7 @@ function musicHit(e){
  raycaster.setFromCamera(ndc,camera);return raycaster.intersectObjects(hits,false)[0]?.object;
 }
 canvas.addEventListener('pointerdown',e=>{pressStart=[e.clientX,e.clientY]});
-canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9){pressStart=null;return;}const target=musicHit(e);const career=arrived?careerTarget(raycaster,scene):null;if(career&&(!target||station>.5)){if(career==='album')album.open();else showCareer(career);pressStart=null;return;}if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();else if(arrived&&!wearing&&headphones?.visible){const hit=raycaster.intersectObject(headphones,true);if(hit.length)beginWear()}pressStart=null});
+canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9){pressStart=null;return;}const target=musicHit(e);const career=arrived?careerTarget(raycaster,scene):null;if(career&&(!target||station>.5)){if(career==='album')cloud.open();else showCareer(career);pressStart=null;return;}if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();else if(arrived&&!wearing&&headphones?.visible){const hit=raycaster.intersectObject(headphones,true);if(hit.length)beginWear()}pressStart=null});
 canvas.addEventListener('pointermove',e=>{const hit=musicHit(e);canvas.style.cursor=hit||(arrived&&careerTarget(raycaster,scene))?'pointer':'default'},{passive:true});
 canvas.addEventListener('pointercancel',()=>{pressStart=null});
 
