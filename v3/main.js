@@ -1,13 +1,14 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {RGBELoader} from 'three/addons/loaders/RGBELoader.js';
+import {buildLDesk,buildWorkstation,createHands} from './room-phase1.js';
 
 const container=document.querySelector('#scene');
 const status=document.querySelector('#status');
 const guideButton=document.querySelector('#guide');
 const resetButton=document.querySelector('#reset');
 const error=document.querySelector('#error');
-const W=1.8, D=.75;
+const W=2.72, D=.75;
 const DESK_HEIGHT=.75, EYE_HEIGHT=1.62, SEATED_EYE=1.25;
 const CHAIR_Z=.93, CHAIR_FINAL_Z=.80;
 const loadReport=[];
@@ -62,6 +63,11 @@ const startPos=new THREE.Vector3(),endPos=new THREE.Vector3(),lookStart=new THRE
 const approachPos=new THREE.Vector3(),sidePos=new THREE.Vector3(),standPos=new THREE.Vector3();
 let progress=0,desired=0,arrived=false,raf=0,lastTime=0,lastMouse=null,touchId=null,lastTouch=null;
 let dimensions='';
+let station=0,stationTarget=0,headYaw=0,headTarget=0,headPitch=0,pitchTarget=0,wear=0,wearing=false,headphones=null,hands=null,phoneHome=null,phonePickup=null,seatLockTime=0;
+const stationUI=document.querySelector('#station-status'),wearButton=document.querySelector('#wear-headphones');
+const clamp=THREE.MathUtils.clamp;
+const musicSeat=new THREE.Vector3(.38,SEATED_EYE,.91),workSeat=new THREE.Vector3(-.29,SEATED_EYE,1.04);
+const lookDir=new THREE.Vector3();
 function ease(t){return t*t*(3-2*t)}
 function setPath(){
   const portrait=innerWidth/innerHeight<1;
@@ -69,13 +75,13 @@ function setPath(){
   camera.aspect=innerWidth/innerHeight;
   camera.updateProjectionMatrix();
   const height=bounds?.max.y??DESK_HEIGHT;
-  startPos.set(-.20,EYE_HEIGHT,3.7);
-  approachPos.set(.80,EYE_HEIGHT,1.72);
-  sidePos.set(.64,EYE_HEIGHT,.97);
-  standPos.set(0,EYE_HEIGHT,.94);
-  endPos.set(0,SEATED_EYE,CHAIR_FINAL_Z);
-  lookStart.set(0,1.20,-.4);
-  lookEnd.set(0,1.18,-.65);
+  startPos.set(.46,EYE_HEIGHT,4.05);
+  approachPos.set(1.18,EYE_HEIGHT,1.85);
+  sidePos.set(.96,EYE_HEIGHT,1.08);
+  standPos.set(.38,EYE_HEIGHT,.95);
+  endPos.copy(musicSeat);
+  lookStart.set(-.16,1.13,-.1);
+  lookEnd.set(.38,1.16,-.55);
 }
 function applyCamera(){
   const t=THREE.MathUtils.clamp(progress,0,1);
@@ -98,9 +104,19 @@ function applyCamera(){
   if(Math.abs(camera.fov-fov)>.01){camera.fov=fov;camera.updateProjectionMatrix()}
   look.lerpVectors(lookStart,lookEnd,ease(t));
   camera.lookAt(look);
+  if(arrived){
+    camera.position.lerpVectors(musicSeat,workSeat,ease(station));
+    const yaw=ease(station)*Math.PI/2+headYaw;
+    const pitch=-.075+headPitch;
+    lookDir.set(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),-Math.cos(yaw)*Math.cos(pitch));
+    look.copy(camera.position).add(lookDir);
+    camera.lookAt(look);
+  }
   if(chair){
     const nextZ=THREE.MathUtils.lerp(CHAIR_Z,CHAIR_FINAL_Z,sit);
-    if(Math.abs(chair.position.z-nextZ)>.0001){chair.position.z=nextZ;renderer.shadowMap.needsUpdate=true}
+    const x=arrived?camera.position.x:.38,z=arrived?camera.position.z:nextZ;
+    const rotation=Math.PI+(arrived?ease(station)*Math.PI/2:0);
+    if(Math.abs(chair.position.x-x)+Math.abs(chair.position.z-z)+Math.abs(chair.rotation.y-rotation)>.0001){chair.position.x=x;chair.position.z=z;chair.rotation.y=rotation;renderer.shadowMap.needsUpdate=true}
   }
   walkBar.style.transform='scaleX('+t.toFixed(3)+')';
 }
@@ -109,73 +125,98 @@ function invalidate(){
   raf=requestAnimationFrame(frame);
 }
 function frame(now){
-  raf=0;
-  const dt=lastTime?Math.min(.05,(now-lastTime)/1000):1/60;
-  lastTime=now;
+  raf=0;const dt=lastTime?Math.min(.05,(now-lastTime)/1000):1/60;lastTime=now;
   if(ready){
-    progress+= (desired-progress)*(1-Math.exp(-dt*9));
+    progress+=(desired-progress)*(1-Math.exp(-dt*8));
     if(Math.abs(desired-progress)<.001)progress=desired;
     if(progress===1&&!arrived){
-      arrived=true;
-      walkUI.dataset.arrived='true';
-      status.textContent=dimensions+' · Seated at the desk.';
-      skipButton.disabled=true;
+      arrived=true;seatLockTime=now;walkUI.dataset.arrived='true';skipButton.disabled=true;
+      status.textContent='Seated · Scroll down or swipe left to move to the work station.';
+      stationUI.textContent='Music station';wearButton.disabled=!headphones;
+      if(headphones&&!reduceMotion.matches)beginWear();
     }
+    const speed=reduceMotion.matches?1:1-Math.exp(-dt*6);
+    for(const k of [0]){
+      station+=(stationTarget-station)*speed;headYaw+=(headTarget-headYaw)*speed;headPitch+=(pitchTarget-headPitch)*speed;
+    }
+    if(Math.abs(stationTarget-station)<.001)station=stationTarget;
+    if(Math.abs(headTarget-headYaw)<.001)headYaw=headTarget;
+    if(Math.abs(pitchTarget-headPitch)<.001)headPitch=pitchTarget;
   }
   applyCamera();
+  updateWear(dt);
   renderer.render(scene,camera);
-  if(Math.abs(desired-progress)>.0001&&!document.hidden)invalidate();
-  else lastTime=0;
+  const moving=Math.abs(desired-progress)+Math.abs(stationTarget-station)+Math.abs(headTarget-headYaw)+Math.abs(pitchTarget-headPitch)>.0001;
+  if((moving||wearing)&&!document.hidden)invalidate();else lastTime=0;
+}
+function moveStation(delta){
+  if(!arrived||wearing)return;
+  stationTarget=clamp(stationTarget+delta,0,1);headTarget=0;pitchTarget=0;
+  stationUI.textContent=stationTarget>.5?'Work station':'Music station';invalidate();
+}
+function turnHead(dx,dy){
+  if(!arrived||wearing)return;
+  headTarget=clamp(headTarget-dx*.0035,-.42,.42);
+  pitchTarget=clamp(pitchTarget+dy*.0025,-.34,.22);invalidate();
 }
 function advance(pixels){
-  if(!ready||arrived||desired===1)return;
-  const budget=coarse.matches?Math.max(300,innerWidth*.95):Math.max(620,innerWidth*.72);
-  desired=Math.min(1,desired+pixels/budget);
-  invalidate();
+  if(!ready||arrived)return;
+  const budget=coarse.matches?420:850;
+  desired=clamp(desired+pixels/budget,0,1);invalidate();
 }
 function replay(){
   if(!ready)return;
-  progress=desired=0;arrived=false;lastMouse=null;touchId=null;lastTouch=null;lastTime=0;
-  walkUI.dataset.arrived='false';
-  status.textContent=dimensions;
-  skipButton.disabled=false;
-  if(reduceMotion.matches)skip();
-  else invalidate();
+  progress=desired=0;arrived=false;station=stationTarget=0;headYaw=headTarget=headPitch=pitchTarget=0;
+  lastMouse=null;touchId=null;lastTouch=null;lastTime=0;
+  resetWear();walkUI.dataset.arrived='false';status.textContent=dimensions;stationUI.textContent='Entrance';skipButton.disabled=false;wearButton.disabled=true;
+  if(reduceMotion.matches)skip();else invalidate();
 }
-function skip(){
+function skip(){if(!ready||arrived)return;desired=1;if(reduceMotion.matches)progress=1;invalidate();}
+function gesture(dx,dy,drag=false){
   if(!ready)return;
-  desired=1;
-  if(reduceMotion.matches)progress=1;
-  invalidate();
+  if(!arrived){const v=Math.abs(dy)>=Math.abs(dx)?dy:-dx;advance(clamp(v,-160,160));return}
+  if(!drag||Math.abs(dx)>Math.abs(dy)*1.25){moveStation(clamp((!drag?(Math.abs(dy)>=Math.abs(dx)?dy:dx):-dx)/620,-.25,.25))}
+  else turnHead(dx,dy);
 }
+window.addEventListener('wheel',e=>{
+  if(e.target.closest?.('button,a,input,#music-panel'))return;
+  e.preventDefault();
+  const mult=e.deltaMode===1?16:e.deltaMode===2?innerHeight:1;
+  gesture(e.deltaX*mult,e.deltaY*mult);
+},{passive:false});
+const canvas=renderer.domElement;
 window.addEventListener('pointermove',e=>{
-  if(e.pointerType!=='mouse'||!ready||arrived)return;
-  if(e.target.closest?.('button,a')){lastMouse=null;return}
+  if(e.pointerType!=='mouse'||!ready)return;
+  if(e.target.closest?.('button,a,input,#music-panel')){lastMouse=null;return}
   const p=[e.clientX,e.clientY];
-  if(lastMouse)advance(Math.min(90,Math.hypot(p[0]-lastMouse[0],p[1]-lastMouse[1])));
-  lastMouse=p;
+  if(lastMouse){
+    const dx=p[0]-lastMouse[0],dy=p[1]-lastMouse[1];
+    if(!arrived&&e.buttons===0)gesture(dx,dy,true);
+    else if(arrived&&e.buttons===0)turnHead(dx,dy*.35);
+  }lastMouse=p;
 },{passive:true});
 document.documentElement.addEventListener('pointerleave',()=>{lastMouse=null});
-const canvas=renderer.domElement;
 canvas.addEventListener('pointerdown',e=>{
-  if(e.pointerType==='mouse'||!ready||arrived||touchId!==null)return;
-  touchId=e.pointerId;lastTouch=[e.clientX,e.clientY];
-  try{canvas.setPointerCapture(e.pointerId)}catch{}
+  if(!ready||touchId!==null)return;
+  touchId=e.pointerId;lastTouch=[e.clientX,e.clientY];try{canvas.setPointerCapture(e.pointerId)}catch{}
 });
 canvas.addEventListener('pointermove',e=>{
   if(e.pointerId!==touchId||!lastTouch)return;
-  const p=[e.clientX,e.clientY];
-  advance(Math.min(90,Math.hypot(p[0]-lastTouch[0],p[1]-lastTouch[1])));
+  const p=[e.clientX,e.clientY],dx=p[0]-lastTouch[0],dy=p[1]-lastTouch[1];
+  if(e.pointerType==='mouse'&&arrived)turnHead(dx,dy);
+  else gesture(dx,dy,true);
   lastTouch=p;
 },{passive:true});
 function endTouch(e){if(e.pointerId===touchId){touchId=null;lastTouch=null}}
-canvas.addEventListener('pointerup',endTouch);
-canvas.addEventListener('pointercancel',endTouch);
-canvas.addEventListener('lostpointercapture',endTouch);
+canvas.addEventListener('pointerup',endTouch);canvas.addEventListener('pointercancel',endTouch);canvas.addEventListener('lostpointercapture',endTouch);
 window.addEventListener('keydown',e=>{
-  if(!ready||arrived||e.target.closest?.('button,a,input'))return;
-  if(['ArrowUp','w','W',' '].includes(e.key)){e.preventDefault();advance(110)}
-  else if(e.key==='Escape')skip();
+  if(!ready||e.target.closest?.('button,a,input'))return;
+  if(e.key==='Escape'&&!arrived){skip();return}
+  if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','W','s','S',' '].includes(e.key))return;
+  e.preventDefault();
+  if(!arrived)advance(['ArrowUp','ArrowRight','s','S'].includes(e.key)?-125:125);
+  else if(e.key==='ArrowLeft'||e.key==='ArrowDown')moveStation(.35);
+  else if(e.key==='ArrowRight'||e.key==='ArrowUp')moveStation(-.35);
 });
 document.addEventListener('visibilitychange',()=>{
   lastTime=0;lastMouse=null;
@@ -189,7 +230,7 @@ function resize(){
 }
 window.addEventListener('resize',resize);
 resize();
-walkCopy.textContent=coarse.matches?'Swipe across the room to walk closer.':'Move your mouse to walk closer.';
+walkCopy.textContent=coarse.matches?'Swipe left or down to approach; reverse to step back.':'Scroll down to approach; scroll up to step back.';
 resetButton.addEventListener('click',replay);
 skipButton.addEventListener('click',skip);
 guideButton.addEventListener('click',()=>{
@@ -201,13 +242,13 @@ guideButton.addEventListener('click',()=>{
 const RAD=Math.PI/180;
 // x=right, z=toward viewer, positive yaw turns the front toward camera-right.
 const arrangement=[
-  {name:'CRT',w:.45,d:.353,x:-.49,z:-.055,yaw:13,file:'crt.glb'},
+  {name:'CRT',w:.45,d:.353,x:-1.14,z:.88,yaw:90,file:'crt.glb'},
   {name:'Turntable',w:.42,d:.33,x:.59,z:-.045,yaw:-12,file:'turntable-pro-ject-e1-optimized.glb',alternates:['turntable-dj-alt.glb','turntable-candidate.glb']},
-  {name:'Notebook',w:.148,d:.210,x:.025,z:.075,yaw:8,file:'notebook.glb',node:'binder_notebook_closed'},
-  {name:'Coffee mug',w:.12,d:.09,x:-.64,z:.245,yaw:25,file:'mug.glb'},
-  {name:'Coffee beans',w:.052,d:.039,x:-.48,z:.27,yaw:16,file:'beans.glb'},
+  {name:'Notebook',w:.148,d:.210,x:-1.03,z:1.36,yaw:90,file:'notebook.glb',node:'binder_notebook_closed'},
+  {name:'Coffee mug',w:.12,d:.09,x:-1.11,z:.47,yaw:90,file:'mug.glb'},
+  {name:'Coffee beans',w:.052,d:.039,x:-1.02,z:.37,yaw:16,file:'beans.glb'},
   {name:'Earbuds (MVP)',w:.0606,d:.055,x:.30,z:.205,yaw:-16,file:'earbuds-candidate.glb',alternates:['earbuds-alt.glb']},
-  {name:'Headphones',w:.18,d:.16,x:.13,z:-.21,yaw:-10,file:'headphones.glb'}
+  {name:'Headphones',w:.19,d:.16,x:.12,z:.18,yaw:0,file:'headphones.glb'}
 ];
 function footprint(item,y){
   const {w,d,x,z,yaw}=item;
@@ -330,6 +371,7 @@ async function placeImported(item,top,override=null){
     if(item.name==='Coffee mug'&&o.material?.name==='cream'){o.material=o.material.clone();o.material.color.setHex(0x19191b);o.material.roughness=.29}
   });
   scene.add(pivot);
+  if(item.name==='Headphones'){headphones=pivot;phoneHome=pivot.position.clone();phonePickup=pivot.quaternion.clone()}
   return pivot;
 }
 function fallbackChair(){
@@ -363,64 +405,60 @@ function fallbackDesk(){
   return g;
 }
 async function start(){
-  const [loaded,environment]=await Promise.allSettled([
-    loadFirst('Desk',['study-desk-candidate.glb','desk.glb']),
-    new RGBELoader().loadAsync(new URL('hdri/studio.hdr',assets).href)
-  ]);
-  if(environment.status==='fulfilled'){
-    environment.value.mapping=THREE.EquirectangularReflectionMapping;
-    scene.environment=environment.value;
-    scene.environmentIntensity=.7;
-  }
-  const chosen=loaded.status==='fulfilled'?loaded.value:null;
-  const woodMaps=await getWoodMaps();
-  applyRoomMaterials();
-  const original=chosen?.data.scene||fallbackDesk();
-  desk=new THREE.Group();desk.add(original);
-  let b=new THREE.Box3().setFromObject(desk),size=b.getSize(new THREE.Vector3());
-  if(size.z>size.x){original.rotation.y+=Math.PI/2;desk.updateMatrixWorld(true);b.setFromObject(desk);size=b.getSize(size)}
-  if(![size.x,size.y,size.z].every(n=>Number.isFinite(n)&&n>0))throw new Error('Invalid desk bounds');
-  // A writing desk of standard working dimensions; keep tabletop and drawer
-  // construction proportions as close as possible within the requested footprint.
-  desk.scale.set(W/size.x,DESK_HEIGHT/size.y,D/size.z);
-  desk.updateMatrixWorld(true);b.setFromObject(desk);
-  const center=b.getCenter(new THREE.Vector3());
-  desk.position.set(-center.x,-b.min.y,-center.z);
-  desk.updateMatrixWorld(true);
-  desk.traverse(o=>{
-    if(!o.isMesh)return;
-    o.castShadow=true;o.receiveShadow=true;
-    const tint=m=>{
-      const copy=m.clone();
-      if(copy.color){
-        if(m.name==='oak'||m.name==='carcass'){
-          copy.color.setHex(m.name==='oak'?0xb8a08a:0x9a8170);
-          if(woodMaps){copy.map=woodMaps[0];copy.normalMap=woodMaps[1];copy.roughnessMap=woodMaps[2];copy.normalScale.set(.36,.36);copy.roughness=.82;copy.metalness=0;}
-        }
-        else if(chosen?.file==='desk.glb')copy.color.multiply(new THREE.Color(0xc7ab92));
-      }
-      return copy;
-    };
-    const mats=Array.isArray(o.material)?o.material:[o.material];
-    if(woodMaps&&mats.some(m=>m.name==='oak'||m.name==='carcass'))projectWoodUV(o);
-    o.material=Array.isArray(o.material)?o.material.map(tint):tint(o.material);
-  });
-  scene.add(desk);desk.updateMatrixWorld(true);bounds=new THREE.Box3().setFromObject(desk);
-  size=bounds.getSize(new THREE.Vector3());
-  const top=bounds.max.y;
+  const environment=await new RGBELoader().loadAsync(new URL('hdri/studio.hdr',assets).href).catch(()=>null);
+  if(environment){environment.mapping=THREE.EquirectangularReflectionMapping;scene.environment=environment;scene.environmentIntensity=.7}
+  // Phase 1: native solid L-shaped geometry, dimensions in metres. Finish textures deferred.
+  desk=buildLDesk();scene.add(desk);desk.updateMatrixWorld(true);bounds=new THREE.Box3().setFromObject(desk);
+  buildWorkstation(scene);
+  const top=DESK_HEIGHT;
   arrangement.forEach(item=>footprint(item,top+.004));
   createPosters();
   const outcomes=await Promise.allSettled([...arrangement.map(item=>placeImported(item,top+.002)),loadChair(),loadWallSpeakers()]);
   outcomes.filter(r=>r.status==='rejected').forEach(r=>console.warn(r.reason));
-  const fallbacks=loadReport.filter(r=>r.status.includes('fallback')).length;
-  dimensions=(size.x*100).toFixed(0)+' × '+(size.z*100).toFixed(0)+' × '+(size.y*100).toFixed(0)+' cm · standing 162 / seated 125 cm'+(fallbacks?' · '+fallbacks+' fallback props':'')+(environment.status==='rejected'?' · HDRI unavailable':'')+chairStatus;
-  window.__v3AssetReport=loadReport;
-  console.table(loadReport);
-  ready=true;
-  document.querySelector('#load-turntable').disabled=false;
+  hands=createHands();camera.add(hands.root);scene.add(camera);hands.root.visible=false;
+  dimensions='L-shaped desk · 2.72 m × 1.95 m · 75 cm high'+chairStatus;
+  window.__v3AssetReport=loadReport;console.table(loadReport);
+  ready=true;document.querySelector('#load-turntable').disabled=false;
   guideButton.disabled=false;resetButton.disabled=false;skipButton.disabled=false;
   renderer.shadowMap.needsUpdate=true;setPath();replay();
 }
+function resetWear(){
+  wearing=false;wear=0;
+  if(hands)hands.root.visible=false;
+  if(headphones&&phoneHome){scene.attach(headphones);headphones.position.copy(phoneHome);headphones.quaternion.copy(phonePickup);headphones.visible=true;headphones.updateMatrixWorld(true);}
+  wearButton.textContent='Put on headphones';
+}
+function beginWear(){
+  if(!arrived||!headphones||wearing||wear>=1)return;
+  if(station>.06||stationTarget>.06){stationTarget=0;headTarget=0;pitchTarget=0;invalidate();return}
+  wearing=true;wear=0;headTarget=0;pitchTarget=0;hands.root.visible=true;wearButton.disabled=true;
+  stationUI.textContent='Putting on headphones…';invalidate();
+}
+const phonePos=new THREE.Vector3(),localPos=new THREE.Vector3(),pickupQuat=new THREE.Quaternion();
+function updateWear(dt){
+  if(!wearing||!hands||!headphones)return;
+  wear=Math.min(1,wear+dt/2.65);
+  // Reach toward the actual GLB, grasp both earcups, then carry it to the head.
+  camera.updateMatrixWorld(true);
+  if(wear<.32){
+    localPos.copy(phoneHome).add(new THREE.Vector3(0,.08,0));camera.worldToLocal(localPos);
+    hands.pose(localPos,ease(wear/.32),false);
+  }else{
+    if(headphones.parent!==camera){camera.attach(headphones);phonePos.copy(headphones.position);pickupQuat.copy(headphones.quaternion);}
+    const t=ease(clamp((wear-.32)/.56,0,1));
+    const final=new THREE.Vector3(0,.035,-.075);
+    headphones.position.lerpVectors(phonePos,final,t);
+    headphones.position.y+=.15*Math.sin(Math.PI*t);
+    headphones.quaternion.copy(pickupQuat).slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,0)),t);
+    hands.pose(headphones.position.clone().add(new THREE.Vector3(0,.06,0)),1,wear>.88?(wear-.88)/.12:0);
+    if(wear>.88)headphones.visible=false;
+  }
+  renderer.shadowMap.needsUpdate=true;
+  if(wear>=1){wearing=false;hands.root.visible=false;headphones.visible=false;wearButton.disabled=false;wearButton.textContent='Headphones on · Remove';stationUI.textContent='Music station · Headphones on';}
+}
+wearButton.addEventListener('click',()=>{if(wear>=1){resetWear();renderer.shadowMap.needsUpdate=true;invalidate()}else beginWear()});
+document.querySelector('#station-left').addEventListener('click',()=>{if(!arrived)skip();else moveStation(1)});
+document.querySelector('#station-right').addEventListener('click',()=>{if(!arrived)skip();else moveStation(-1)});
 
 const tracks=[["billy-joel","Billy Joel","Vienna","#d2b77f","#252e39","assets/vienna.mp3.mp3"],["ed-sheeran","Ed Sheeran","The Hills of Aberfeldy","#d0a17a","#213e35","music/ed-sheeran/Ed%20Sheeran%20-%20The%20Hills%20of%20Aberfeldy%20%5BOfficial%20Video%5D.mp3"],["michael-jackson","Michael Jackson","Chicago","#d5c9b0","#25232b","music/michael-jackson/Michael%20Jackson%20-%20Chicago%20%28Official%20Audio%29.mp3"],["queen","Queen","Love Of My Life","#e4bd73","#762e2d","music/queen/Queen%20-%20Love%20Of%20My%20Life%20%5BLyrics%5D.mp3"],["elton-john","Elton John","Yellow Brick Road","#f0cb71","#293b63","music/elton-john/yellow%20brick%20road.weba"]];
 const audio=new Audio(); audio.preload='none'; audio.volume=.72;
@@ -525,7 +563,7 @@ function musicHit(e){
  raycaster.setFromCamera(ndc,camera);return raycaster.intersectObjects(hits,false)[0]?.object;
 }
 canvas.addEventListener('pointerdown',e=>{pressStart=[e.clientX,e.clientY]});
-canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9)return;const target=musicHit(e);if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();pressStart=null});
+canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9)return;const target=musicHit(e);if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();else if(arrived&&!wearing&&headphones?.visible){const hit=raycaster.intersectObject(headphones,true);if(hit.length)beginWear()}pressStart=null});
 canvas.addEventListener('pointermove',e=>{canvas.style.cursor=musicHit(e)?'pointer':'default'},{passive:true});
 canvas.addEventListener('pointercancel',()=>{pressStart=null});
 
