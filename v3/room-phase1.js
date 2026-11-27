@@ -26,8 +26,8 @@ export function buildWorkstation(scene){
  const wall=new THREE.Mesh(new THREE.PlaneGeometry(4.3,4.4),mat(0x81766a,.96));wall.rotation.y=Math.PI/2;wall.position.set(-1.63,2.2,.9);wall.receiveShadow=true;scene.add(wall);
  const frames=[['20%','Yokogawa','Handover cycle-time reduction'],['0→50','Coffee Koffee','Cups/day'],['1K+','7 Senses','Storefront users'],['3','Hardware builds','Hands-on prototypes']];
  frames.forEach(([metric,title,sub],i)=>{
-  const g=new THREE.Group();g.name='Achievement · '+title;g.rotation.y=Math.PI/2;
-  g.position.set(-1.604,1.48+Math.floor(i/2)*.32,.42+(i%2)*.46);
+  const g=new THREE.Group();g.name='Achievement · '+title;g.userData.career=['engineering','coffee','commerce','hardware'][i];g.rotation.y=Math.PI/2;
+  g.position.set(-1.604,1.69+Math.floor(i/2)*.32,.52+(i%2)*.46);
   box(g,.415,.30,.025,0,0,0,steel);
   const p=new THREE.Mesh(new THREE.PlaneGeometry(.393,.278),new THREE.MeshStandardMaterial({map:cardTexture(metric,title,sub),roughness:.9,emissive:0xffffff,emissiveIntensity:.045}));p.position.z=.014;g.add(p);scene.add(g);
  });

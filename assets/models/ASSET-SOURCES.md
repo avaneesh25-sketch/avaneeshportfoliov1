@@ -44,3 +44,6 @@ Source listing: [Vinyl player Pro-Ject E1 by Axxxo](https://sketchfab.com/3d-mod
 
 ## Phase 1 — two-workstation room
 Continuous L desk and articulated first-person hands are original procedural 3D geometry for the interaction prototype; they are not scanned human anatomy or images. Achievement frames use the repository's `content/work/resume.json` (selected work metrics, not unverified formal awards). CRT and left return are relocated. Texture fidelity deferred. Existing chair, speakers, posters, music and local Pro-Ject loader retained.
+
+## Career workstation
+CRT returned to music station. New desktop monitor, keyboard, mouse, iPad-style tablet, automation-panel and turbine study models are original dimensioned procedural meshes for phase 1, not branded CAD replicas or exact reproductions of the user's builds. Generic earbuds GLB retained (not a verified AirPods model). Career plaques are portfolio summary artwork, not fabricated certificates or trophies. Details drawn from the two existing resume PDFs and content/work/resume.json. Existing PDF links preserved. Texture fidelity is deferred.

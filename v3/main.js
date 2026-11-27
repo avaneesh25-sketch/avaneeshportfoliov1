@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {RGBELoader} from 'three/addons/loaders/RGBELoader.js';
 import {buildLDesk,buildWorkstation,createHands} from './room-phase1.js';
+import {buildCareerDesk,careerDetails,showCareer,careerTarget} from './career-desk.js';
 
 const container=document.querySelector('#scene');
 const status=document.querySelector('#status');
@@ -152,7 +153,7 @@ function frame(now){
 function moveStation(delta){
   if(!arrived||wearing)return;
   stationTarget=clamp(stationTarget+delta,0,1);headTarget=0;pitchTarget=0;
-  stationUI.textContent=stationTarget>.5?'Work station':'Music station';invalidate();
+  stationUI.textContent=stationTarget>.5?'Work station':'Music station';document.querySelector('#music-panel').classList.toggle('work-side',stationTarget>.5);document.querySelector('#career-open').hidden=stationTarget<=.5;invalidate();
 }
 function turnHead(dx,dy){
   if(!arrived||wearing)return;
@@ -168,7 +169,7 @@ function replay(){
   if(!ready)return;
   progress=desired=0;arrived=false;station=stationTarget=0;headYaw=headTarget=headPitch=pitchTarget=0;
   lastMouse=null;touchId=null;lastTouch=null;lastTime=0;
-  resetWear();walkUI.dataset.arrived='false';status.textContent=dimensions;stationUI.textContent='Entrance';skipButton.disabled=false;wearButton.disabled=true;
+  resetWear();document.querySelector('#music-panel').classList.remove('work-side');document.querySelector('#career-open').hidden=true;document.querySelector('#career-panel').hidden=true;walkUI.dataset.arrived='false';status.textContent=dimensions;stationUI.textContent='Entrance';skipButton.disabled=false;wearButton.disabled=true;
   if(reduceMotion.matches)skip();else invalidate();
 }
 function skip(){if(!ready||arrived)return;desired=1;if(reduceMotion.matches)progress=1;invalidate();}
@@ -179,7 +180,7 @@ function gesture(dx,dy,drag=false){
   else turnHead(dx,dy);
 }
 window.addEventListener('wheel',e=>{
-  if(e.target.closest?.('button,a,input,#music-panel'))return;
+  if(e.target.closest?.('button,a,input,#music-panel,#career-panel'))return;
   e.preventDefault();
   const mult=e.deltaMode===1?16:e.deltaMode===2?innerHeight:1;
   gesture(e.deltaX*mult,e.deltaY*mult);
@@ -187,7 +188,7 @@ window.addEventListener('wheel',e=>{
 const canvas=renderer.domElement;
 window.addEventListener('pointermove',e=>{
   if(e.pointerType!=='mouse'||!ready)return;
-  if(e.target.closest?.('button,a,input,#music-panel')){lastMouse=null;return}
+  if(e.target.closest?.('button,a,input,#music-panel,#career-panel')){lastMouse=null;return}
   const p=[e.clientX,e.clientY];
   if(lastMouse){
     const dx=p[0]-lastMouse[0],dy=p[1]-lastMouse[1];
@@ -241,12 +242,12 @@ guideButton.addEventListener('click',()=>{
 const RAD=Math.PI/180;
 // x=right, z=toward viewer, positive yaw turns the front toward camera-right.
 const arrangement=[
-  {name:'CRT',w:.45,d:.353,x:-1.14,z:.88,yaw:90,file:'crt.glb'},
+  {name:'CRT',w:.45,d:.353,x:-.43,z:-.105,yaw:10,file:'crt.glb'},
   {name:'Turntable',w:.42,d:.33,x:.59,z:-.045,yaw:-12,file:'turntable-pro-ject-e1-optimized.glb',alternates:['turntable-dj-alt.glb','turntable-candidate.glb']},
-  {name:'Notebook',w:.148,d:.210,x:-1.03,z:1.36,yaw:90,file:'notebook.glb',node:'binder_notebook_closed'},
+  {name:'Notebook',w:.148,d:.210,x:-1.10,z:.60,yaw:90,file:'notebook.glb',node:'binder_notebook_closed'},
   {name:'Coffee mug',w:.12,d:.09,x:-1.11,z:.47,yaw:90,file:'mug.glb'},
   {name:'Coffee beans',w:.052,d:.039,x:-1.02,z:.37,yaw:16,file:'beans.glb'},
-  {name:'Earbuds (MVP)',w:.0606,d:.055,x:.30,z:.205,yaw:-16,file:'earbuds-candidate.glb',alternates:['earbuds-alt.glb']},
+  {name:'Earbuds (MVP)',w:.0606,d:.055,x:-.89,z:1.41,yaw:90,file:'earbuds-candidate.glb',alternates:['earbuds-alt.glb']},
   {name:'Headphones',w:.19,d:.16,x:.12,z:.18,yaw:0,file:'headphones.glb'}
 ];
 function footprint(item,y){
@@ -370,6 +371,9 @@ async function placeImported(item,top,override=null){
     if(item.name==='Coffee mug'&&o.material?.name==='cream'){o.material=o.material.clone();o.material.color.setHex(0x19191b);o.material.roughness=.29}
   });
   scene.add(pivot);
+  if(item.name==='Earbuds (MVP)')pivot.userData.career='hardware';
+  if(item.name==='Notebook')pivot.userData.career='commerce';
+  if(item.name==='Coffee mug'||item.name==='Coffee beans')pivot.userData.career='coffee';
   if(item.name==='Headphones'){headphones=pivot;phoneHome=pivot.position.clone();phonePickup=pivot.quaternion.clone()}
   return pivot;
 }
@@ -409,6 +413,7 @@ async function start(){
   // Phase 1: native solid L-shaped geometry, dimensions in metres. Finish textures deferred.
   desk=buildLDesk();scene.add(desk);desk.updateMatrixWorld(true);bounds=new THREE.Box3().setFromObject(desk);
   buildWorkstation(scene);
+  buildCareerDesk(scene);
   const top=DESK_HEIGHT;
   arrangement.forEach(item=>footprint(item,top+.004));
   createPosters();
@@ -562,8 +567,8 @@ function musicHit(e){
  raycaster.setFromCamera(ndc,camera);return raycaster.intersectObjects(hits,false)[0]?.object;
 }
 canvas.addEventListener('pointerdown',e=>{pressStart=[e.clientX,e.clientY]});
-canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9){pressStart=null;return;}const target=musicHit(e);if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();else if(arrived&&!wearing&&headphones?.visible){const hit=raycaster.intersectObject(headphones,true);if(hit.length)beginWear()}pressStart=null});
-canvas.addEventListener('pointermove',e=>{canvas.style.cursor=musicHit(e)?'pointer':'default'},{passive:true});
+canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9){pressStart=null;return;}const target=musicHit(e);const career=arrived?careerTarget(raycaster,scene):null;if(career&&(!target||station>.5)){showCareer(career);pressStart=null;return;}if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();else if(arrived&&!wearing&&headphones?.visible){const hit=raycaster.intersectObject(headphones,true);if(hit.length)beginWear()}pressStart=null});
+canvas.addEventListener('pointermove',e=>{const hit=musicHit(e);canvas.style.cursor=hit||(arrived&&careerTarget(raycaster,scene))?'pointer':'default'},{passive:true});
 canvas.addEventListener('pointercancel',()=>{pressStart=null});
 
 // A local file is parsed in the visitor's browser; never uploaded or sent to a service.
