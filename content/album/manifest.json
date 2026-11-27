@@ -1,0 +1,74 @@
+{
+  "chapters": [
+    {
+      "title": "Behind the portfolio",
+      "description": "Existing personal introduction media from the portfolio.",
+      "media": [
+        {
+          "type": "image",
+          "src": "content/about/photo.jpeg",
+          "alt": "Portfolio portrait"
+        },
+        {
+          "type": "image",
+          "src": "content/intro/photo-01.jpeg",
+          "alt": "Portfolio introduction photo 1"
+        },
+        {
+          "type": "video",
+          "src": "content/intro/clip-01.mp4",
+          "alt": "Portfolio introduction clip"
+        },
+        {
+          "type": "image",
+          "src": "content/intro/photo-03.jpeg",
+          "alt": "Portfolio introduction photo 3"
+        },
+        {
+          "type": "image",
+          "src": "content/intro/photo2.jpeg",
+          "alt": "Portfolio introduction photo 4"
+        },
+        {
+          "type": "image",
+          "src": "content/intro/photo4.jpeg",
+          "alt": "Portfolio introduction photo 5"
+        }
+      ]
+    },
+    {
+      "title": "Yokogawa",
+      "description": "Process safety, automation, client requirements and cross-functional delivery.",
+      "metric": "20% handover cycle-time reduction",
+      "media": []
+    },
+    {
+      "title": "Coffee Koffee",
+      "description": "A campus coffee venture built through sourcing, pricing and customer feedback.",
+      "metric": "0→50 cups/day",
+      "media": []
+    },
+    {
+      "title": "7 Senses",
+      "description": "Storefront, catalogue, suppliers, Meta ads and conversion experiments.",
+      "metric": "1K+ storefront users",
+      "media": []
+    },
+    {
+      "title": "Hardware builds",
+      "description": "Wearable bio-tracker, therapeutic exoskeleton and Tesla turbine prototypes.",
+      "metric": "3 hands-on builds",
+      "media": []
+    },
+    {
+      "title": "Education & campus life",
+      "description": "Masters’ Union, REVA University, campus leadership and community involvement.",
+      "media": []
+    },
+    {
+      "title": "Certifications & training",
+      "description": "Technical training and engineering certifications.",
+      "media": []
+    }
+  ]
+}
