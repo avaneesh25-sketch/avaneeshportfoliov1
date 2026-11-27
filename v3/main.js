@@ -11,6 +11,7 @@ const W=1.8, D=.75;
 const DESK_HEIGHT=.75, EYE_HEIGHT=1.62, SEATED_EYE=1.25;
 const CHAIR_Z=.93, CHAIR_FINAL_Z=.80;
 const loadReport=[];
+const newModels={'chair-executive.glb':'https://cdn.3dassets.dev/assets/16982/v1/model.glb','wall-speaker.glb':'https://cdn.3dassets.dev/assets/38854/v1/model.glb'};
 const assets=new URL('../assets/',import.meta.url);
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x1b1713);
@@ -44,7 +45,7 @@ const fill=new THREE.DirectionalLight(0xc5d0de,.38);fill.position.set(2,2,-2);sc
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(100,100),new THREE.MeshStandardMaterial({color:0x302b25,roughness:.93}));
 floor.rotation.x=-Math.PI/2;floor.position.y=-.002;floor.receiveShadow=true;scene.add(floor);
 // Room shell, kept deliberately understated so the desk is the focal point.
-const wall=new THREE.Mesh(new THREE.PlaneGeometry(12,4.4),new THREE.MeshStandardMaterial({color:0x3b3128,roughness:1}));
+const wall=new THREE.Mesh(new THREE.PlaneGeometry(12,4.4),new THREE.MeshStandardMaterial({color:0x81766a,roughness:.96}));
 wall.position.set(0,2.2,-1.15);wall.receiveShadow=true;scene.add(wall);
 const baseboard=new THREE.Mesh(new THREE.BoxGeometry(12,.09,.025),new THREE.MeshStandardMaterial({color:0x2b241e,roughness:.87}));
 baseboard.position.set(0,.045,-1.13);scene.add(baseboard);
@@ -73,8 +74,8 @@ function setPath(){
   sidePos.set(.64,EYE_HEIGHT,.97);
   standPos.set(0,EYE_HEIGHT,.94);
   endPos.set(0,SEATED_EYE,CHAIR_FINAL_Z);
-  lookStart.set(0,height+.15,0);
-  lookEnd.set(0,height+.12,-.10);
+  lookStart.set(0,1.20,-.4);
+  lookEnd.set(0,1.18,-.65);
 }
 function applyCamera(){
   const t=THREE.MathUtils.clamp(progress,0,1);
@@ -93,7 +94,7 @@ function applyCamera(){
   }
   const portrait=camera.aspect<1;
   const sit=ease(THREE.MathUtils.clamp((t-.65)/.35,0,1));
-  const fov=THREE.MathUtils.lerp(portrait?67:45,portrait?82:65,sit);
+  const fov=THREE.MathUtils.lerp(portrait?67:45,portrait?83:73,sit);
   if(Math.abs(camera.fov-fov)>.01){camera.fov=fov;camera.updateProjectionMatrix()}
   look.lerpVectors(lookStart,lookEnd,ease(t));
   camera.lookAt(look);
@@ -234,9 +235,10 @@ function raiseDeskGeometry(model,originalHeight,targetHeight){
 const loader=new GLTFLoader();
 const sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function getGLB(file){
-  const url=new URL('models/'+file,assets).href;
+  const local=new URL('models/'+file,assets).href;
   let failure;
   for(let i=0;i<2;i++){
+    const url=i&&newModels[file]?newModels[file]:local;
     const ctl=new AbortController(),timer=setTimeout(()=>ctl.abort(),8000);
     try{
       const response=await fetch(url,{signal:ctl.signal,cache:i?'reload':'default'});
@@ -342,17 +344,17 @@ function fallbackChair(){
   return g;
 }
 async function loadChair(){
-  const loaded=await loadFirst('Chair',['chair.glb']);
+  const loaded=await loadFirst('Chair',['chair-executive.glb','chair.glb']);
   const root=loaded?.data.scene||fallbackChair();
   chair=new THREE.Group();const model=new THREE.Group();model.add(root);chair.add(model);
   let b=new THREE.Box3().setFromObject(root),s=b.getSize(new THREE.Vector3());
   if(!Number.isFinite(s.y)||s.y<=0){chair=null;chairStatus=' · Chair geometry invalid';return}
-  root.scale.multiplyScalar(1.13/s.y);model.updateMatrixWorld(true);b.setFromObject(model);
+  root.scale.multiplyScalar(1.19/s.y);model.updateMatrixWorld(true);b.setFromObject(model);
   const center=b.getCenter(new THREE.Vector3());
   model.position.set(-center.x,-b.min.y,-center.z);
   chair.rotation.y=Math.PI;chair.position.set(0,0,CHAIR_Z);
   chair.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
-  scene.add(chair);chairStatus=loaded?' · Ergonomic chair':' · Chair fallback';
+  scene.add(chair);chairStatus=loaded?.file==='chair-executive.glb'?' · Executive chair':loaded?' · Existing ergonomic chair':' · Chair fallback';
 }
 function fallbackDesk(){
   const g=new THREE.Group(),wood=material(0x563722,.7);
@@ -371,6 +373,8 @@ async function start(){
     scene.environmentIntensity=.7;
   }
   const chosen=loaded.status==='fulfilled'?loaded.value:null;
+  const woodMaps=await getWoodMaps();
+  applyRoomMaterials();
   const original=chosen?.data.scene||fallbackDesk();
   desk=new THREE.Group();desk.add(original);
   let b=new THREE.Box3().setFromObject(desk),size=b.getSize(new THREE.Vector3());
@@ -382,28 +386,34 @@ async function start(){
   desk.updateMatrixWorld(true);b.setFromObject(desk);
   const center=b.getCenter(new THREE.Vector3());
   desk.position.set(-center.x,-b.min.y,-center.z);
+  desk.updateMatrixWorld(true);
   desk.traverse(o=>{
     if(!o.isMesh)return;
     o.castShadow=true;o.receiveShadow=true;
     const tint=m=>{
       const copy=m.clone();
       if(copy.color){
-        if(m.name==='oak')copy.color.setHex(0x68452e);
-        else if(m.name==='carcass')copy.color.setHex(0x40332a);
+        if(m.name==='oak'||m.name==='carcass'){
+          copy.color.setHex(m.name==='oak'?0xb8a08a:0x9a8170);
+          if(woodMaps){copy.map=woodMaps[0];copy.normalMap=woodMaps[1];copy.roughnessMap=woodMaps[2];copy.normalScale.set(.36,.36);copy.roughness=.82;copy.metalness=0;}
+        }
         else if(chosen?.file==='desk.glb')copy.color.multiply(new THREE.Color(0xc7ab92));
       }
       return copy;
     };
+    const mats=Array.isArray(o.material)?o.material:[o.material];
+    if(woodMaps&&mats.some(m=>m.name==='oak'||m.name==='carcass'))projectWoodUV(o);
     o.material=Array.isArray(o.material)?o.material.map(tint):tint(o.material);
   });
   scene.add(desk);desk.updateMatrixWorld(true);bounds=new THREE.Box3().setFromObject(desk);
   size=bounds.getSize(new THREE.Vector3());
   const top=bounds.max.y;
   arrangement.forEach(item=>footprint(item,top+.004));
-  const outcomes=await Promise.allSettled([...arrangement.map(item=>placeImported(item,top+.002)),loadChair()]);
+  createPosters();
+  const outcomes=await Promise.allSettled([...arrangement.map(item=>placeImported(item,top+.002)),loadChair(),loadWallSpeakers()]);
   outcomes.filter(r=>r.status==='rejected').forEach(r=>console.warn(r.reason));
   const fallbacks=loadReport.filter(r=>r.status.includes('fallback')).length;
-  dimensions=(size.x*100).toFixed(0)+' × '+(size.z*100).toFixed(0)+' × '+(size.y*100).toFixed(0)+' cm · standing 162 / seated 125 cm'+(fallbacks?' · '+fallbacks+' fallback props':'')+(environment.status==='rejected'?' · HDRI unavailable':'');
+  dimensions=(size.x*100).toFixed(0)+' × '+(size.z*100).toFixed(0)+' × '+(size.y*100).toFixed(0)+' cm · standing 162 / seated 125 cm'+(fallbacks?' · '+fallbacks+' fallback props':'')+(environment.status==='rejected'?' · HDRI unavailable':'')+chairStatus;
   window.__v3AssetReport=loadReport;
   console.table(loadReport);
   ready=true;
@@ -411,6 +421,114 @@ async function start(){
   guideButton.disabled=false;resetButton.disabled=false;skipButton.disabled=false;
   renderer.shadowMap.needsUpdate=true;setPath();replay();
 }
+
+const tracks=[["billy-joel","Billy Joel","Vienna","#d2b77f","#252e39","assets/vienna.mp3.mp3"],["ed-sheeran","Ed Sheeran","The Hills of Aberfeldy","#d0a17a","#213e35","music/ed-sheeran/Ed%20Sheeran%20-%20The%20Hills%20of%20Aberfeldy%20%5BOfficial%20Video%5D.mp3"],["michael-jackson","Michael Jackson","Chicago","#d5c9b0","#25232b","music/michael-jackson/Michael%20Jackson%20-%20Chicago%20%28Official%20Audio%29.mp3"],["queen","Queen","Love Of My Life","#e4bd73","#762e2d","music/queen/Queen%20-%20Love%20Of%20My%20Life%20%5BLyrics%5D.mp3"],["elton-john","Elton John","Yellow Brick Road","#f0cb71","#293b63","music/elton-john/yellow%20brick%20road.weba"]];
+const audio=new Audio(); audio.preload='none'; audio.volume=.72;
+const nowPlaying=document.querySelector('#now-playing'),playButton=document.querySelector('#music-toggle'),artistDock=document.querySelector('#artist-dock');
+const raycaster=new THREE.Raycaster(),ndc=new THREE.Vector2(),hits=[],posterFrames=[],speakerIndicators=[];
+let active=-1,pressStart=null;
+const texLoader=new THREE.TextureLoader();
+async function getWoodMaps(){
+ try{
+  const maps=await Promise.all(['wood-color.jpg','wood-normal.jpg','wood-roughness.jpg'].map(name=>texLoader.loadAsync(new URL('textures/'+name,assets).href)));
+  maps.forEach((t,i)=>{t.colorSpace=i===0?THREE.SRGBColorSpace:THREE.NoColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());t.needsUpdate=true});
+  return maps;
+ }catch(e){console.warn('Wood maps unavailable',e);return null}
+}
+function projectWoodUV(mesh){
+ const g=mesh.geometry.index?mesh.geometry.toNonIndexed():mesh.geometry.clone();
+ const p=g.getAttribute('position'),n=g.getAttribute('normal');
+ if(!p||!n)return;
+ const uv=new Float32Array(p.count*2),v=new THREE.Vector3(),normal=new THREE.Vector3(),normalMatrix=new THREE.Matrix3().getNormalMatrix(mesh.matrixWorld);
+ for(let i=0;i<p.count;i++){
+  v.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld);normal.fromBufferAttribute(n,i).applyMatrix3(normalMatrix).normalize();
+  const x=Math.abs(normal.x),y=Math.abs(normal.y),z=Math.abs(normal.z);
+  uv[i*2]=(x>y&&x>z?v.z:v.x)/.85;
+  uv[i*2+1]=(y>x&&y>z?v.z:v.y)/.85;
+ }
+ g.setAttribute('uv',new THREE.BufferAttribute(uv,2));g.deleteAttribute('tangent');mesh.geometry=g;
+}
+function applyRoomMaterials(){
+ const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d'),data=ctx.createImageData(256,256);
+ let seed=462;for(let i=0;i<data.data.length;i+=4){seed=(Math.imul(seed,1664525)+1013904223)>>>0;const v=118+(seed>>>27);data.data[i]=data.data[i+1]=data.data[i+2]=v;data.data[i+3]=255}
+ ctx.putImageData(data,0,0);const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(36,13);wall.material.bumpMap=t;wall.material.bumpScale=.007;wall.material.needsUpdate=true;
+}
+function posterTexture(track,index){
+ const c=document.createElement('canvas');c.width=600;c.height=840;const x=c.getContext('2d');
+ const [,artist,title,ink,bg]=track;
+ x.fillStyle=bg;x.fillRect(0,0,600,840);x.fillStyle=ink;x.fillRect(26,26,548,788);
+ x.fillStyle=bg;x.fillRect(40,40,520,760);
+ x.fillStyle=ink;x.font='600 22px Arial';x.textAlign='left';x.fillText('THE LISTENING ROOM',66,90);
+ x.fillRect(66,110,468,2);x.textAlign='center';
+ const cx=300,cy=340;
+ if(index===0||index===2){
+  x.strokeStyle=ink;for(let r=52;r<208;r+=12){x.lineWidth=r%3?2:4;x.beginPath();x.arc(cx,cy,r,0,Math.PI*2);x.stroke()}
+  x.fillStyle=ink;x.beginPath();x.arc(cx,cy,48,0,Math.PI*2);x.fill();x.fillStyle=bg;x.beginPath();x.arc(cx,cy,7,0,Math.PI*2);x.fill();
+ }else if(index===1){
+  for(let j=0;j<5;j++){x.fillStyle=j%2?bg:ink;x.beginPath();x.moveTo(65,500-j*26);x.lineTo(175+j*16,215+j*28);x.lineTo(310,380-j*20);x.lineTo(420-j*8,195+j*36);x.lineTo(535,500-j*18);x.closePath();x.fill()}
+ }else if(index===3){
+  x.strokeStyle=ink;x.lineWidth=12;for(let j=0;j<6;j++){x.save();x.translate(cx,cy);x.rotate(j*Math.PI/3);x.strokeRect(-110,-110,220,220);x.restore()}
+ }else{
+  x.fillStyle=ink;for(let j=0;j<10;j++){const a=j*Math.PI/5;x.save();x.translate(cx,cy);x.rotate(a);x.fillRect(-13,-205,26,150);x.restore()}x.beginPath();x.arc(cx,cy,45,0,Math.PI*2);x.fill();
+ }
+ x.fillStyle=ink;const words=artist.toUpperCase().split(' ');let lines=words.length>1?words:[artist.toUpperCase()];let y=590;
+ x.font='bold 68px Georgia';for(const line of lines){x.fillText(line,300,y,470);y+=72}
+ x.font='500 27px Arial';x.fillText(title,300,748,465);x.textAlign='left';x.font='18px Arial';x.fillText('SIDE A  /  0'+(index+1),66,785);
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;tex.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return tex;
+}
+function createPosters(){
+ tracks.forEach((track,i)=>{
+  const g=new THREE.Group();g.position.set((i-2)*.342,1.53+(i%2?.025:0),-1.119);g.name=track[1]+' poster';
+  const frame=box(g,.304,.424,.028,0,0,0,material(0x211b16,.58));frame.castShadow=true;
+  const print=new THREE.Mesh(new THREE.PlaneGeometry(.277,.397),new THREE.MeshStandardMaterial({map:posterTexture(track,i),roughness:.78,metalness:0,emissive:0xffffff,emissiveIntensity:.055}));
+  print.position.z=.015;print.userData.artist=i;g.add(print);hits.push(print);
+  const label=box(g,.275,.005,.006,0,-.204,.018,new THREE.MeshStandardMaterial({color:0x483b2c,emissive:0x000000}));posterFrames.push(label);
+  scene.add(g);
+  const btn=document.createElement('button');btn.type='button';btn.textContent=track[1];btn.title=track[2];btn.setAttribute('aria-pressed','false');btn.addEventListener('click',()=>selectArtist(i));artistDock.append(btn);
+ });
+}
+async function loadWallSpeakers(){
+ const loaded=await loadFirst('Wall speaker',['wall-speaker.glb']);
+ for(const x of [-1.12,1.12]){
+  const g=new THREE.Group();g.position.set(x,1.32,-1.01);
+  const shelf=box(g,.245,.025,.29,0,-.013,.018,material(0x483125,.72));shelf.castShadow=true;
+  const bracket=box(g,.06,.14,.025,0,-.08,-.116,dark);bracket.castShadow=true;
+  if(loaded){
+   const m=loaded.data.scene.clone(true);let b=new THREE.Box3().setFromObject(m),s=b.getSize(new THREE.Vector3());m.scale.multiplyScalar(.28/Math.max(.001,s.y));m.updateMatrixWorld(true);b.setFromObject(m);const center=b.getCenter(new THREE.Vector3());m.position.sub(new THREE.Vector3(center.x,b.min.y,center.z));g.add(m);m.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  }else{
+   box(g,.18,.28,.23,0,.14,0,material(0x493124,.65));
+   box(g,.164,.264,.009,0,.14,.12,dark);
+   for(const [r,y] of [[.065,.096],[.022,.213]]){const m=cyl(g,r,.009,0,y,.128,black);m.rotation.x=Math.PI/2}
+  }
+  const indicator=new THREE.Mesh(new THREE.SphereGeometry(.004,12,8),new THREE.MeshStandardMaterial({color:0x746d54,emissive:0x000000}));indicator.position.set(.065,.021,.132);g.add(indicator);speakerIndicators.push(indicator);
+  const target=new THREE.Mesh(new THREE.PlaneGeometry(.205,.30),new THREE.MeshBasicMaterial({transparent:true,opacity:0,depthWrite:false}));target.position.set(0,.14,.15);target.userData.speaker=true;g.add(target);hits.push(target);scene.add(g);
+ }
+}
+function updateMusic(){
+ const playing=active>=0&&!audio.paused&&!audio.ended;
+ nowPlaying.textContent=active<0?'Choose an artist on the wall':(playing?'Playing · ':'Paused · ')+tracks[active][1]+' / '+tracks[active][2];
+ playButton.textContent=playing?'Pause':'Play';playButton.disabled=active<0;
+ [...artistDock.children].forEach((btn,i)=>btn.setAttribute('aria-pressed',String(i===active)));
+ posterFrames.forEach((m,i)=>{m.material.emissive.setHex(i===active?0xc18b39:0x000000);m.material.emissiveIntensity=i===active?1:.0});
+ speakerIndicators.forEach(m=>{m.material.emissive.setHex(playing?0x72bc67:0x000000);m.material.emissiveIntensity=playing?2:0});
+ invalidate();
+}
+function selectArtist(i){
+ if(active!==i){audio.pause();active=i;audio.src=new URL('../'+tracks[i][5],import.meta.url).href}
+ audio.play().catch(e=>{nowPlaying.textContent='Playback unavailable · '+tracks[i][2];console.warn(e)});updateMusic();
+}
+function toggleMusic(){if(active<0){selectArtist(0);return}if(audio.paused)selectArtist(active);else audio.pause()}
+ playButton.addEventListener('click',toggleMusic);['playing','pause','ended'].forEach(event=>audio.addEventListener(event,updateMusic));
+ audio.addEventListener('error',()=>{nowPlaying.textContent='Unable to load '+(tracks[active]?.[2]||'track');playButton.textContent='Retry';invalidate()});
+function musicHit(e){
+ const b=canvas.getBoundingClientRect();ndc.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);
+ raycaster.setFromCamera(ndc,camera);return raycaster.intersectObjects(hits,false)[0]?.object;
+}
+canvas.addEventListener('pointerdown',e=>{pressStart=[e.clientX,e.clientY]});
+canvas.addEventListener('pointerup',e=>{if(!pressStart||Math.hypot(e.clientX-pressStart[0],e.clientY-pressStart[1])>9)return;const target=musicHit(e);if(target?.userData.artist!==undefined)selectArtist(target.userData.artist);else if(target?.userData.speaker)toggleMusic();pressStart=null});
+canvas.addEventListener('pointermove',e=>{canvas.style.cursor=musicHit(e)?'pointer':'default'},{passive:true});
+canvas.addEventListener('pointercancel',()=>{pressStart=null});
+
 // A local file is parsed in the visitor's browser; never uploaded or sent to a service.
 const localInput=document.querySelector('#turntable-file');
 const localButton=document.querySelector('#load-turntable');
