@@ -1,0 +1,14 @@
+{
+  "chair-executive.glb": {
+    "source": "https://cdn.3dassets.dev/assets/16982/v1/model.glb",
+    "bytes": 181860,
+    "sha256": "b462f45bd114f57620bae6f7e331e50ef207b017fcb02ddc71010fedbe9b0560",
+    "license": "CC0"
+  },
+  "wall-speaker.glb": {
+    "source": "https://cdn.3dassets.dev/assets/38854/v1/model.glb",
+    "bytes": 28596,
+    "sha256": "423d35be6d40bfa01d8cfcdf15088c6d0da385ae8505074dd55c239ed03dddab",
+    "license": "CC0"
+  }
+}
