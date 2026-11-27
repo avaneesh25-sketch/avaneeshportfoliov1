@@ -201,7 +201,7 @@ const RAD=Math.PI/180;
 // x=right, z=toward viewer, positive yaw turns the front toward camera-right.
 const arrangement=[
   {name:'CRT',w:.45,d:.353,x:-.49,z:-.055,yaw:13,file:'crt.glb'},
-  {name:'Turntable',w:.45,d:.36,x:.59,z:-.065,yaw:-12,file:'turntable-dj-alt.glb',alternates:['turntable-candidate.glb']},
+  {name:'Turntable',w:.42,d:.33,x:.59,z:-.045,yaw:-12,file:'turntable-pro-ject-e1-optimized.glb',alternates:['turntable-dj-alt.glb','turntable-candidate.glb']},
   {name:'Notebook',w:.148,d:.210,x:.025,z:.075,yaw:8,file:'notebook.glb',node:'binder_notebook_closed'},
   {name:'Coffee mug',w:.12,d:.09,x:-.64,z:.245,yaw:25,file:'mug.glb'},
   {name:'Coffee beans',w:.052,d:.039,x:-.48,z:.27,yaw:16,file:'beans.glb'},
@@ -296,8 +296,8 @@ function fallbackProp(name){
   }
   return g;
 }
-async function placeImported(item,top){
-  const loaded=await loadFirst(item.name,[item.file,...(item.alternates||[])].filter(Boolean));
+async function placeImported(item,top,override=null){
+  const loaded=override?{data:override,file:'turntable-pro-ject-e1-optimized.glb'}:await loadFirst(item.name,[item.file,...(item.alternates||[])].filter(Boolean));
   let object=loaded?.data.scene;
   if(item.node&&object){
     const found=object.getObjectByName(item.node);
@@ -308,11 +308,13 @@ async function placeImported(item,top){
   model.add(object);pivot.add(model);
   let b=new THREE.Box3().setFromObject(model),s=b.getSize(new THREE.Vector3());
   if(item.node&&s.x>s.z){object.rotation.y+=Math.PI/2;model.updateMatrixWorld(true);b.setFromObject(model);s=b.getSize(s)}
-  if(!Number.isFinite(s.x)||s.x<=0||s.z<=0){
+  if(![s.x,s.y,s.z].every(n=>Number.isFinite(n)&&n>0)){
+    if(override)throw new Error('Invalid uploaded model bounds');
     model.remove(object);object=fallbackProp(item.name);model.add(object);
     b.setFromObject(model);s=b.getSize(s);loadReport.push({name:item.name,status:'invalid bounds fallback'});
   }
-  const factor=Math.min(item.w/s.x,item.d/s.z);
+  const isProJect=loaded?.file==='turntable-pro-ject-e1-optimized.glb';
+  const factor=isProJect?item.w/s.x:Math.min(item.w/s.x,item.d/s.z);
   // Scale the parent, not a translated node within an imported model.
   const scaled=new THREE.Group();model.remove(object);scaled.add(object);model.add(scaled);
   scaled.scale.setScalar(factor);model.updateMatrixWorld(true);b.setFromObject(model);
@@ -322,10 +324,11 @@ async function placeImported(item,top){
   pivot.name=item.name;
   pivot.traverse(o=>{
     if(!o.isMesh)return;
-    o.castShadow=true;o.receiveShadow=true;
+    o.castShadow=!(isProJect&&o.material?.transparent);o.receiveShadow=true;
     if(item.name==='Coffee mug'&&o.material?.name==='cream'){o.material=o.material.clone();o.material.color.setHex(0x19191b);o.material.roughness=.29}
   });
   scene.add(pivot);
+  return pivot;
 }
 function fallbackChair(){
   const g=new THREE.Group();
@@ -404,7 +407,31 @@ async function start(){
   window.__v3AssetReport=loadReport;
   console.table(loadReport);
   ready=true;
+  document.querySelector('#load-turntable').disabled=false;
   guideButton.disabled=false;resetButton.disabled=false;skipButton.disabled=false;
   renderer.shadowMap.needsUpdate=true;setPath();replay();
 }
+// A local file is parsed in the visitor's browser; never uploaded or sent to a service.
+const localInput=document.querySelector('#turntable-file');
+const localButton=document.querySelector('#load-turntable');
+const localStatus=document.querySelector('#turntable-status');
+localButton.addEventListener('click',()=>localInput.click());
+localInput.addEventListener('change',async()=>{
+  const file=localInput.files?.[0];
+  if(!file||!ready)return;
+  localButton.disabled=true;localStatus.textContent='Loading Pro-Ject E1…';
+  try{
+    if(file.size>30*1024*1024)throw new Error('Choose the optimized GLB (under 30 MiB).');
+    const bytes=await file.arrayBuffer();
+    if(bytes.byteLength<20||new DataView(bytes).getUint32(0,true)!==0x46546c67)throw new Error('Choose a valid GLB file.');
+    const parsed=await loader.parseAsync(bytes,'');
+    const old=scene.getObjectByName('Turntable');
+    await placeImported(arrangement.find(x=>x.name==='Turntable'),bounds.max.y+.002,parsed);
+    if(old)scene.remove(old);
+    renderer.shadowMap.needsUpdate=true;invalidate();
+    localStatus.textContent='Pro-Ject E1 · local preview active';
+    localButton.textContent='Change turntable';
+  }catch(e){console.error(e);localStatus.textContent='Could not load model: '+e.message}
+  finally{localButton.disabled=false;localInput.value=''}
+});
 start().catch(e=>{status.textContent='Desk initialization failed.';error.hidden=false;error.textContent='The scene could not initialize.';console.error(e)});
